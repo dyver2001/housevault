@@ -74,7 +74,15 @@ export function saveDebts(debts: BankDebt[]): void {
 export function loadTargets(): SavingsTarget[] {
   try {
     const raw = localStorage.getItem(KEYS.TARGETS);
-    return raw ? JSON.parse(raw) : DEFAULT_TARGETS;
+    if (!raw) return DEFAULT_TARGETS;
+    const parsed: SavingsTarget[] = JSON.parse(raw);
+    const hasSeatAteca = parsed.some(t => t.title.toLowerCase().includes('seat') || t.title.toLowerCase().includes('ateca'));
+    if (!hasSeatAteca) {
+      const updated = [DEFAULT_TARGETS[0], ...parsed];
+      saveTargets(updated);
+      return updated;
+    }
+    return parsed;
   } catch {
     return DEFAULT_TARGETS;
   }

@@ -141,6 +141,16 @@ export const DEFAULT_DEBTS: BankDebt[] = [
 
 export const DEFAULT_TARGETS: SavingsTarget[] = [
   {
+    id: 'target-seat-ateca',
+    title: 'Seat Ateca (15.000 €)',
+    targetAmount: 75000.0,
+    currentSavedAmount: 22500.0,
+    priority: 'CRITICAL',
+    category: 'Mașină Familie',
+    deadline: 'Dec 2027',
+    iconName: 'car'
+  },
+  {
     id: 'target-1',
     title: 'Avans Casă / Apartament Nou',
     targetAmount: 120000.0,

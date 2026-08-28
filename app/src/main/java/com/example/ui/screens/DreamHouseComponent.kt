@@ -29,12 +29,12 @@ fun DreamHouseComponent(
     onDepositClick: () -> Unit = {}
 ) {
     val carTarget = targets.find {
-        it.title.contains("masin", ignoreCase = true) || it.title.contains("mașin", ignoreCase = true) || it.title.contains("car", ignoreCase = true) || it.title.contains("auto", ignoreCase = true) || it.title.contains("bmw", ignoreCase = true)
+        it.title.contains("seat", ignoreCase = true) || it.title.contains("ateca", ignoreCase = true) || it.title.contains("masin", ignoreCase = true) || it.title.contains("mașin", ignoreCase = true) || it.title.contains("car", ignoreCase = true)
     } ?: targets.firstOrNull() ?: SavingsTarget(
-        id = "default-car",
-        title = "Mașina Noastră de Vis (BMW / Sport Edition)",
-        targetAmount = 85000.0,
-        currentSavedAmount = 38500.0,
+        id = "target-seat-ateca",
+        title = "Seat Ateca (15.000 €)",
+        targetAmount = 75000.0,
+        currentSavedAmount = 22500.0,
         priority = com.example.data.TargetPriority.CRITICAL,
         category = "VEHICLE",
         deadline = "2027-12-31",
@@ -51,10 +51,10 @@ fun DreamHouseComponent(
     }
 
     val stageName = when (stage) {
-        1 -> "Șasiu Sport, Suspensie & Jante Aliaj 🛞"
-        2 -> "Caroserie Aerodinamică & Geamuri Fumurii 🏎️"
-        3 -> "Motor Twin-Turbo & Faruri Matrix LED ⚡"
-        else -> "Mașina Visurilor Gata de Drum • Cheia în Mână! 🔑"
+        1 -> "Șasiu SUV & Jante Aliaj 18\" 🛞"
+        2 -> "Caroserie Seat Ateca & Bare Plafon 🚙"
+        3 -> "Motor 2.0 TDI & Faruri Full-LED ⚡"
+        else -> "Seat Ateca Gata de Drum • Cheia în Mână! 🔑"
     }
 
     Card(
@@ -88,9 +88,9 @@ fun DreamHouseComponent(
                         }
                     }
                     Column {
-                        Text("Mașina Noastră de Vis", fontWeight = FontWeight.Black, color = Color.White, fontSize = 15.sp)
+                        Text("Seat Ateca (SUV Familie)", fontWeight = FontWeight.Black, color = Color.White, fontSize = 15.sp)
                         Text(
-                            "${carTarget.currentSavedAmount.toInt()} / ${carTarget.targetAmount.toInt()} ${profile.currencySymbol}",
+                            "${carTarget.currentSavedAmount.toInt()} / ${carTarget.targetAmount.toInt()} ${profile.currencySymbol} (~15.000 €)",
                             fontSize = 11.sp,
                             color = TextSecondary
                         )
@@ -140,7 +140,7 @@ fun DreamHouseComponent(
             ) {
                 listOf(
                     Triple("1. Șasiu", 25, "🛞"),
-                    Triple("2. Caroserie", 50, "🏎️"),
+                    Triple("2. Caroserie", 50, "🚙"),
                     Triple("3. Motor", 75, "⚡"),
                     Triple("4. La Drum!", 100, "🔑")
                 ).forEach { (label, threshold, icon) ->

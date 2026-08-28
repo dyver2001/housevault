@@ -1100,6 +1100,15 @@ class HouseVaultRepository(context: Context) {
 
     private fun createDefaultTargets() = listOf(
         SavingsTarget(
+            title = "Seat Ateca (15.000 €)",
+            targetAmount = 75000.0,
+            currentSavedAmount = 22500.0,
+            priority = TargetPriority.CRITICAL,
+            category = "Mașină Familie",
+            deadline = "Dec 2027",
+            iconName = "car"
+        ),
+        SavingsTarget(
             title = "Avans Casă / Apartament Nou",
             targetAmount = 120000.0,
             currentSavedAmount = 32000.0,

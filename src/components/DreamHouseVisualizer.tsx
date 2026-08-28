@@ -15,22 +15,20 @@ export const DreamHouseVisualizer: React.FC<DreamHouseVisualizerProps> = ({
   onDepositMore,
   lang = 'ro'
 }) => {
-  // Find primary car/auto target (or default to top savings target)
+  // Find primary Seat Ateca / car target (or default to Seat Ateca)
   const carTarget = targets.find(
     (t) =>
+      t.title.toLowerCase().includes('seat') ||
+      t.title.toLowerCase().includes('ateca') ||
       t.title.toLowerCase().includes('masin') ||
       t.title.toLowerCase().includes('mașin') ||
       t.title.toLowerCase().includes('car') ||
-      t.title.toLowerCase().includes('auto') ||
-      t.title.toLowerCase().includes('bmw') ||
-      t.title.toLowerCase().includes('audi') ||
-      t.title.toLowerCase().includes('porsche') ||
-      t.title.toLowerCase().includes('tesla')
+      t.title.toLowerCase().includes('auto')
   ) || targets[0] || {
-    id: 'default-car',
-    title: 'Mașina Noastră de Vis (BMW / Sport Edition)',
-    targetAmount: 85000,
-    currentSavedAmount: 38500,
+    id: 'target-seat-ateca',
+    title: 'Seat Ateca (15.000 €)',
+    targetAmount: 75000,
+    currentSavedAmount: 22500,
     priority: 'CRITICAL',
     category: 'VEHICLE',
     deadline: '2027-12-31',
@@ -41,10 +39,10 @@ export const DreamHouseVisualizer: React.FC<DreamHouseVisualizerProps> = ({
 
   // Determine car assembly stage
   const getStage = (pct: number) => {
-    if (pct < 25) return { stage: 1, label: lang === 'ro' ? 'Șasiu Sport, Suspensie & Jante Aliaj' : 'Sport Chassis & Alloy Wheels', icon: '🛞', next: 25 };
-    if (pct < 50) return { stage: 2, label: lang === 'ro' ? 'Caroserie Aerodinamică & Geamuri Fumurii' : 'Aerodynamic Body & Tinted Glass', icon: '🏎️', next: 50 };
-    if (pct < 75) return { stage: 3, label: lang === 'ro' ? 'Motor Twin-Turbo, Cockpit & Faruri Matrix LED' : 'Twin-Turbo Engine & Matrix LEDs', icon: '⚡', next: 75 };
-    return { stage: 4, label: lang === 'ro' ? 'Mașina Visurilor Gata de Drum • Cheia în Mână!' : 'Dream Car Ready • Keys in Hand!', icon: '🔑', next: 100 };
+    if (pct < 25) return { stage: 1, label: lang === 'ro' ? 'Șasiu SUV, Suspensie & Jante Aliaj 18"' : 'SUV Chassis & 18" Alloy Wheels', icon: '🛞', next: 25 };
+    if (pct < 50) return { stage: 2, label: lang === 'ro' ? 'Caroserie Seat Ateca & Bare Plafon Argintii' : 'Seat Ateca Body & Roof Rails', icon: '🚙', next: 50 };
+    if (pct < 75) return { stage: 3, label: lang === 'ro' ? 'Motor 2.0 TDI/TSI, Faruri Seat Full-LED & Cockpit' : '2.0 TDI Engine & Seat Full-LEDs', icon: '⚡', next: 75 };
+    return { stage: 4, label: lang === 'ro' ? 'Seat Ateca Gata de Drum • Cheia în Mână!' : 'Seat Ateca Ready • Keys in Hand!', icon: '🔑', next: 100 };
   };
 
   const currentStageInfo = getStage(percent);
@@ -66,14 +64,14 @@ export const DreamHouseVisualizer: React.FC<DreamHouseVisualizerProps> = ({
           <div>
             <div className="flex items-center space-x-2">
               <h3 className="text-base font-black text-white font-display">
-                {lang === 'ro' ? 'Constructorul Mașinii Noastre de Vis' : 'Dream Car Visual Builder'}
+                {lang === 'ro' ? 'Seat Ateca SUV • Mașina Noastră de Vis' : 'Seat Ateca SUV • Dream Car Builder'}
               </h3>
               <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 text-[10px] font-bold">
                 {percent}% {lang === 'ro' ? 'Construit' : 'Built'}
               </span>
             </div>
             <p className="text-xs text-stone-400">
-              {carTarget.title} • {carTarget.currentSavedAmount.toLocaleString()} / {carTarget.targetAmount.toLocaleString()} {currencySymbol}
+              {carTarget.title} • {carTarget.currentSavedAmount.toLocaleString()} / {carTarget.targetAmount.toLocaleString()} {currencySymbol} (~15.000 €)
             </p>
           </div>
         </div>
@@ -97,25 +95,26 @@ export const DreamHouseVisualizer: React.FC<DreamHouseVisualizerProps> = ({
         </div>
       </div>
 
-      {/* Visual Car Illustration (4-Stage Animated SVG) */}
+      {/* Visual Car Illustration (Seat Ateca SUV 4-Stage Animated SVG) */}
       <div className="my-5 p-4 rounded-2xl bg-stone-950/80 border border-stone-800/80 flex flex-col items-center justify-center relative z-10 overflow-hidden">
         <svg
           viewBox="0 0 460 210"
           className="w-full max-w-lg h-44 transition-all duration-700 select-none"
         >
           <defs>
-            {/* Gradients for car body & neon glow */}
-            <linearGradient id="carBodyGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-              <stop offset="0%" stopColor="#059669" />
-              <stop offset="50%" stopColor="#10b981" />
-              <stop offset="100%" stopColor="#047857" />
+            {/* Gradients for Seat Ateca body & neon glow */}
+            <linearGradient id="atecaBodyGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stopColor="#047857" />
+              <stop offset="40%" stopColor="#10b981" />
+              <stop offset="80%" stopColor="#059669" />
+              <stop offset="100%" stopColor="#064e3b" />
             </linearGradient>
-            <linearGradient id="carGlassGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-              <stop offset="0%" stopColor="#38bdf8" stopOpacity="0.9" />
-              <stop offset="100%" stopColor="#0369a1" stopOpacity="0.6" />
+            <linearGradient id="atecaGlassGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" stopColor="#38bdf8" stopOpacity="0.85" />
+              <stop offset="100%" stopColor="#0369a1" stopOpacity="0.5" />
             </linearGradient>
             <linearGradient id="headlightBeam" x1="0%" y1="0%" x2="100%" y2="0%">
-              <stop offset="0%" stopColor="#38bdf8" stopOpacity="0.8" />
+              <stop offset="0%" stopColor="#38bdf8" stopOpacity="0.85" />
               <stop offset="100%" stopColor="#38bdf8" stopOpacity="0" />
             </linearGradient>
           </defs>
@@ -131,15 +130,15 @@ export const DreamHouseVisualizer: React.FC<DreamHouseVisualizerProps> = ({
 
           {/* Headlight Beams projecting forward when >= 75% */}
           {percent >= 75 && (
-            <polygon points="390,140 455,120 455,175 390,150" fill="url(#headlightBeam)" />
+            <polygon points="395,135 458,115 458,175 395,150" fill="url(#headlightBeam)" />
           )}
 
-          {/* STAGE 1: CHASSIS & WHEELS (0% - 24%) */}
+          {/* STAGE 1: CHASSIS & SUV WHEELS (0% - 24%) */}
           <g className="transition-all duration-500">
-            {/* Chassis Frame Bar */}
+            {/* SUV High-Clearance Chassis Frame */}
             <rect
               x="85"
-              y="160"
+              y="158"
               width="290"
               height="14"
               rx="4"
@@ -149,114 +148,131 @@ export const DreamHouseVisualizer: React.FC<DreamHouseVisualizerProps> = ({
               strokeDasharray={percent < 25 ? '4 4' : 'none'}
             />
 
-            {/* Rear Wheel (Left) */}
-            <circle cx="140" cy="172" r="22" fill="#09090b" stroke="#78716c" strokeWidth="3" />
-            <circle cx="140" cy="172" r="14" fill="#27272a" stroke={percent >= 25 ? '#10b981' : '#71717a'} strokeWidth="2" />
-            <circle cx="140" cy="172" r="6" fill="#10b981" />
-            {/* Wheel Spokes */}
-            <line x1="140" y1="158" x2="140" y2="186" stroke="#a1a1aa" strokeWidth="1.5" />
-            <line x1="126" y1="172" x2="154" y2="172" stroke="#a1a1aa" strokeWidth="1.5" />
+            {/* Rear Wheel (Left) - 18" Bi-Color Alloy Rim */}
+            <circle cx="140" cy="168" r="24" fill="#09090b" stroke="#78716c" strokeWidth="3.5" />
+            <circle cx="140" cy="168" r="15" fill="#27272a" stroke={percent >= 25 ? '#10b981' : '#71717a'} strokeWidth="2" />
+            <circle cx="140" cy="168" r="6" fill="#10b981" />
+            {/* Rim Spokes */}
+            <line x1="140" y1="152" x2="140" y2="184" stroke="#e2e8f0" strokeWidth="1.5" />
+            <line x1="124" y1="168" x2="156" y2="168" stroke="#e2e8f0" strokeWidth="1.5" />
+            <line x1="128" y1="156" x2="152" y2="180" stroke="#a1a1aa" strokeWidth="1.2" />
+            <line x1="128" y1="180" x2="152" y2="156" stroke="#a1a1aa" strokeWidth="1.2" />
 
-            {/* Front Wheel (Right) */}
-            <circle cx="340" cy="172" r="22" fill="#09090b" stroke="#78716c" strokeWidth="3" />
-            <circle cx="340" cy="172" r="14" fill="#27272a" stroke={percent >= 25 ? '#10b981' : '#71717a'} strokeWidth="2" />
-            <circle cx="340" cy="172" r="6" fill="#10b981" />
-            {/* Wheel Spokes */}
-            <line x1="340" y1="158" x2="340" y2="186" stroke="#a1a1aa" strokeWidth="1.5" />
-            <line x1="326" y1="172" x2="354" y2="172" stroke="#a1a1aa" strokeWidth="1.5" />
+            {/* Front Wheel (Right) - 18" Bi-Color Alloy Rim */}
+            <circle cx="340" cy="168" r="24" fill="#09090b" stroke="#78716c" strokeWidth="3.5" />
+            <circle cx="340" cy="168" r="15" fill="#27272a" stroke={percent >= 25 ? '#10b981' : '#71717a'} strokeWidth="2" />
+            <circle cx="340" cy="168" r="6" fill="#10b981" />
+            {/* Rim Spokes */}
+            <line x1="340" y1="152" x2="340" y2="184" stroke="#e2e8f0" strokeWidth="1.5" />
+            <line x1="324" y1="168" x2="356" y2="168" stroke="#e2e8f0" strokeWidth="1.5" />
+            <line x1="328" y1="156" x2="352" y2="180" stroke="#a1a1aa" strokeWidth="1.2" />
+            <line x1="328" y1="180" x2="352" y2="156" stroke="#a1a1aa" strokeWidth="1.2" />
 
-            {/* Brake Calipers in Brembo Red */}
+            {/* Brembo Sport Calipers */}
             {percent >= 15 && (
               <>
-                <rect x="150" y="162" width="6" height="12" rx="2" fill="#ef4444" />
-                <rect x="350" y="162" width="6" height="12" rx="2" fill="#ef4444" />
+                <rect x="150" y="156" width="7" height="14" rx="2" fill="#ef4444" />
+                <rect x="350" y="156" width="7" height="14" rx="2" fill="#ef4444" />
               </>
             )}
 
             {percent < 25 && (
-              <text x="240" y="145" textAnchor="middle" fill="#a8a29e" fontSize="11" fontWeight="bold">
-                🛞 {lang === 'ro' ? 'Montare Șasiu & Jante Aliaj...' : 'Assembling Sport Chassis & Rims...'}
+              <text x="240" y="140" textAnchor="middle" fill="#a8a29e" fontSize="11" fontWeight="bold">
+                🛞 {lang === 'ro' ? 'Montare Șasiu & Jante Aliaj 18" Seat...' : 'Assembling Seat Ateca Chassis & 18" Rims...'}
               </text>
             )}
           </g>
 
-          {/* STAGE 2: AERODYNAMIC CAR BODY & GLASS (25% - 49%) */}
+          {/* STAGE 2: SEAT ATECA SUV BODYWORK, SILVER ROOF RAILS & GLASS (25% - 49%) */}
           {percent >= 25 && (
             <g className="transition-all duration-700">
-              {/* Lower Body Shell */}
+              {/* Lower SUV Protective Plastic Cladding */}
+              <path d="M 75 160 L 95 138 L 155 125 L 365 125 L 405 145 L 400 162 L 75 162 Z" fill="#18181b" />
+
+              {/* Main Body Shell (Seat Ateca dynamic muscular shoulders) */}
               <path
-                d="M 75 162 L 95 135 L 155 125 L 365 125 L 405 150 L 400 165 L 75 165 Z"
-                fill={percent >= 50 ? 'url(#carBodyGrad)' : '#064e3b'}
+                d="M 75 158 L 92 130 L 145 118 L 365 118 L 405 138 L 402 158 L 75 158 Z"
+                fill={percent >= 50 ? 'url(#atecaBodyGrad)' : '#064e3b'}
                 stroke="#10b981"
                 strokeWidth="2.5"
               />
 
-              {/* Cabin Roof & Windshield (Sport Coupe Curve) */}
+              {/* SUV Tall Cabin & Roofline (Seat Ateca Crossover profile) */}
               <path
-                d="M 160 125 L 195 80 L 295 80 L 345 125 Z"
+                d="M 148 118 L 180 72 L 310 72 L 358 118 Z"
                 fill="#0f172a"
                 stroke="#10b981"
                 strokeWidth="2"
               />
 
+              {/* Seat Ateca Silver Roof Rails (Bare Plafon) */}
+              <line x1="190" y1="68" x2="305" y2="68" stroke="#e2e8f0" strokeWidth="3" strokeLinecap="round" />
+              <line x1="205" y1="68" x2="205" y2="72" stroke="#94a3b8" strokeWidth="2" />
+              <line x1="290" y1="68" x2="290" y2="72" stroke="#94a3b8" strokeWidth="2" />
+
               {/* Tinted Windows */}
-              {/* Rear Window */}
-              <polygon points="170,120 198,87 235,87 235,120" fill="url(#carGlassGrad)" stroke="#0284c7" strokeWidth="1" />
+              {/* Rear Quarter Window */}
+              <polygon points="158,114 185,78 225,78 225,114" fill="url(#atecaGlassGrad)" stroke="#0284c7" strokeWidth="1" />
+              {/* Middle Door Window */}
+              <polygon points="230,114 230,78 280,78 280,114" fill="url(#atecaGlassGrad)" stroke="#0284c7" strokeWidth="1" />
               {/* Front Windshield Window */}
-              <polygon points="245,120 245,87 290,87 335,120" fill="url(#carGlassGrad)" stroke="#0284c7" strokeWidth="1" />
+              <polygon points="285,114 285,78 305,78 348,114" fill="url(#atecaGlassGrad)" stroke="#0284c7" strokeWidth="1" />
 
               {/* Side Door & Handle Lines */}
-              <line x1="240" y1="125" x2="240" y2="160" stroke="#047857" strokeWidth="2" />
-              <rect x="250" y="132" width="12" height="3" rx="1.5" fill="#e2e8f0" />
+              <line x1="228" y1="118" x2="228" y2="155" stroke="#047857" strokeWidth="1.5" />
+              <line x1="282" y1="118" x2="282" y2="155" stroke="#047857" strokeWidth="1.5" />
+              <rect x="238" y="125" width="12" height="3" rx="1.5" fill="#e2e8f0" />
+              <rect x="292" y="125" width="12" height="3" rx="1.5" fill="#e2e8f0" />
             </g>
           )}
 
-          {/* STAGE 3: TWIN TURBO ENGINE, SPOILER & MATRIX LEDS (50% - 74%) */}
+          {/* STAGE 3: SEAT FULL-LED SIGNATURE, ENGINE, SPOILER & RADIATOR GRILLE (50% - 74%) */}
           {percent >= 50 && (
             <g className="transition-all duration-700">
-              {/* Rear Aerodynamic Spoiler */}
-              <path d="M 65 130 L 95 130 L 85 136 L 70 136 Z" fill="#0f172a" stroke="#10b981" strokeWidth="2" />
-              <line x1="72" y1="136" x2="72" y2="148" stroke="#10b981" strokeWidth="2.5" />
-              <line x1="88" y1="136" x2="88" y2="148" stroke="#10b981" strokeWidth="2.5" />
+              {/* Rear Roof Spoiler */}
+              <path d="M 144 75 L 175 72 L 175 78 L 148 80 Z" fill="#0f172a" stroke="#10b981" strokeWidth="1.5" />
 
-              {/* Front Matrix LED Headlight */}
-              <polygon points="380,138 402,142 390,148 375,145" fill="#38bdf8" stroke="#bae6fd" strokeWidth="1.5" />
+              {/* Seat Triangular Matrix Full-LED Headlight Signature */}
+              <polygon points="380,126 405,134 392,142 374,136" fill="#38bdf8" stroke="#bae6fd" strokeWidth="1.5" />
+              <polyline points="380,128 402,135 378,138" fill="none" stroke="#f0f9ff" strokeWidth="1.5" />
 
-              {/* Rear Sport Tail Light (Neon Red Strip) */}
-              <rect x="75" y="140" width="10" height="6" rx="2" fill="#ef4444" stroke="#f87171" strokeWidth="1" />
+              {/* Front Seat Trapezoidal Honeycomb Radiator Grille */}
+              <polygon points="398,138 406,140 405,152 396,150" fill="#18181b" stroke="#94a3b8" strokeWidth="1.2" />
+              {/* Seat 'S' Chrome Emblem */}
+              <line x1="400" y1="144" x2="403" y2="144" stroke="#f8fafc" strokeWidth="2" />
 
-              {/* Front Sport Grille / Intercooler */}
-              <rect x="395" y="152" width="8" height="10" rx="2" fill="#18181b" stroke="#71717a" strokeWidth="1" />
+              {/* Rear Seat Coast-to-Coast LED Tail Light */}
+              <rect x="74" y="132" width="12" height="6" rx="2" fill="#ef4444" stroke="#f87171" strokeWidth="1" />
 
-              {/* Dual Exhaust Pipes with Blue Flame effect */}
-              <rect x="68" y="162" width="8" height="4" rx="1" fill="#71717a" />
+              {/* Dual Chrome Exhaust Tips */}
+              <rect x="68" y="156" width="8" height="5" rx="1.5" fill="#e2e8f0" stroke="#71717a" strokeWidth="1" />
               {percent >= 65 && (
-                <circle cx="64" cy="164" r="3" fill="#38bdf8" opacity="0.8" />
+                <circle cx="63" cy="158" r="3" fill="#38bdf8" opacity="0.8" />
               )}
             </g>
           )}
 
-          {/* STAGE 4: GLOWING BADGES, LIGHTS & KEY UNLOCKED (75% - 100%) */}
+          {/* STAGE 4: NEVADA METALLIC ACCENTS, DRIVING PARTICLES & KEY UNLOCKED (75% - 100%) */}
           {percent >= 75 && (
             <g className="transition-all duration-700">
-              {/* Sport Racing Stripe */}
-              <path d="M 195 80 L 295 80 L 365 125 L 400 155" stroke="#f59e0b" strokeWidth="3" fill="none" opacity="0.8" />
+              {/* Dynamic Chrome Side Window Trim */}
+              <path d="M 156 114 Q 240 70 348 114" stroke="#f8fafc" strokeWidth="2" fill="none" opacity="0.9" />
 
               {/* Side Mirror */}
-              <polygon points="288,118 302,114 300,122" fill="#047857" stroke="#10b981" strokeWidth="1" />
+              <polygon points="296,112 312,108 308,116" fill="#047857" stroke="#e2e8f0" strokeWidth="1" />
 
               {/* Speed Dash Particles */}
-              <line x1="30" y1="110" x2="55" y2="110" stroke="#10b981" strokeWidth="2" strokeLinecap="round" opacity="0.6" />
-              <line x1="15" y1="130" x2="45" y2="130" stroke="#38bdf8" strokeWidth="2" strokeLinecap="round" opacity="0.6" />
-              <line x1="25" y1="150" x2="50" y2="150" stroke="#10b981" strokeWidth="2" strokeLinecap="round" opacity="0.6" />
+              <line x1="30" y1="105" x2="55" y2="105" stroke="#10b981" strokeWidth="2" strokeLinecap="round" opacity="0.6" />
+              <line x1="15" y1="125" x2="45" y2="125" stroke="#38bdf8" strokeWidth="2" strokeLinecap="round" opacity="0.6" />
+              <line x1="25" y1="145" x2="50" y2="145" stroke="#10b981" strokeWidth="2" strokeLinecap="round" opacity="0.6" />
             </g>
           )}
 
           {/* 100% Complete Golden Key Badge */}
           {percent >= 100 && (
             <g className="animate-bounce">
-              <circle cx="230" cy="50" r="22" fill="#f59e0b" stroke="#fef08a" strokeWidth="3" />
-              <text x="230" y="58" textAnchor="middle" fontSize="20">🔑</text>
+              <circle cx="230" cy="48" r="22" fill="#f59e0b" stroke="#fef08a" strokeWidth="3" />
+              <text x="230" y="56" textAnchor="middle" fontSize="20">🔑</text>
             </g>
           )}
         </svg>
@@ -273,9 +289,9 @@ export const DreamHouseVisualizer: React.FC<DreamHouseVisualizerProps> = ({
               <span className="text-[11px] text-stone-400">
                 {percent < 100
                   ? (lang === 'ro'
-                      ? `Mai sunt ${Math.max(0, Math.round(carTarget.targetAmount * (currentStageInfo.next / 100) - carTarget.currentSavedAmount)).toLocaleString()} ${currencySymbol} până la următoarea etapă`
+                      ? `Mai sunt ${Math.max(0, Math.round(carTarget.targetAmount * (currentStageInfo.next / 100) - carTarget.currentSavedAmount)).toLocaleString()} ${currencySymbol} (~${Math.round(Math.max(0, carTarget.targetAmount * (currentStageInfo.next / 100) - carTarget.currentSavedAmount) / 5)} €) până la următoarea etapă`
                       : `${Math.max(0, Math.round(carTarget.targetAmount * (currentStageInfo.next / 100) - carTarget.currentSavedAmount)).toLocaleString()} ${currencySymbol} until next milestone`)
-                  : (lang === 'ro' ? '🎉 Felicitări Haytham & Cati! Mașina este complet deblocată!' : '🎉 Congratulations Haytham & Cati! Dream Car Unlocked!')}
+                  : (lang === 'ro' ? '🎉 Felicitări Haytham & Cati! Seat Ateca este al vostru!' : '🎉 Congratulations Haytham & Cati! Seat Ateca Unlocked!')}
               </span>
             </div>
           </div>
@@ -289,10 +305,10 @@ export const DreamHouseVisualizer: React.FC<DreamHouseVisualizerProps> = ({
       {/* 4-Step Milestone Pills */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 relative z-10">
         {[
-          { step: 1, label: lang === 'ro' ? 'Șasiu & Jante' : 'Chassis & Rims', threshold: 25, icon: '🛞' },
-          { step: 2, label: lang === 'ro' ? 'Caroserie' : 'Bodywork', threshold: 50, icon: '🏎️' },
-          { step: 3, label: lang === 'ro' ? 'Motor & LED' : 'Engine & LEDs', threshold: 75, icon: '⚡' },
-          { step: 4, label: lang === 'ro' ? 'La Drum!' : 'Ready to Drive', threshold: 100, icon: '🔑' }
+          { step: 1, label: lang === 'ro' ? 'Șasiu & Jante 18"' : 'Chassis & Rims', threshold: 25, icon: '🛞' },
+          { step: 2, label: lang === 'ro' ? 'Caroserie & Bare' : 'Body & Rails', threshold: 50, icon: '🚙' },
+          { step: 3, label: lang === 'ro' ? 'Motor & Full-LED' : 'Engine & LEDs', threshold: 75, icon: '⚡' },
+          { step: 4, label: lang === 'ro' ? 'La Drum (15k €)!' : 'Ready (15k €)!', threshold: 100, icon: '🔑' }
         ].map((m) => {
           const isDone = percent >= m.threshold;
           const isCurrent = !isDone && (m.step === 1 ? percent < 25 : percent >= (m.threshold - 25));
