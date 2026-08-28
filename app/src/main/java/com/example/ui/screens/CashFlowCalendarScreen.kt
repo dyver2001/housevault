@@ -128,6 +128,8 @@ fun CashFlowCalendarScreen(
     val totalPay = selectedDayEvents.filter { !it.isIncome }.sumOf { it.amount }
     val totalInflow = selectedDayEvents.filter { it.isIncome }.sumOf { it.amount }
 
+    var showPopoutDialog by remember { mutableStateOf(false) }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -230,7 +232,10 @@ fun CashFlowCalendarScreen(
                                     modifier = Modifier
                                         .weight(1f)
                                         .height(48.dp)
-                                        .clickable { selectedDay = dayNumber },
+                                        .clickable {
+                                            selectedDay = dayNumber
+                                            showPopoutDialog = true
+                                        },
                                     shape = RoundedCornerShape(8.dp),
                                     colors = CardDefaults.cardColors(
                                         containerColor = if (isSelected) EmeraldPrimary.copy(alpha = 0.25f)
@@ -301,129 +306,100 @@ fun CashFlowCalendarScreen(
                 }
             }
         }
+    }
 
-        // Selected Date Breakdown Card
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(20.dp),
-            colors = CardDefaults.cardColors(containerColor = CardBackground)
-        ) {
-            Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+    // Pop-out Dialog when a date is clicked
+    if (showPopoutDialog) {
+        AlertDialog(
+            onDismissRequest = { showPopoutDialog = false },
+            confirmButton = {
+                TextButton(onClick = { showPopoutDialog = false }) {
+                    Text("Închide", color = EmeraldPrimary, fontWeight = FontWeight.Bold)
+                }
+            },
+            containerColor = CardBackground,
+            title = {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Column {
-                        Surface(shape = RoundedCornerShape(6.dp), color = EmeraldPrimary.copy(alpha = 0.15f)) {
+                        Text(
+                            "Scadențe $selectedDay $monthName $year",
+                            fontWeight = FontWeight.Black,
+                            fontSize = 16.sp,
+                            color = Color.White
+                        )
+                        if (totalPay > 0 || totalInflow > 0) {
                             Text(
-                                "Scadențe $selectedDay $monthName $year",
-                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
+                                "De plată: -${String.format(Locale.US, "%,.0f", totalPay)} ${profile.currencySymbol}",
                                 fontSize = 12.sp,
                                 fontWeight = FontWeight.Bold,
-                                color = EmeraldPrimary
+                                color = Color(0xFFF43F5E)
                             )
-                        }
-                    }
-
-                    if (totalPay > 0 || totalInflow > 0) {
-                        Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                            if (totalPay > 0) {
-                                Text(
-                                    "-${String.format(Locale.US, "%,.0f", totalPay)} ${profile.currencySymbol}",
-                                    fontWeight = FontWeight.Black,
-                                    fontSize = 13.sp,
-                                    color = Color(0xFFF43F5E)
-                                )
-                            }
-                            if (totalInflow > 0) {
-                                Text(
-                                    "+${String.format(Locale.US, "%,.0f", totalInflow)} ${profile.currencySymbol}",
-                                    fontWeight = FontWeight.Black,
-                                    fontSize = 13.sp,
-                                    color = EmeraldPrimary
-                                )
-                            }
                         }
                     }
                 }
-
-                HorizontalDivider(color = Color(0xFF2A2E2C))
-
-                if (selectedDayEvents.isEmpty()) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 16.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                            Icon(Icons.Default.CheckCircle, contentDescription = null, tint = EmeraldPrimary, modifier = Modifier.size(28.dp))
-                            Text("Fără plăți programate pe această dată.", fontSize = 13.sp, color = TextSecondary)
-                        }
-                    }
-                } else {
-                    selectedDayEvents.forEach { event ->
-                        Card(
-                            modifier = Modifier.fillMaxWidth(),
-                            shape = RoundedCornerShape(14.dp),
-                            colors = CardDefaults.cardColors(
-                                containerColor = if (event.isIncome) Color(0xFF0F241A) else Color(0xFF24141A)
-                            ),
-                            border = CardDefaults.outlinedCardBorder().copy(
-                                brush = androidx.compose.ui.graphics.SolidColor(
-                                    if (event.isIncome) EmeraldPrimary.copy(alpha = 0.4f) else Color(0xFFF43F5E).copy(alpha = 0.4f)
-                                )
-                            )
+            },
+            text = {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .verticalScroll(rememberScrollState()),
+                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    if (selectedDayEvents.isEmpty()) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 20.dp),
+                            contentAlignment = Alignment.Center
                         ) {
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(12.dp),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
+                            Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                Icon(Icons.Default.CheckCircle, contentDescription = null, tint = EmeraldPrimary, modifier = Modifier.size(32.dp))
+                                Text("Fără plăți programate pe această dată.", fontSize = 13.sp, color = TextSecondary)
+                            }
+                        }
+                    } else {
+                        selectedDayEvents.forEach { event ->
+                            Card(
+                                modifier = Modifier.fillMaxWidth(),
+                                shape = RoundedCornerShape(12.dp),
+                                colors = CardDefaults.cardColors(
+                                    containerColor = if (event.isIncome) Color(0xFF0F241A) else Color(0xFF24141A)
+                                ),
+                                border = CardDefaults.outlinedCardBorder().copy(
+                                    brush = androidx.compose.ui.graphics.SolidColor(
+                                        if (event.isIncome) EmeraldPrimary.copy(alpha = 0.4f) else Color(0xFFF43F5E).copy(alpha = 0.4f)
+                                    )
+                                )
                             ) {
                                 Row(
-                                    modifier = Modifier.weight(1f),
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(10.dp),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
                                 ) {
-                                    Box(
-                                        modifier = Modifier
-                                            .size(36.dp)
-                                            .background(
-                                                if (event.isIncome) EmeraldPrimary.copy(alpha = 0.2f) else Color(0xFFF43F5E).copy(alpha = 0.2f),
-                                                RoundedCornerShape(8.dp)
-                                            ),
-                                        contentAlignment = Alignment.Center
-                                    ) {
-                                        Icon(
-                                            imageVector = if (event.isIncome) Icons.Default.TrendingUp else Icons.Default.Receipt,
-                                            contentDescription = null,
-                                            tint = if (event.isIncome) EmeraldPrimary else Color(0xFFF43F5E),
-                                            modifier = Modifier.size(18.dp)
-                                        )
-                                    }
-
-                                    Column {
+                                    Column(modifier = Modifier.weight(1f)) {
                                         Text(event.title, fontWeight = FontWeight.Bold, color = Color.White, fontSize = 13.sp)
                                         if (event.notes.isNotEmpty()) {
                                             Text(event.notes, fontSize = 11.sp, color = TextSecondary)
                                         }
                                     }
+                                    Text(
+                                        text = "${if (event.isIncome) "+" else "-"}${String.format(Locale.US, "%,.0f", event.amount)} ${profile.currencySymbol}",
+                                        fontWeight = FontWeight.Black,
+                                        fontSize = 13.sp,
+                                        color = if (event.isIncome) EmeraldPrimary else Color(0xFFF43F5E)
+                                    )
                                 }
-
-                                Text(
-                                    text = "${if (event.isIncome) "+" else "-"}${String.format(Locale.US, "%,.0f", event.amount)} ${profile.currencySymbol}",
-                                    fontWeight = FontWeight.Black,
-                                    fontSize = 14.sp,
-                                    color = if (event.isIncome) EmeraldPrimary else Color(0xFFF43F5E)
-                                )
                             }
                         }
                     }
                 }
             }
-        }
+        )
     }
 }

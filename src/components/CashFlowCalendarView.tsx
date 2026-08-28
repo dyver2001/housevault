@@ -11,7 +11,8 @@ import {
   Clock,
   Sparkles,
   ArrowDownRight,
-  ArrowUpRight
+  ArrowUpRight,
+  X
 } from 'lucide-react';
 import { HouseholdProfile, FreelanceProject, BankDebt, HouseholdExpense } from '../types';
 
@@ -34,6 +35,7 @@ export const CashFlowCalendarView: React.FC<CashFlowCalendarViewProps> = ({
 }) => {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDay, setSelectedDay] = useState<number>(new Date().getDate());
+  const [isPopoutOpen, setIsPopoutOpen] = useState(false);
 
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth();
@@ -157,7 +159,7 @@ export const CashFlowCalendarView: React.FC<CashFlowCalendarViewProps> = ({
               {lang === 'ro' ? 'Calendarul Plăților & Încasărilor' : 'Cash Flow & Bills Calendar'}
             </h2>
             <p className="text-xs text-stone-400">
-              {lang === 'ro' ? 'Apasă pe orice zi pentru a vedea detaliile exacte ale plăților' : 'Click on any day to see scheduled payments'}
+              {lang === 'ro' ? 'Apasă pe orice zi pentru a deschide detaliile exacte ale scadențelor' : 'Click on any day to pop out scheduled payments'}
             </p>
           </div>
         </div>
@@ -216,8 +218,11 @@ export const CashFlowCalendarView: React.FC<CashFlowCalendarViewProps> = ({
               <button
                 type="button"
                 key={dayNum}
-                onClick={() => setSelectedDay(dayNum)}
-                className={`min-h-[64px] sm:min-h-[80px] rounded-2xl p-1.5 sm:p-2 flex flex-col justify-between border transition-all text-left cursor-pointer relative ${
+                onClick={() => {
+                  setSelectedDay(dayNum);
+                  setIsPopoutOpen(true);
+                }}
+                className={`min-h-[64px] sm:min-h-[80px] rounded-2xl p-1.5 sm:p-2 flex flex-col justify-between border transition-all text-left cursor-pointer active:scale-95 relative ${
                   isSelected
                     ? 'bg-emerald-950/40 border-emerald-400 ring-2 ring-emerald-400/60 shadow-lg shadow-emerald-500/10'
                     : isToday
@@ -260,123 +265,137 @@ export const CashFlowCalendarView: React.FC<CashFlowCalendarViewProps> = ({
         </div>
       </div>
 
-      {/* Selected Date Detailed Breakdown Card (What to Pay & What Comes In) */}
-      <div className="bg-stone-900 border border-stone-800 rounded-3xl p-4 sm:p-6 space-y-4 shadow-xl">
-        {/* Detail Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-stone-800">
-          <div>
-            <div className="flex items-center space-x-2">
-              <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                Data Selectată
-              </span>
-              <h3 className="text-base sm:text-lg font-black text-white capitalize">
-                {selectedDateFormatted}
-              </h3>
+      {/* Pop-out Modal When a Date Is Pressed */}
+      {isPopoutOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/75 backdrop-blur-sm animate-in fade-in duration-200"
+          onClick={() => setIsPopoutOpen(false)}
+        >
+          <div
+            className="w-full max-w-lg rounded-t-3xl sm:rounded-3xl bg-stone-900 border border-stone-750 shadow-2xl p-5 sm:p-6 space-y-4 max-h-[85vh] overflow-y-auto animate-in slide-in-from-bottom-8 sm:zoom-in-95 duration-200"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Pop-out Header with Close Button */}
+            <div className="flex items-center justify-between pb-3 border-b border-stone-800">
+              <div className="flex items-center space-x-2">
+                <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                  Scadențe & Plăți
+                </span>
+                <h3 className="text-base sm:text-lg font-black text-white capitalize">
+                  {selectedDateFormatted}
+                </h3>
+              </div>
+              <button
+                onClick={() => setIsPopoutOpen(false)}
+                className="w-8 h-8 rounded-full bg-stone-800 hover:bg-stone-700 text-stone-300 hover:text-white flex items-center justify-center transition cursor-pointer"
+                title="Închide"
+              >
+                <X className="w-4 h-4" />
+              </button>
             </div>
-            <p className="text-xs text-stone-400 mt-0.5">
-              {selectedEvents.length === 0
-                ? 'Nu sunt plăți sau încasări programate pentru această zi.'
-                : `Ai ${selectedEvents.length} tranzacții programate pe această dată.`}
-            </p>
-          </div>
 
-          {/* Quick Summary Badges */}
-          {selectedEvents.length > 0 && (
-            <div className="flex items-center space-x-3">
-              {totalBillsAndDebts > 0 && (
-                <div className="px-3 py-1.5 rounded-xl bg-rose-500/10 border border-rose-500/20 text-right">
+            {/* Quick Summary Badges */}
+            {selectedEvents.length > 0 && (
+              <div className="grid grid-cols-2 gap-3">
+                <div className="p-3 rounded-2xl bg-rose-950/20 border border-rose-500/30">
                   <div className="text-[10px] uppercase font-bold text-rose-400 tracking-wider">De Plătit</div>
-                  <div className="text-sm font-black font-mono text-rose-300">
+                  <div className="text-base sm:text-lg font-black font-mono text-rose-300">
                     -{totalBillsAndDebts.toLocaleString()} {currencySymbol}
                   </div>
                 </div>
-              )}
-              {totalIncome > 0 && (
-                <div className="px-3 py-1.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-right">
+
+                <div className="p-3 rounded-2xl bg-emerald-950/20 border border-emerald-500/30">
                   <div className="text-[10px] uppercase font-bold text-emerald-400 tracking-wider">Încasări</div>
-                  <div className="text-sm font-black font-mono text-emerald-300">
+                  <div className="text-base sm:text-lg font-black font-mono text-emerald-300">
                     +{totalIncome.toLocaleString()} {currencySymbol}
                   </div>
                 </div>
-              )}
-            </div>
-          )}
-        </div>
+              </div>
+            )}
 
-        {/* List of items scheduled on this day */}
-        {selectedEvents.length > 0 ? (
-          <div className="space-y-2.5">
-            {selectedEvents.map((ev) => {
-              const isIncome = ev.type === 'INCOME';
-              const isDebt = ev.type === 'DEBT';
-              return (
-                <div
-                  key={ev.id}
-                  className={`p-3.5 sm:p-4 rounded-2xl border transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${
-                    isIncome
-                      ? 'bg-emerald-950/20 border-emerald-500/30'
-                      : isDebt
-                      ? 'bg-purple-950/20 border-purple-500/30'
-                      : 'bg-rose-950/20 border-rose-500/30'
-                  }`}
-                >
-                  <div className="flex items-start space-x-3">
+            {/* List of items scheduled on this day */}
+            {selectedEvents.length > 0 ? (
+              <div className="space-y-2.5">
+                {selectedEvents.map((ev) => {
+                  const isIncome = ev.type === 'INCOME';
+                  const isDebt = ev.type === 'DEBT';
+                  return (
                     <div
-                      className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 mt-0.5 ${
+                      key={ev.id}
+                      className={`p-3.5 sm:p-4 rounded-2xl border transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${
                         isIncome
-                          ? 'bg-emerald-500/20 text-emerald-400'
+                          ? 'bg-emerald-950/20 border-emerald-500/30'
                           : isDebt
-                          ? 'bg-purple-500/20 text-purple-400'
-                          : 'bg-rose-500/20 text-rose-400'
+                          ? 'bg-purple-950/20 border-purple-500/30'
+                          : 'bg-rose-950/20 border-rose-500/30'
                       }`}
                     >
-                      {isIncome ? (
-                        <ArrowDownRight className="w-5 h-5" />
-                      ) : isDebt ? (
-                        <Landmark className="w-5 h-5" />
-                      ) : (
-                        <Receipt className="w-5 h-5" />
-                      )}
-                    </div>
-                    <div>
-                      <div className="flex items-center space-x-2">
-                        <span className="font-bold text-sm text-white">{ev.title}</span>
-                        {ev.category && (
-                          <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-stone-800 text-stone-300 border border-stone-700">
-                            {ev.category}
-                          </span>
-                        )}
+                      <div className="flex items-start space-x-3">
+                        <div
+                          className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 mt-0.5 ${
+                            isIncome
+                              ? 'bg-emerald-500/20 text-emerald-400'
+                              : isDebt
+                              ? 'bg-purple-500/20 text-purple-400'
+                              : 'bg-rose-500/20 text-rose-400'
+                          }`}
+                        >
+                          {isIncome ? (
+                            <ArrowDownRight className="w-5 h-5" />
+                          ) : isDebt ? (
+                            <Landmark className="w-5 h-5" />
+                          ) : (
+                            <Receipt className="w-5 h-5" />
+                          )}
+                        </div>
+                        <div>
+                          <div className="flex items-center space-x-2">
+                            <span className="font-bold text-sm text-white">{ev.title}</span>
+                            {ev.category && (
+                              <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-stone-800 text-stone-300 border border-stone-700">
+                                {ev.category}
+                              </span>
+                            )}
+                          </div>
+                          {ev.notes && (
+                            <p className="text-xs text-stone-400 mt-0.5">{ev.notes}</p>
+                          )}
+                        </div>
                       </div>
-                      {ev.notes && (
-                        <p className="text-xs text-stone-400 mt-0.5">{ev.notes}</p>
-                      )}
-                    </div>
-                  </div>
 
-                  <div className="text-right sm:self-center flex sm:flex-col items-center sm:items-end justify-between sm:justify-center">
-                    <span className="text-xs text-stone-400 sm:hidden">Sumă:</span>
-                    <span
-                      className={`text-base sm:text-lg font-black font-mono ${
-                        isIncome ? 'text-emerald-400' : isDebt ? 'text-purple-300' : 'text-rose-400'
-                      }`}
-                    >
-                      {isIncome ? '+' : '-'}{ev.amount.toLocaleString()} {currencySymbol}
-                    </span>
-                  </div>
-                </div>
-              );
-            })}
+                      <div className="text-right sm:self-center flex sm:flex-col items-center sm:items-end justify-between sm:justify-center">
+                        <span className="text-xs text-stone-400 sm:hidden">Sumă:</span>
+                        <span
+                          className={`text-base sm:text-lg font-black font-mono ${
+                            isIncome ? 'text-emerald-400' : isDebt ? 'text-purple-300' : 'text-rose-400'
+                          }`}
+                        >
+                          {isIncome ? '+' : '-'}{ev.amount.toLocaleString()} {currencySymbol}
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="p-8 text-center rounded-2xl bg-stone-950/40 border border-stone-800/80 space-y-2">
+                <CheckCircle2 className="w-8 h-8 text-emerald-500/60 mx-auto" />
+                <h4 className="text-sm font-bold text-stone-300">Fără plăți programate</h4>
+                <p className="text-xs text-stone-500 max-w-sm mx-auto">
+                  Nu ai nicio factură sau rată scadentă pe data de {selectedDateFormatted}. Ești complet liber!
+                </p>
+              </div>
+            )}
+
+            <button
+              onClick={() => setIsPopoutOpen(false)}
+              className="w-full py-3 rounded-xl bg-stone-800 hover:bg-stone-750 text-white font-bold text-sm transition cursor-pointer"
+            >
+              Închide
+            </button>
           </div>
-        ) : (
-          <div className="p-8 text-center rounded-2xl bg-stone-950/40 border border-stone-800/80 space-y-2">
-            <CheckCircle2 className="w-8 h-8 text-emerald-500/60 mx-auto" />
-            <h4 className="text-sm font-bold text-stone-300">Fără plăți programate</h4>
-            <p className="text-xs text-stone-500 max-w-sm mx-auto">
-              Nu ai nicio factură sau rată scadentă pe data de {selectedDateFormatted}.
-            </p>
-          </div>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 };
