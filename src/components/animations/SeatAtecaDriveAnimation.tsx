@@ -1,25 +1,25 @@
-﻿import React, { useState, useEffect } from 'react';
-import { Sparkles, Gauge, Zap, Volume2, Flame } from 'lucide-react';
+import React, { useState } from 'react';
+import { Gauge, Zap, Flame } from 'lucide-react';
 import { soundFx } from '../../utils/audioEffects';
 import { triggerConfetti } from '../../utils/confetti';
 
 interface SeatAtecaDriveAnimationProps {
-  percent: number;
-  currentAmount: number;
-  targetAmount: number;
+  percent?: number;
+  currentAmount?: number;
+  targetAmount?: number;
   currencySymbol?: string;
   lang?: string;
 }
 
 export const SeatAtecaDriveAnimation: React.FC<SeatAtecaDriveAnimationProps> = ({
-  percent,
-  currentAmount,
-  targetAmount,
+  percent = 30,
+  currentAmount = 22500,
+  targetAmount = 75000,
   currencySymbol = 'lei',
   lang = 'ro'
 }) => {
   const [isNitro, setIsNitro] = useState(false);
-  const [speed, setSpeed] = useState(Math.round(40 + (percent * 1.2))); // e.g. 40 to 160 km/h based on progress
+  const [speed, setSpeed] = useState(Math.round(40 + ((percent || 0) * 1.2)));
 
   const triggerNitro = () => {
     soundFx.playEngineRev();
@@ -29,7 +29,7 @@ export const SeatAtecaDriveAnimation: React.FC<SeatAtecaDriveAnimationProps> = (
 
     setTimeout(() => {
       setIsNitro(false);
-      setSpeed(Math.round(40 + (percent * 1.2)));
+      setSpeed(Math.round(40 + ((percent || 0) * 1.2)));
     }, 2500);
   };
 
@@ -90,7 +90,7 @@ export const SeatAtecaDriveAnimation: React.FC<SeatAtecaDriveAnimationProps> = (
           {/* Exhaust Nitro Flame */}
           {isNitro && (
             <div className="absolute bottom-4 -left-7 flex items-center space-x-1 animate-pulse">
-              <div className="w-7 h-3 bg-gradient-to-l from-cyan-400 via-blue-500 to-transparent rounded-full blur-xs" />
+              <div className="w-7 h-3 bg-gradient-to-l from-cyan-400 via-blue-500 to-transparent rounded-full blur-[2px]" />
               <Flame className="w-5 h-5 text-cyan-400 transform -rotate-90 animate-bounce" />
             </div>
           )}

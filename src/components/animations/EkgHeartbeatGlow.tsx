@@ -1,25 +1,23 @@
-﻿import React from 'react';
+import React from 'react';
 
 interface EkgHeartbeatGlowProps {
-  runwayMonths: number;
+  runwayMonths?: number;
   className?: string;
 }
 
 export const EkgHeartbeatGlow: React.FC<EkgHeartbeatGlowProps> = ({
-  runwayMonths,
+  runwayMonths = 12,
   className = ''
 }) => {
-  const isHealthy = runwayMonths >= 6;
+  const isHealthy = (runwayMonths || 12) >= 6;
   const strokeColor = isHealthy ? '#10b981' : '#f59e0b';
-  const glowColor = isHealthy ? 'rgba(16, 185, 129, 0.4)' : 'rgba(245, 158, 11, 0.4)';
 
   return (
     <div className={`relative w-full h-12 overflow-hidden pointer-events-none select-none ${className}`}>
       <svg
         viewBox="0 0 400 60"
         preserveAspectRatio="none"
-        className="w-full h-full filter drop-shadow-[0_0_8px_var(--glow)]"
-        style={{ '--glow': glowColor } as React.CSSProperties}
+        className="w-full h-full"
       >
         <defs>
           <linearGradient id="ekgGrad" x1="0%" y1="0%" x2="100%" y2="0%">
@@ -59,14 +57,6 @@ export const EkgHeartbeatGlow: React.FC<EkgHeartbeatGlowProps> = ({
           }}
         />
       </svg>
-
-      <style>{`
-        @keyframes ekgPulse {
-          0% { stroke-dashoffset: 400; opacity: 0.3; }
-          50% { stroke-dashoffset: 0; opacity: 1; }
-          100% { stroke-dashoffset: -400; opacity: 0.3; }
-        }
-      `}</style>
     </div>
   );
 };

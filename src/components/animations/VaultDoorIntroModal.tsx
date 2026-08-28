@@ -1,5 +1,5 @@
-﻿import React, { useState, useEffect } from 'react';
-import { ShieldCheck, Sparkles, Key, Lock, Unlock, X } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Sparkles, Key, Lock, Unlock } from 'lucide-react';
 import { soundFx } from '../../utils/audioEffects';
 import { triggerCoinRain } from '../../utils/confetti';
 

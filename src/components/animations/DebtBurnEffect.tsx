@@ -1,10 +1,10 @@
-﻿import React, { useEffect, useState } from 'react';
-import { Flame, Sparkles, Trash2, CheckCircle2 } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { Flame } from 'lucide-react';
 import { soundFx } from '../../utils/audioEffects';
 
 interface DebtBurnEffectProps {
-  debtTitle: string;
-  amount: number;
+  debtTitle?: string;
+  amount?: number;
   currencySymbol?: string;
   onComplete?: () => void;
 }
@@ -65,9 +65,9 @@ export const DebtBurnEffect: React.FC<DebtBurnEffectProps> = ({
               🔥 DISTRUGERE DATORIE BANCARĂ!
             </span>
             <h3 className="text-xl font-black text-white font-display">
-              -{amount.toLocaleString()} {currencySymbol}
+              -{(amount || 0).toLocaleString()} {currencySymbol}
             </h3>
-            <p className="text-xs text-stone-400">{debtTitle}</p>
+            <p className="text-xs text-stone-400">{debtTitle || 'Datorie'}</p>
           </div>
 
           {/* Paper Shredder Visual Strips */}

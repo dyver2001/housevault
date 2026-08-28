@@ -1,5 +1,5 @@
-﻿import React from 'react';
-import { Sparkles, Car, Shield, Home, Target } from 'lucide-react';
+import React from 'react';
+import { Sparkles } from 'lucide-react';
 import { SavingsTarget } from '../../types';
 
 interface LiquidJarVisualizerProps {
@@ -13,18 +13,19 @@ export const LiquidJarVisualizer: React.FC<LiquidJarVisualizerProps> = ({
   currencySymbol = 'lei',
   onDeposit
 }) => {
-  const percent = Math.min(100, Math.round(((target.currentSavedAmount || 0) / (target.targetAmount || 1)) * 100));
+  const percent = Math.min(100, Math.round(((target?.currentSavedAmount || 0) / (target?.targetAmount || 1)) * 100));
   const fillHeight = Math.max(12, Math.min(180, (percent / 100) * 170));
+  const safeId = (target?.id || 'jar').replace(/[^a-zA-Z0-9_-]/g, '_');
 
   return (
     <div className="relative p-5 rounded-3xl bg-stone-900 border border-stone-800 hover:border-emerald-500/40 transition shadow-xl flex flex-col items-center justify-between space-y-4 group">
       {/* Target Title & Stats */}
       <div className="w-full text-center space-y-1">
         <h4 className="font-black text-sm text-white font-display truncate">
-          {target.title}
+          {target?.title || 'Obiectiv'}
         </h4>
         <p className="text-xs text-stone-400 font-mono">
-          {target.currentSavedAmount.toLocaleString()} / {target.targetAmount.toLocaleString()} {currencySymbol}
+          {(target?.currentSavedAmount || 0).toLocaleString()} / {(target?.targetAmount || 0).toLocaleString()} {currencySymbol}
         </p>
       </div>
 
@@ -32,13 +33,13 @@ export const LiquidJarVisualizer: React.FC<LiquidJarVisualizerProps> = ({
       <div className="relative w-28 h-44 flex items-center justify-center">
         <svg viewBox="0 0 120 180" className="w-full h-full filter drop-shadow-[0_8px_16px_rgba(16,185,129,0.25)]">
           <defs>
-            <linearGradient id={`liquidGrad-${target.id}`} x1="0%" y1="0%" x2="0%" y2="100%">
+            <linearGradient id={`liquidGrad-${safeId}`} x1="0%" y1="0%" x2="0%" y2="100%">
               <stop offset="0%" stopColor="#34d399" />
               <stop offset="50%" stopColor="#10b981" />
               <stop offset="100%" stopColor="#047857" />
             </linearGradient>
 
-            <clipPath id={`jarClip-${target.id}`}>
+            <clipPath id={`jarClip-${safeId}`}>
               {/* Glass Jar Interior Shape */}
               <rect x="15" y="25" width="90" height="145" rx="18" />
             </clipPath>
@@ -62,14 +63,14 @@ export const LiquidJarVisualizer: React.FC<LiquidJarVisualizerProps> = ({
           />
 
           {/* Liquid Container clipped to Jar */}
-          <g clipPath={`url(#jarClip-${target.id})`}>
+          <g clipPath={`url(#jarClip-${safeId})`}>
             {/* Liquid Body */}
             <rect
               x="0"
               y={180 - fillHeight}
               width="120"
               height={fillHeight}
-              fill={`url(#liquidGrad-${target.id})`}
+              fill={`url(#liquidGrad-${safeId})`}
             />
 
             {/* Dynamic Wave Top */}

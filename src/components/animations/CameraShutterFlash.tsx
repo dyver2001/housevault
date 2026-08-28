@@ -1,10 +1,10 @@
-﻿import React, { useEffect, useState } from 'react';
-import { Camera, Film, Sparkles, CheckCircle2 } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { Camera } from 'lucide-react';
 import { soundFx } from '../../utils/audioEffects';
 
 interface CameraShutterFlashProps {
-  projectTitle: string;
-  amount: number;
+  projectTitle?: string;
+  amount?: number;
   currencySymbol?: string;
   onComplete?: () => void;
 }
@@ -62,9 +62,9 @@ export const CameraShutterFlash: React.FC<CameraShutterFlashProps> = ({
             🎬 ÎNCASARE FREELANCE VIDEO
           </span>
           <h3 className="text-xl font-black text-white font-display">
-            +{amount.toLocaleString()} {currencySymbol}
+            +{(amount || 0).toLocaleString()} {currencySymbol}
           </h3>
-          <p className="text-xs text-stone-400 font-medium truncate">{projectTitle}</p>
+          <p className="text-xs text-stone-400 font-medium truncate">{projectTitle || 'Proiect Video'}</p>
         </div>
 
         <p className="text-[11px] font-bold text-emerald-400 animate-pulse">
