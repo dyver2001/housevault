@@ -11,7 +11,7 @@ import {
   User,
   Calendar,
   Bell,
-  ChevronDown,
+  ArrowUpDown,
   Check
 } from 'lucide-react';
 import { HouseholdProfile } from '../types';
@@ -32,7 +32,7 @@ interface NavbarProps {
   onSelectTab: (tab: TabType) => void;
   profile: HouseholdProfile;
   onOpenSettings: () => void;
-  onOpenInstall: () => void;
+  onOpenInstall?: () => void;
   uncollectedCount: number;
   overdueCount: number;
   syncCode?: string | null;
@@ -52,26 +52,29 @@ export const Navbar: React.FC<NavbarProps> = ({
   uncollectedCount,
   overdueCount,
   syncCode,
+  isSyncConnected,
   currentUser,
   onOpenAuth,
   onOpenActivityFeed
 }) => {
   const lang: Language = (profile.language as Language) || 'ro';
   const t = translations[lang] || translations.ro;
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
+  const [isFloatingMenuOpen, setIsFloatingMenuOpen] = useState(false);
+  const floatingMenuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setIsDropdownOpen(false);
+      if (floatingMenuRef.current && !floatingMenuRef.current.contains(event.target as Node)) {
+        setIsFloatingMenuOpen(false);
       }
     };
-    document.addEventListener('mousedown', handleClickOutside);
+    if (isFloatingMenuOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
     return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
+  }, [isFloatingMenuOpen]);
 
-  const tabs = [
+  const allTabs = [
     {
       id: 'dashboard' as TabType,
       label: t.tabs.dashboard,
@@ -112,184 +115,238 @@ export const Navbar: React.FC<NavbarProps> = ({
     }
   ];
 
-  const activeTabObj = tabs.find((t) => t.id === currentTab) || tabs[0];
-  const ActiveIcon = activeTabObj.icon;
+  // 4 Primary tabs shown in the Revolut floating dock
+  const primaryDockTabs = [
+    { id: 'dashboard' as TabType, label: 'Home', icon: LayoutDashboard },
+    { id: 'freelance' as TabType, label: 'Încasări', icon: Coins, badge: uncollectedCount > 0 ? uncollectedCount : undefined },
+    { id: 'budget' as TabType, label: 'Buget', icon: Receipt },
+    { id: 'debt' as TabType, label: 'Datorii', icon: Landmark },
+  ];
 
   return (
-    <header
-      className="sticky top-0 z-40 bg-stone-900/95 backdrop-blur-xl border-b border-stone-800 transition-all w-full"
-      style={{ paddingTop: 'max(env(safe-area-inset-top, 0px), 10px)' }}
-    >
-      <div className="max-w-7xl mx-auto px-3.5 sm:px-6 lg:px-8 pb-2">
-        {/* Top Header Row */}
-        <div className="flex items-center justify-between h-14 sm:h-16 gap-2">
-          {/* Logo & Brand with RON badge */}
-          <div className="flex items-center space-x-2.5 cursor-pointer flex-shrink-0" onClick={() => onSelectTab('dashboard')}>
-            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br from-amber-500 via-orange-500 to-emerald-600 flex items-center justify-center shadow-md shadow-amber-500/10 flex-shrink-0">
-              <ShieldCheck className="w-5 h-5 sm:w-6 sm:h-6 text-stone-950 stroke-[2.5]" />
-            </div>
-            <div className="flex items-center space-x-2">
-              <span className="font-display font-black text-lg sm:text-xl tracking-tight text-white">HouseVault</span>
-              <span className="text-[10px] sm:text-xs font-bold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                {profile.currencyCode} ({profile.currencySymbol})
-              </span>
-            </div>
-          </div>
-
-          {/* Desktop Navigation Tabs */}
-          <nav className="hidden lg:flex items-center space-x-1">
-            {tabs.map((t) => {
-              const Icon = t.icon;
-              const isActive = currentTab === t.id;
-              return (
-                <button
-                  key={t.id}
-                  id={`nav-tab-${t.id}`}
-                  onClick={() => onSelectTab(t.id)}
-                  className={`relative flex items-center space-x-2 px-3.5 py-2 rounded-xl text-sm font-medium transition-all duration-200 cursor-pointer ${
-                    isActive
-                      ? t.highlight
-                        ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
-                        : 'bg-stone-800 text-white shadow-sm border border-stone-700'
-                      : 'text-stone-400 hover:text-stone-200 hover:bg-stone-800/50'
-                  }`}
-                >
-                  <Icon className={`w-4 h-4 ${isActive ? (t.highlight ? 'text-amber-400' : 'text-emerald-400') : 'text-stone-400'}`} />
-                  <span>{t.label}</span>
-                  {t.badge !== undefined && (
-                    <span
-                      className={`ml-1.5 px-1.5 py-0.5 text-xs font-bold rounded-full ${
-                        t.badgeAlert ? 'bg-rose-500 text-white animate-pulse' : 'bg-amber-500 text-stone-950'
-                      }`}
-                    >
-                      {t.badge}
-                    </span>
-                  )}
-                </button>
-              );
-            })}
-          </nav>
-
-          {/* Right Action Toolbar */}
-          <div className="flex items-center space-x-1.5 sm:space-x-2 flex-shrink-0">
-            {/* Live Sync Pill */}
-            {syncCode ? (
+    <>
+      {/* Top Header Bar */}
+      <header
+        className="sticky top-0 z-40 bg-stone-900/95 backdrop-blur-xl border-b border-stone-800/80 transition-all w-full"
+        style={{ paddingTop: 'max(env(safe-area-inset-top, 0px), 8px)' }}
+      >
+        <div className="max-w-7xl mx-auto px-3.5 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-14 sm:h-16 gap-2">
+            {/* Left: Revolut Profile Avatar & Brand */}
+            <div className="flex items-center space-x-2.5 flex-shrink-0">
               <button
-                onClick={onOpenSettings}
-                className="h-8.5 px-2.5 rounded-full bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-300 transition flex items-center space-x-1.5 text-xs font-bold shadow-sm cursor-pointer whitespace-nowrap flex-shrink-0"
-                title={lang === 'ro' ? `Conectat Live (${syncCode})` : `Live Synced (${syncCode})`}
+                onClick={onOpenAuth}
+                className="relative w-9 h-9 rounded-full bg-gradient-to-br from-emerald-500/20 to-stone-800 border border-emerald-500/40 flex items-center justify-center text-emerald-300 font-bold text-xs shadow-sm cursor-pointer hover:border-emerald-400 active:scale-95 transition flex-shrink-0"
+                title={currentUser ? `${currentUser.name} (${currentUser.email})` : 'Autentificare'}
               >
-                <span className="relative flex h-2 w-2 flex-shrink-0">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-                </span>
-                <span className="font-mono text-emerald-200 text-[11px] font-bold tracking-wide whitespace-nowrap">{syncCode}</span>
+                {currentUser ? (
+                  <span>{currentUser.name.charAt(0).toUpperCase()}</span>
+                ) : (
+                  <User className="w-4 h-4 text-emerald-400" />
+                )}
+                <span className={`absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full border-2 border-stone-900 ${isSyncConnected ? 'bg-emerald-400' : 'bg-amber-400'}`} />
               </button>
-            ) : (
-              <button
-                onClick={onOpenSettings}
-                className="h-8.5 px-2.5 rounded-full bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 text-amber-300 transition flex items-center space-x-1 text-xs font-semibold cursor-pointer whitespace-nowrap flex-shrink-0"
-                title={lang === 'ro' ? 'Apasă pentru sincronizare' : 'Click to pair'}
-              >
-                <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse flex-shrink-0" />
-                <span className="text-[11px] font-medium hidden sm:inline whitespace-nowrap">Offline</span>
-              </button>
-            )}
 
-            {/* Couple Activity Feed Bell */}
-            <button
-              onClick={onOpenActivityFeed}
-              className="w-8.5 h-8.5 sm:w-9 sm:h-9 rounded-full bg-stone-800/90 hover:bg-stone-750 border border-stone-700/70 text-stone-300 hover:text-amber-400 flex items-center justify-center transition cursor-pointer relative flex-shrink-0 active:scale-95 shadow-sm"
-              title={lang === 'ro' ? 'Activitate Live în Cuplu' : 'Couple Activity Feed'}
-            >
-              <Bell className="w-4 h-4" />
-              <span className="w-2 h-2 rounded-full bg-amber-400 absolute top-1.5 right-1.5 ring-2 ring-stone-900" />
-            </button>
-
-            {/* Profile Avatar */}
-            <button
-              onClick={onOpenAuth}
-              className="w-8.5 h-8.5 sm:w-9 sm:h-9 rounded-full bg-stone-800/90 hover:bg-stone-750 border border-stone-700/70 text-emerald-300 font-bold text-xs flex items-center justify-center transition cursor-pointer flex-shrink-0 active:scale-95 shadow-sm"
-              title={currentUser ? `${currentUser.name}` : 'Login'}
-            >
-              {currentUser ? (
-                <span>{currentUser.name.charAt(0).toUpperCase()}</span>
-              ) : (
-                <User className="w-4 h-4 text-emerald-400" />
-              )}
-            </button>
-
-            {/* Settings Gear Button */}
-            <button
-              id="btn-open-settings"
-              onClick={onOpenSettings}
-              className="w-8.5 h-8.5 sm:w-9 sm:h-9 rounded-full bg-stone-800/90 hover:bg-stone-750 border border-stone-700/70 text-stone-300 hover:text-white flex items-center justify-center transition cursor-pointer flex-shrink-0 active:scale-95 shadow-sm"
-              title="Setări & Configurare"
-            >
-              <Settings className="w-4 h-4 text-stone-300" />
-            </button>
-          </div>
-        </div>
-
-        {/* Mobile Drop-Down Menu Selector */}
-        <div className="lg:hidden relative mt-1" ref={dropdownRef}>
-          <button
-            onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-            className="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl bg-stone-800/90 hover:bg-stone-800 border border-stone-700/80 text-white shadow-sm transition-all active:scale-[0.99] cursor-pointer"
-          >
-            <div className="flex items-center space-x-2.5">
-              <ActiveIcon className="w-4 h-4 text-emerald-400" />
-              <span className="font-bold text-sm tracking-tight">{activeTabObj.label}</span>
-              {activeTabObj.badge !== undefined && (
-                <span className="px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-500 text-stone-950">
-                  {activeTabObj.badge}
+              <div className="flex items-center space-x-1.5 cursor-pointer" onClick={() => onSelectTab('dashboard')}>
+                <span className="font-display font-black text-lg sm:text-xl tracking-tight text-white">HouseVault</span>
+                <span className="text-[10px] font-extrabold px-1.5 py-0.5 rounded-md bg-stone-800 text-emerald-400 border border-stone-700/80">
+                  {profile.currencyCode}
                 </span>
-              )}
+              </div>
             </div>
-            <div className="flex items-center space-x-1 text-stone-400 text-xs font-semibold">
-              <span className="text-[11px] text-stone-400">Meniu</span>
-              <ChevronDown className={`w-4 h-4 text-stone-400 transition-transform duration-200 ${isDropdownOpen ? 'rotate-180' : ''}`} />
-            </div>
-          </button>
 
-          {/* Animated Drop-Down Menu Options */}
-          {isDropdownOpen && (
-            <div className="absolute top-full left-0 right-0 mt-1.5 z-50 rounded-2xl bg-stone-900/98 backdrop-blur-2xl border border-stone-700 shadow-2xl p-1.5 space-y-1 animate-in fade-in slide-in-from-top-2 duration-150">
-              {tabs.map((t) => {
+            {/* Desktop Navigation Tabs */}
+            <nav className="hidden lg:flex items-center space-x-1">
+              {allTabs.map((t) => {
                 const Icon = t.icon;
-                const isSelected = currentTab === t.id;
+                const isActive = currentTab === t.id;
                 return (
                   <button
                     key={t.id}
-                    onClick={() => {
-                      onSelectTab(t.id);
-                      setIsDropdownOpen(false);
-                    }}
-                    className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all cursor-pointer ${
-                      isSelected
-                        ? 'bg-emerald-500/15 text-emerald-300 border border-emerald-500/30'
-                        : 'text-stone-300 hover:bg-stone-800/80 hover:text-white'
+                    id={`nav-tab-${t.id}`}
+                    onClick={() => onSelectTab(t.id)}
+                    className={`relative flex items-center space-x-2 px-3.5 py-2 rounded-xl text-sm font-medium transition-all duration-200 cursor-pointer ${
+                      isActive
+                        ? t.highlight
+                          ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
+                          : 'bg-stone-800 text-white shadow-sm border border-stone-700'
+                        : 'text-stone-400 hover:text-stone-200 hover:bg-stone-800/50'
                     }`}
                   >
-                    <div className="flex items-center space-x-3">
-                      <Icon className={`w-4 h-4 ${isSelected ? 'text-emerald-400' : 'text-stone-400'}`} />
-                      <span className={isSelected ? 'font-bold' : 'font-medium'}>{t.label}</span>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      {t.badge !== undefined && (
-                        <span className="px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-500 text-stone-950">
-                          {t.badge}
-                        </span>
-                      )}
-                      {isSelected && <Check className="w-4 h-4 text-emerald-400" />}
-                    </div>
+                    <Icon className={`w-4 h-4 ${isActive ? (t.highlight ? 'text-amber-400' : 'text-emerald-400') : 'text-stone-400'}`} />
+                    <span>{t.label}</span>
+                    {t.badge !== undefined && (
+                      <span
+                        className={`ml-1.5 px-1.5 py-0.5 text-xs font-bold rounded-full ${
+                          t.badgeAlert ? 'bg-rose-500 text-white animate-pulse' : 'bg-amber-500 text-stone-950'
+                        }`}
+                      >
+                        {t.badge}
+                      </span>
+                    )}
                   </button>
                 );
               })}
+            </nav>
+
+            {/* Right Action Toolbar */}
+            <div className="flex items-center space-x-1.5 sm:space-x-2 flex-shrink-0">
+              {syncCode ? (
+                <button
+                  onClick={onOpenSettings}
+                  className="h-8.5 px-2.5 rounded-full bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-300 transition flex items-center space-x-1.5 text-xs font-bold shadow-sm cursor-pointer whitespace-nowrap flex-shrink-0"
+                  title={lang === 'ro' ? `Conectat Live (${syncCode})` : `Live Synced (${syncCode})`}
+                >
+                  <span className="relative flex h-2 w-2 flex-shrink-0">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                  </span>
+                  <span className="font-mono text-emerald-200 text-[11px] font-bold tracking-wide whitespace-nowrap">{syncCode}</span>
+                </button>
+              ) : (
+                <button
+                  onClick={onOpenSettings}
+                  className="h-8.5 px-2.5 rounded-full bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 text-amber-300 transition flex items-center space-x-1 text-xs font-semibold cursor-pointer whitespace-nowrap flex-shrink-0"
+                  title={lang === 'ro' ? 'Apasă pentru sincronizare' : 'Click to pair'}
+                >
+                  <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse flex-shrink-0" />
+                  <span className="text-[11px] font-medium hidden sm:inline whitespace-nowrap">Offline</span>
+                </button>
+              )}
+
+              <button
+                onClick={onOpenActivityFeed}
+                className="w-8.5 h-8.5 sm:w-9 sm:h-9 rounded-full bg-stone-800/90 hover:bg-stone-750 border border-stone-700/70 text-stone-300 hover:text-amber-400 flex items-center justify-center transition cursor-pointer relative flex-shrink-0 active:scale-95 shadow-sm"
+                title={lang === 'ro' ? 'Activitate Live în Cuplu' : 'Couple Activity Feed'}
+              >
+                <Bell className="w-4 h-4" />
+                <span className="w-2 h-2 rounded-full bg-amber-400 absolute top-1.5 right-1.5 ring-2 ring-stone-900" />
+              </button>
+
+              <button
+                id="btn-open-settings"
+                onClick={onOpenSettings}
+                className="w-8.5 h-8.5 sm:w-9 sm:h-9 rounded-full bg-stone-800/90 hover:bg-stone-750 border border-stone-700/70 text-stone-300 hover:text-white flex items-center justify-center transition cursor-pointer flex-shrink-0 active:scale-95 shadow-sm"
+                title="Setări & Configurare"
+              >
+                <Settings className="w-4 h-4 text-stone-300" />
+              </button>
             </div>
-          )}
+          </div>
         </div>
-      </div>
-    </header>
+      </header>
+
+      {/* Backdrop for Floating Popup Menu */}
+      {isFloatingMenuOpen && (
+        <div
+          className="fixed inset-0 z-45 bg-black/60 backdrop-blur-xs lg:hidden transition-opacity"
+          onClick={() => setIsFloatingMenuOpen(false)}
+        />
+      )}
+
+      {/* Floating Revolut-Style Popup Menu (Image 1 Style) */}
+      {isFloatingMenuOpen && (
+        <div
+          ref={floatingMenuRef}
+          className="fixed bottom-20 left-3 right-3 sm:left-6 sm:right-6 z-50 rounded-3xl bg-stone-900/98 backdrop-blur-3xl border border-stone-750/90 shadow-2xl p-2 space-y-1 lg:hidden animate-in fade-in slide-in-from-bottom-5 duration-200"
+          style={{ maxHeight: 'calc(100vh - 160px)', overflowY: 'auto' }}
+        >
+          <div className="px-3 py-1.5 text-xs font-semibold text-stone-400 uppercase tracking-wider">
+            Meniu Financiar
+          </div>
+
+          {allTabs.map((t, idx) => {
+            const Icon = t.icon;
+            const isSelected = currentTab === t.id;
+            return (
+              <React.Fragment key={t.id}>
+                {idx === 5 && <div className="h-px bg-stone-800/80 my-1 mx-2" />}
+                <button
+                  onClick={() => {
+                    onSelectTab(t.id);
+                    setIsFloatingMenuOpen(false);
+                  }}
+                  className={`w-full flex items-center justify-between px-3.5 py-3 rounded-2xl text-sm font-semibold transition-all cursor-pointer ${
+                    isSelected
+                      ? 'bg-stone-800 text-white shadow-sm border border-stone-700'
+                      : 'text-stone-300 hover:bg-stone-800/60 hover:text-white'
+                  }`}
+                >
+                  <div className="flex items-center space-x-3.5">
+                    <div className={`w-8 h-8 rounded-xl flex items-center justify-center ${isSelected ? 'bg-emerald-500/20 text-emerald-400' : 'bg-stone-800 text-stone-400'}`}>
+                      <Icon className="w-4.5 h-4.5" />
+                    </div>
+                    <span className={isSelected ? 'font-bold text-white' : 'font-medium text-stone-200'}>
+                      {t.label}
+                    </span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    {t.badge !== undefined && (
+                      <span className="px-2 py-0.5 rounded-full text-xs font-bold bg-amber-500 text-stone-950">
+                        {t.badge}
+                      </span>
+                    )}
+                    {isSelected && <Check className="w-4 h-4 text-emerald-400" />}
+                  </div>
+                </button>
+              </React.Fragment>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Floating Revolut Bottom Navigation Pill Dock (Image 2 Style) */}
+      <nav
+        className="fixed bottom-4 left-3 right-3 sm:left-6 sm:right-6 z-45 bg-stone-900/95 backdrop-blur-2xl border border-stone-750/80 rounded-full p-1.5 lg:hidden flex items-center justify-around shadow-2xl shadow-black/80"
+        style={{ marginBottom: 'max(env(safe-area-inset-bottom, 0px), 0px)' }}
+      >
+        {primaryDockTabs.map((t) => {
+          const Icon = t.icon;
+          const isActive = currentTab === t.id && !isFloatingMenuOpen;
+          return (
+            <button
+              key={t.id}
+              onClick={() => {
+                onSelectTab(t.id);
+                setIsFloatingMenuOpen(false);
+              }}
+              className={`flex-1 flex flex-col items-center justify-center py-1.5 px-2 rounded-full transition-all cursor-pointer relative ${
+                isActive
+                  ? 'bg-stone-800 text-white shadow-sm border border-stone-700/80'
+                  : 'text-stone-400 hover:text-stone-200'
+              }`}
+            >
+              <div className="relative">
+                <Icon className={`w-5 h-5 ${isActive ? 'text-emerald-400' : 'text-stone-400'}`} />
+                {t.badge !== undefined && (
+                  <span className="absolute -top-1 -right-2 px-1 rounded-full text-[9px] font-bold bg-amber-500 text-stone-950">
+                    {t.badge}
+                  </span>
+                )}
+              </div>
+              <span className={`text-[10px] tracking-tight mt-0.5 truncate ${isActive ? 'font-bold text-white' : 'font-medium'}`}>
+                {t.label}
+              </span>
+            </button>
+          );
+        })}
+
+        {/* Floating Menu Toggle Button (Revolut Switcher Icon) */}
+        <button
+          onClick={() => setIsFloatingMenuOpen(!isFloatingMenuOpen)}
+          className={`flex-1 flex flex-col items-center justify-center py-1.5 px-2 rounded-full transition-all cursor-pointer relative ${
+            isFloatingMenuOpen || (currentTab !== 'dashboard' && currentTab !== 'freelance' && currentTab !== 'budget' && currentTab !== 'debt')
+              ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 shadow-sm'
+              : 'text-stone-400 hover:text-stone-200'
+          }`}
+          title="Toate Secțiunile"
+        >
+          <ArrowUpDown className={`w-5 h-5 transition-transform duration-200 ${isFloatingMenuOpen ? 'rotate-180 text-emerald-400' : 'text-stone-400'}`} />
+          <span className="text-[10px] tracking-tight mt-0.5 font-semibold truncate">
+            Meniu
+          </span>
+        </button>
+      </nav>
+    </>
   );
 };
