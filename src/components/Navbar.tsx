@@ -65,27 +65,16 @@ export const Navbar: React.FC<NavbarProps> = ({
   const [isFloatingMenuOpen, setIsFloatingMenuOpen] = useState(false);
   const floatingMenuRef = useRef<HTMLDivElement>(null);
 
-  // Close floating menu safely
-  const closeFloatingMenu = () => {
-    setIsFloatingMenuOpen(false);
+  // Toggle floating menu cleanly with 1 tap
+  const toggleFloatingMenu = (e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    setIsFloatingMenuOpen((prev) => !prev);
   };
 
-  // Close on outside click
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent | TouchEvent) => {
-      if (floatingMenuRef.current && !floatingMenuRef.current.contains(event.target as Node)) {
-        closeFloatingMenu();
-      }
-    };
-    if (isFloatingMenuOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
-      document.addEventListener('touchstart', handleClickOutside);
-    }
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-      document.removeEventListener('touchstart', handleClickOutside);
-    };
-  }, [isFloatingMenuOpen]);
+  const closeFloatingMenu = (e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    setIsFloatingMenuOpen(false);
+  };
 
   // Handle phone Back button (Android & Mobile browsers) to dismiss floating menu
   useEffect(() => {
@@ -433,7 +422,7 @@ export const Navbar: React.FC<NavbarProps> = ({
 
         {/* Floating Menu Toggle Button (Toggles open/close cleanly) */}
         <button
-          onClick={() => setIsFloatingMenuOpen(!isFloatingMenuOpen)}
+          onClick={toggleFloatingMenu}
           className={`flex-1 flex flex-col items-center justify-center py-1.5 px-2 rounded-full transition-all cursor-pointer relative ${
             isFloatingMenuOpen || (currentTab !== 'dashboard' && currentTab !== 'freelance' && currentTab !== 'budget' && currentTab !== 'debt')
               ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 shadow-sm'
