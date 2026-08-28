@@ -570,11 +570,15 @@ class HouseVaultRepository(context: Context) {
         val json = prefs.getString("profile_json", null) ?: return createDefaultProfile()
         return try {
             val o = JSONObject(json)
+            var hName = o.optString("husbandName", "Haytham (Videograf)")
+            var wName = o.optString("wifeName", "Cati (IT Support)")
+            if (hName.contains("Alex")) hName = "Haytham (Videograf)"
+            if (wName.contains("Elena")) wName = "Cati (IT Support)"
             HouseholdProfile(
                 currencySymbol = o.optString("currencySymbol", "lei"),
                 currencyCode = o.optString("currencyCode", "RON"),
-                husbandName = o.optString("husbandName", "Alex (Videograf)"),
-                wifeName = o.optString("wifeName", "Elena (IT Support)"),
+                husbandName = hName,
+                wifeName = wName,
                 wifeMonthlySalary = o.optDouble("wifeMonthlySalary", 6500.0),
                 husbandEstMonthlyGross = o.optDouble("husbandEstMonthlyGross", 12500.0),
                 emergencyFundMonthsGoal = o.optInt("emergencyFundMonthsGoal", 6),
@@ -805,8 +809,8 @@ class HouseVaultRepository(context: Context) {
     private fun createDefaultProfile() = HouseholdProfile(
         currencySymbol = "lei",
         currencyCode = "RON",
-        husbandName = "Alex (Videograf)",
-        wifeName = "Elena (IT Support)",
+        husbandName = "Haytham (Videograf)",
+        wifeName = "Cati (IT Support)",
         wifeMonthlySalary = 6500.0,
         husbandEstMonthlyGross = 12500.0,
         emergencyFundMonthsGoal = 6,

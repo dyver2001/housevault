@@ -136,8 +136,8 @@ data class HouseholdExpense(
 data class HouseholdProfile(
     val currencySymbol: String = "lei",
     val currencyCode: String = "RON",
-    val husbandName: String = "Alex (Videograf)",
-    val wifeName: String = "Elena (IT Support)",
+    val husbandName: String = "Haytham (Videograf)",
+    val wifeName: String = "Cati (IT Support)",
     val wifeMonthlySalary: Double = 6500.0,
     val husbandEstMonthlyGross: Double = 12000.0,
     val emergencyFundMonthsGoal: Int = 6,

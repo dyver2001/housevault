@@ -441,9 +441,12 @@ export const App: React.FC = () => {
             targets={targets}
             expenses={expenses}
             splitRule={splitRule}
-            onSelectTab={setCurrentTab}
-            onOpenCollect={(project) => setCollectProject(project)}
-            onOpenNewGig={() => setEditingProject(null)}
+            syncCode={syncCode}
+            onNavigate={setCurrentTab}
+            onOpenCollectModal={(project) => setCollectProject(project)}
+            onOpenNewProject={() => setEditingProject(null)}
+            onOpenNewExpense={() => {}}
+            onOpenSettings={() => setIsSettingsOpen(true)}
           />
         )}
 

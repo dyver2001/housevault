@@ -27,7 +27,15 @@ const KEYS = {
 export function loadProfile(): HouseholdProfile {
   try {
     const raw = localStorage.getItem(KEYS.PROFILE);
-    return raw ? JSON.parse(raw) : DEFAULT_PROFILE;
+    if (!raw) return DEFAULT_PROFILE;
+    const parsed = JSON.parse(raw);
+    if (parsed.husbandName?.includes('Alex')) {
+      parsed.husbandName = 'Haytham (Videograf)';
+    }
+    if (parsed.wifeName?.includes('Elena')) {
+      parsed.wifeName = 'Cati (IT Support)';
+    }
+    return parsed;
   } catch {
     return DEFAULT_PROFILE;
   }

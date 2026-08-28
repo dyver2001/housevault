@@ -233,8 +233,8 @@ app.post('/api/advisor', async (req: Request, res: Response) => {
 
 FINANCIAL STATE:
 - Currency: ${profile?.currencySymbol || 'lei'} (${profile?.currencyCode || 'RON'})
-- Freelance Partner: ${profile?.husbandName || 'Alex (Videograf)'} (Est Gross: ${profile?.currencySymbol}${profile?.husbandEstMonthlyGross || 12000}/mo)
-- Steady Salary Partner: ${profile?.wifeName || 'Elena (IT Support)'} (Salary: ${profile?.currencySymbol}${profile?.wifeMonthlySalary || 6500}/mo)
+- Freelance Partner: ${profile?.husbandName || 'Haytham (Videograf)'} (Est Gross: ${profile?.currencySymbol}${profile?.husbandEstMonthlyGross || 12000}/mo)
+- Steady Salary Partner: ${profile?.wifeName || 'Cati (IT Support)'} (Salary: ${profile?.currencySymbol}${profile?.wifeMonthlySalary || 6500}/mo)
 - Fixed Monthly Household Bills: ${profile?.currencySymbol}${fixedExpenses}/mo (Covered by steady salary, surplus: ${profile?.currencySymbol}${wifeSurplus}/mo)
 - Outstanding Freelance Money Waiting to Be Collected: ${profile?.currencySymbol}${totalUncollected}
 - Total Bank Debt: ${profile?.currencySymbol}${totalDebt} across ${(debts || []).length} accounts
@@ -293,18 +293,20 @@ function generateLocalAdvice(
 ): string {
   const sym = profile?.currencySymbol || 'lei';
   const lower = (prompt || '').toLowerCase();
+  const wifeName = profile?.wifeName ? profile.wifeName.split(' ')[0] : 'Cati';
+  const husbandName = profile?.husbandName ? profile.husbandName.split(' ')[0] : 'Haytham';
 
   if (lower.includes('split') || lower.includes('windfall') || lower.includes('gig') || lower.includes('commercial') || lower.includes('nunta') || lower.includes('wedding')) {
     return `### 💰 Regula de Aur a Distribuirii Încasărilor (35/35/15/15)
 
-Deoarece salariul fix al Elenei (**${sym}${profile?.wifeMonthlySalary || 6500}/lună**) acoperă integral costurile fixe ale casei (**${sym}${fixedExpenses}/lună**), **100% din banii încasați din proiectele video pot fi direcționați strategic spre achitarea datoriilor și avansul pentru casă!**
+Deoarece salariul fix al lui ${wifeName} (**${sym}${profile?.wifeMonthlySalary || 6500}/lună**) acoperă integral costurile fixe ale casei (**${sym}${fixedExpenses}/lună**), **100% din banii încasați din proiectele video ale lui ${husbandName} pot fi direcționați strategic spre achitarea datoriilor și avansul pentru casă!**
 
 De fiecare dată când intră un onorariu sau avans în cont:
 
 - **35% ➔ Achitare Datorii Bancare**: Direcționat imediat spre cardul cu cea mai mare dobândă (${debts[0]?.bankName || 'Card Credit'}).
 - **35% ➔ Seif Avans Casă & Siguranță**: Blocat instantaneu în contul dedicat locuinței.
 - **15% ➔ Rezervă Taxe & Echipamente Video**: Fond tampon pentru taxe (PFA/SRL) și mentenanță/upgrade camere.
-- **15% ➔ Bani de Buzunar (Safe Pocket)**: Recompensa lui Alex pentru finalizarea filmării și a montajului.
+- **15% ➔ Bani de Buzunar (Safe Pocket)**: Recompensa lui ${husbandName} pentru finalizarea filmării și a montajului.
 
 ⚡ **Regula de Aur**: Faceți transferul celor 70% (Datorii + Seif) în primele **15 minute** de la intrarea banilor pe card, pentru a nu fi cheltuiți accidental!`;
   }

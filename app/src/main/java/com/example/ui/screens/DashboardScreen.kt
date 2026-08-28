@@ -37,6 +37,7 @@ fun DashboardScreen(
     val targets by viewModel.targets.collectAsState()
     val expenses by viewModel.expenses.collectAsState()
     val splitRule by viewModel.splitRule.collectAsState()
+    val vaultSyncCode by viewModel.vaultSyncCode.collectAsState()
 
     val sym = profile.currencySymbol
     val uncollectedProjects = projects.filterNot { it.isFullyCollected }
@@ -46,6 +47,9 @@ fun DashboardScreen(
     val totalTargetsGoal = targets.sumOf { it.targetAmount }
     val fixedBills = expenses.filter { it.isFixed }.sumOf { it.amount }
     val wifeSalarySurplus = (profile.wifeMonthlySalary - fixedBills).coerceAtLeast(0.0)
+
+    val wifeShortName = profile.wifeName.split(" ").firstOrNull() ?: "Cati"
+    val husbandShortName = profile.husbandName.split(" ").firstOrNull() ?: "Haytham"
 
     // Interactive Windfall Splitter state
     var simulatedGigAmount by remember { mutableStateOf("3500") }
@@ -60,6 +64,47 @@ fun DashboardScreen(
         contentPadding = PaddingValues(top = 16.dp, bottom = 90.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
+        // --- COUPLE LIVE CONNECTION STATUS PILL ---
+        item {
+            Surface(
+                shape = RoundedCornerShape(12.dp),
+                color = if (vaultSyncCode != null) Emerald100 else Amber100,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { onNavigate(AppTab.SHARE_APK) }
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 14.dp, vertical = 10.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Surface(
+                            shape = CircleShape,
+                            color = if (vaultSyncCode != null) Emerald600 else Amber600,
+                            modifier = Modifier.size(10.dp)
+                        ) {}
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = if (vaultSyncCode != null)
+                                "🟢 Conectat cu $wifeShortName (Seif: $vaultSyncCode)"
+                            else
+                                "🔴 Neconectat • Sincronizează cu $wifeShortName",
+                            style = MaterialTheme.typography.labelMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = if (vaultSyncCode != null) Emerald800 else Amber700
+                        )
+                    }
+
+                    Text(
+                        text = "⚙️",
+                        style = MaterialTheme.typography.labelSmall
+                    )
+                }
+            }
+        }
         // --- HERO: FREELANCE CASH COLLECTOR BANNER ---
         item {
             Card(

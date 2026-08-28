@@ -28,10 +28,12 @@ interface DashboardViewProps {
   targets: SavingsTarget[];
   expenses: HouseholdExpense[];
   splitRule: WindfallSplitRule;
+  syncCode?: string | null;
   onNavigate: (tab: TabType) => void;
   onOpenCollectModal: (project: FreelanceProject) => void;
   onOpenNewProject: () => void;
   onOpenNewExpense: () => void;
+  onOpenSettings?: () => void;
 }
 
 export const DashboardView: React.FC<DashboardViewProps> = ({
@@ -41,9 +43,11 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   targets,
   expenses,
   splitRule,
+  syncCode,
   onNavigate,
   onOpenCollectModal,
-  onOpenNewProject
+  onOpenNewProject,
+  onOpenSettings
 }) => {
   const sym = profile.currencySymbol;
 
@@ -95,16 +99,41 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         <div className="absolute -left-10 -top-10 w-64 h-64 bg-amber-500/5 rounded-full blur-3xl pointer-events-none" />
 
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6 relative z-10">
-          <div className="space-y-2">
-            <div className="inline-flex items-center space-x-2 px-2.5 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-300 text-xs font-semibold">
-              <Sparkles className="w-3.5 h-3.5" />
-              <span>Couple Financial Engine</span>
+          <div className="space-y-2.5">
+            <div className="flex flex-wrap items-center gap-2">
+              <div className="inline-flex items-center space-x-2 px-2.5 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-300 text-xs font-semibold">
+                <Sparkles className="w-3.5 h-3.5" />
+                <span>{profile.language === 'ro' ? 'Motor Financiar de Cuplu' : 'Couple Financial Engine'}</span>
+              </div>
+
+              {syncCode ? (
+                <div
+                  onClick={onOpenSettings}
+                  className="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-xs font-bold cursor-pointer hover:bg-emerald-500/25 transition shadow-sm"
+                  title="Apasă pentru detalii sincronizare"
+                >
+                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
+                  <span>🟢 {profile.language === 'ro' ? 'Conectat cu' : 'Synced with'} {profile.wifeName.split(' ')[0]} ({syncCode})</span>
+                </div>
+              ) : (
+                <div
+                  onClick={onOpenSettings}
+                  className="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-300 text-xs font-bold cursor-pointer hover:bg-amber-500/25 transition"
+                  title="Apasă pentru a sincroniza"
+                >
+                  <span className="w-2 h-2 rounded-full bg-amber-400" />
+                  <span>🔴 {profile.language === 'ro' ? 'Neconectat • Sincronizează' : 'Offline • Pair Vault'}</span>
+                </div>
+              )}
             </div>
+
             <h1 className="text-2xl sm:text-3xl font-display font-black text-white tracking-tight">
               {profile.wifeName.split(' ')[0]} Anchors Bills. {profile.husbandName.split(' ')[0]} Accelerates Wealth.
             </h1>
             <p className="text-stone-300 text-sm max-w-2xl leading-relaxed">
-              Elena's IT salary guarantees fixed survival costs ({sym}{fixedExpenses.toLocaleString()}/mo), leaving 100% of freelance videography windfalls to annihilate bank debt and fill your house savings vault.
+              {profile.language === 'ro'
+                ? `Salariul fix al lui ${profile.wifeName.split(' ')[0]} garantează cheltuielile lunare (${sym}${fixedExpenses.toLocaleString()}/lună), lăsând 100% din onorariile video ale lui ${profile.husbandName.split(' ')[0]} libere să achite datoriile bancare și să umple seiful pentru casă.`
+                : `${profile.wifeName.split(' ')[0]}'s steady salary guarantees fixed survival costs (${sym}${fixedExpenses.toLocaleString()}/mo), leaving 100% of ${profile.husbandName.split(' ')[0]}'s freelance videography windfalls to annihilate bank debt and fill your house savings vault.`}
             </p>
           </div>
 

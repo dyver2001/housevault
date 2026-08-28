@@ -110,7 +110,10 @@ fun MobileShareScreen(viewModel: HouseVaultViewModel) {
                                     style = MaterialTheme.typography.titleMedium
                                 )
                                 Text(
-                                    text = if (lang == "ro") "Alex & Elena conectați în timp real" else "Sync Alex & Elena in real time",
+                                    text = if (lang == "ro")
+                                        "${profile.husbandName.split(" ").firstOrNull() ?: "Haytham"} & ${profile.wifeName.split(" ").firstOrNull() ?: "Cati"} conectați în timp real"
+                                    else
+                                        "Sync ${profile.husbandName.split(" ").firstOrNull() ?: "Haytham"} & ${profile.wifeName.split(" ").firstOrNull() ?: "Cati"} in real time",
                                     style = MaterialTheme.typography.bodySmall,
                                     color = Slate500
                                 )
@@ -123,7 +126,7 @@ fun MobileShareScreen(viewModel: HouseVaultViewModel) {
                                 color = Emerald100
                             ) {
                                 Text(
-                                    text = "🟢 " + (if (lang == "ro") "Activ" else "Active"),
+                                    text = "🟢 " + (if (lang == "ro") "Conectat" else "Connected"),
                                     style = MaterialTheme.typography.labelSmall,
                                     color = Emerald800,
                                     fontWeight = FontWeight.Bold,
@@ -135,8 +138,8 @@ fun MobileShareScreen(viewModel: HouseVaultViewModel) {
 
                     Text(
                         text = if (lang == "ro")
-                            "Când Alex încasează un proiect video sau Elena bifează o cheltuială, ambele telefoane se actualizează automat fără fișiere manuale."
-                            else "When Alex collects gig money or Elena logs a bill, both phones update automatically in real time.",
+                            "Când ${profile.husbandName.split(" ").firstOrNull() ?: "Haytham"} încasează un proiect video sau ${profile.wifeName.split(" ").firstOrNull() ?: "Cati"} bifează o cheltuială, ambele telefoane se actualizează automat fără fișiere manuale."
+                            else "When ${profile.husbandName.split(" ").firstOrNull() ?: "Haytham"} collects gig money or ${profile.wifeName.split(" ").firstOrNull() ?: "Cati"} logs a bill, both phones update automatically in real time.",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )

@@ -149,20 +149,25 @@ export const Navbar: React.FC<NavbarProps> = ({
             {syncCode ? (
               <button
                 onClick={onOpenSettings}
-                className="px-2.5 py-1.5 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/30 text-emerald-300 transition flex items-center space-x-1.5 text-xs font-bold cursor-pointer"
-                title={`Connected to shared vault ${syncCode}`}
+                className="px-2.5 py-1.5 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-500/40 text-emerald-300 transition flex items-center space-x-1.5 text-xs font-bold shadow-sm cursor-pointer"
+                title={lang === 'ro' ? `Conectat Live cu ${profile.wifeName.split(' ')[0]}` : `Connected Live with ${profile.wifeName.split(' ')[0]}`}
               >
-                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                <span className="font-mono">{syncCode}</span>
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                </span>
+                <span className="hidden sm:inline">{lang === 'ro' ? 'Conectat' : 'Live'}</span>
+                <span className="font-mono text-emerald-200">{syncCode}</span>
               </button>
             ) : (
               <button
                 onClick={onOpenSettings}
-                className="hidden sm:flex px-2.5 py-1.5 rounded-xl bg-stone-800 hover:bg-stone-750 border border-stone-700 text-stone-300 transition items-center space-x-1.5 text-xs font-semibold cursor-pointer"
-                title="Pair with Spouse"
+                className="px-2.5 py-1.5 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/30 text-amber-300 transition flex items-center space-x-1.5 text-xs font-semibold cursor-pointer"
+                title={lang === 'ro' ? 'Apasă pentru a sincroniza cu partenerul' : 'Click to pair with partner'}
               >
-                <span className="w-2 h-2 rounded-full bg-stone-500" />
-                <span>{lang === 'ro' ? 'Sincronizare' : 'Cloud Sync'}</span>
+                <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
+                <span className="hidden sm:inline">{lang === 'ro' ? 'Neconectat' : 'Offline'}</span>
+                <span className="sm:hidden font-bold">{lang === 'ro' ? 'Seif' : 'Sync'}</span>
               </button>
             )}
 
