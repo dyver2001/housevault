@@ -13,6 +13,9 @@ import {
 } from 'lucide-react';
 import { SavingsTarget, HouseholdProfile, TargetPriority } from '../types';
 
+import { LiquidJarVisualizer } from './animations/LiquidJarVisualizer';
+import { soundFx } from '../utils/audioEffects';
+
 interface SavingsTargetsViewProps {
   profile: HouseholdProfile;
   targets: SavingsTarget[];
@@ -33,6 +36,7 @@ export const SavingsTargetsView: React.FC<SavingsTargetsViewProps> = ({
   const sym = profile.currencySymbol;
   const [depositModalTarget, setDepositModalTarget] = useState<SavingsTarget | null>(null);
   const [depositInput, setDepositInput] = useState<string>('500');
+  const [jarViewMode, setJarViewMode] = useState<'CARDS' | 'JARS'>('JARS');
 
   const totalSaved = targets.reduce((acc, t) => acc + t.currentSavedAmount, 0);
   const totalGoals = targets.reduce((acc, t) => acc + t.targetAmount, 0);
@@ -43,6 +47,7 @@ export const SavingsTargetsView: React.FC<SavingsTargetsViewProps> = ({
     if (!depositModalTarget) return;
     const amt = parseFloat(depositInput);
     if (!isNaN(amt) && amt > 0) {
+      soundFx.playCashChime();
       onDepositToTarget(depositModalTarget.id, amt);
       setDepositModalTarget(null);
       setDepositInput('500');
@@ -101,14 +106,44 @@ export const SavingsTargetsView: React.FC<SavingsTargetsViewProps> = ({
           </p>
         </div>
 
-        <button
-          id="btn-add-new-target"
-          onClick={onOpenNewTarget}
-          className="flex items-center space-x-2 px-4 py-2.5 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-stone-950 font-bold text-sm shadow-lg shadow-cyan-500/20 transition-all cursor-pointer self-start sm:self-auto"
-        >
-          <Plus className="w-4 h-4" />
-          <span>New Savings Vault</span>
-        </button>
+        <div className="flex items-center space-x-2 self-start sm:self-auto">
+          {/* Mode Switcher */}
+          <div className="flex bg-stone-900 p-1 rounded-xl border border-stone-700">
+            <button
+              type="button"
+              onClick={() => {
+                soundFx.playCashChime();
+                setJarViewMode('JARS');
+              }}
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
+                jarViewMode === 'JARS' ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40' : 'text-stone-400'
+              }`}
+            >
+              🌊 Borcane Neon
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                soundFx.playCashChime();
+                setJarViewMode('CARDS');
+              }}
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
+                jarViewMode === 'CARDS' ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40' : 'text-stone-400'
+              }`}
+            >
+              📋 Carduri
+            </button>
+          </div>
+
+          <button
+            id="btn-add-new-target"
+            onClick={onOpenNewTarget}
+            className="flex items-center space-x-2 px-4 py-2.5 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-stone-950 font-bold text-sm shadow-lg shadow-cyan-500/20 transition-all cursor-pointer"
+          >
+            <Plus className="w-4 h-4" />
+            <span>New Savings Vault</span>
+          </button>
+        </div>
       </div>
 
       {/* Progress Banner */}
@@ -137,8 +172,21 @@ export const SavingsTargetsView: React.FC<SavingsTargetsViewProps> = ({
         </div>
       </div>
 
-      {/* Targets Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+      {/* Conditionally Render Liquid Jars vs Standard Cards */}
+      {jarViewMode === 'JARS' ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-5">
+          {targets.map((target) => (
+            <LiquidJarVisualizer
+              key={target.id}
+              target={target}
+              currencySymbol={sym}
+              onDeposit={() => setDepositModalTarget(target)}
+            />
+          ))}
+        </div>
+      ) : (
+        /* Targets Grid */
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
         {targets.map((target) => {
           const progress =
             target.targetAmount > 0
@@ -222,7 +270,8 @@ export const SavingsTargetsView: React.FC<SavingsTargetsViewProps> = ({
             </div>
           );
         })}
-      </div>
+        </div>
+      )}
 
       {/* Deposit Modal */}
       {depositModalTarget && (

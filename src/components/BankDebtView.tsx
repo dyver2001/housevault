@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import { BankDebt, HouseholdProfile } from '../types';
 import { DebtPayoffSimulatorModal } from './DebtPayoffSimulatorModal';
+import { DebtBurnEffect } from './animations/DebtBurnEffect';
 
 interface BankDebtViewProps {
   profile: HouseholdProfile;
@@ -33,6 +34,7 @@ export const BankDebtView: React.FC<BankDebtViewProps> = ({
   const [paymentModalDebt, setPaymentModalDebt] = useState<BankDebt | null>(null);
   const [paymentInput, setPaymentInput] = useState<string>('');
   const [isSimulatorOpen, setIsSimulatorOpen] = useState(false);
+  const [burningDebt, setBurningDebt] = useState<{ title: string; amount: number } | null>(null);
 
   const totalCurrentDebt = debts.reduce((acc, d) => acc + d.currentBalance, 0);
   const totalOriginalDebt = debts.reduce((acc, d) => acc + d.originalBalance, 0);
@@ -52,6 +54,7 @@ export const BankDebtView: React.FC<BankDebtViewProps> = ({
     if (!paymentModalDebt) return;
     const amt = parseFloat(paymentInput);
     if (!isNaN(amt) && amt > 0) {
+      setBurningDebt({ title: paymentModalDebt.bankName, amount: amt });
       onMakePayment(paymentModalDebt.id, amt);
       setPaymentModalDebt(null);
       setPaymentInput('');
@@ -314,6 +317,16 @@ export const BankDebtView: React.FC<BankDebtViewProps> = ({
         debts={debts}
         profile={profile}
       />
+
+      {/* Debt Burning Destruction Animation */}
+      {burningDebt && (
+        <DebtBurnEffect
+          debtTitle={burningDebt.title}
+          amount={burningDebt.amount}
+          currencySymbol={sym}
+          onComplete={() => setBurningDebt(null)}
+        />
+      )}
     </div>
   );
 };

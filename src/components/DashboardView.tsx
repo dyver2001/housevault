@@ -25,6 +25,9 @@ import {
 } from '../types';
 import { TabType } from './Navbar';
 import { DreamHouseVisualizer } from './DreamHouseVisualizer';
+import { EkgHeartbeatGlow } from './animations/EkgHeartbeatGlow';
+import { VaultDoorIntroModal } from './animations/VaultDoorIntroModal';
+import { soundFx } from '../utils/audioEffects';
 
 interface DashboardViewProps {
   profile: HouseholdProfile;
@@ -57,6 +60,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   onNavigate,
   onOpenCollectModal,
   onOpenNewProject,
+  onOpenNewExpense,
   onOpenSettings,
   onOpenScanner,
   onOpenReport,
@@ -64,6 +68,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   onOpenActivityFeed,
   onDepositMoreTarget
 }) => {
+  const [isVaultDoorOpen, setIsVaultDoorOpen] = React.useState(false);
   const sym = profile.currencySymbol;
 
   // Uncollected freelance
@@ -153,6 +158,18 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           </div>
 
           <div className="flex flex-wrap gap-3 items-center">
+            <button
+              type="button"
+              onClick={() => {
+                soundFx.playCashChime();
+                setIsVaultDoorOpen(true);
+              }}
+              className="flex items-center space-x-2 px-4 py-2.5 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 font-bold text-sm shadow-lg transition-all cursor-pointer"
+            >
+              <Vault className="w-4 h-4 text-amber-400" />
+              <span>🔓 Deschide Seiful 3D</span>
+            </button>
+
             <button
               id="btn-dash-new-project"
               onClick={onOpenNewProject}
@@ -357,6 +374,19 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             <span>House & Gear funds</span>
             <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
           </div>
+        </div>
+      </div>
+
+      {/* 💓 Live Financial Heartbeat EKG Pulse */}
+      <div className="p-3 bg-stone-900/60 border border-stone-800/80 rounded-2xl flex items-center justify-between space-x-4">
+        <div className="flex items-center space-x-2 pl-2">
+          <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping" />
+          <span className="text-xs font-bold text-emerald-400 font-mono uppercase tracking-wider">
+            Ritm Financiar Cuplu: {runwayMonths} Luni Siguranță
+          </span>
+        </div>
+        <div className="flex-1 max-w-xs sm:max-w-md">
+          <EkgHeartbeatGlow runwayMonths={parseFloat(runwayMonths) || 12} />
         </div>
       </div>
 
@@ -619,6 +649,14 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           </div>
         </div>
       </div>
+
+      {/* 3D Steel Mechanical Vault Door Intro Modal */}
+      <VaultDoorIntroModal
+        isOpen={isVaultDoorOpen}
+        onClose={() => setIsVaultDoorOpen(false)}
+        title={`${profile.husbandName.split(' ')[0]} & ${profile.wifeName.split(' ')[0]} • Seiful Familiei`}
+        subtitle="Mecanismele seifului deblocate cu succes!"
+      />
     </div>
   );
 };

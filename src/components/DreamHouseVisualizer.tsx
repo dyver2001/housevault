@@ -1,9 +1,10 @@
-import React from 'react';
-import { Car, Sparkles, Key, CheckCircle, ChevronRight, Gauge, Zap } from 'lucide-react';
+import React, { useState } from 'react';
+import { Car, Sparkles, Key, CheckCircle, ChevronRight, Gauge, Zap, Compass } from 'lucide-react';
 import { SavingsTarget } from '../types';
 
 import { soundFx } from '../utils/audioEffects';
 import { triggerConfetti } from '../utils/confetti';
+import { SeatAtecaDriveAnimation } from './animations/SeatAtecaDriveAnimation';
 
 interface DreamHouseVisualizerProps {
   targets: SavingsTarget[];
@@ -18,6 +19,8 @@ export const DreamHouseVisualizer: React.FC<DreamHouseVisualizerProps> = ({
   onDepositMore,
   lang = 'ro'
 }) => {
+  const [viewMode, setViewMode] = useState<'BUILD' | 'DRIVE'>('BUILD');
+
   // Find primary Seat Ateca / car target (or default to Seat Ateca)
   const carTarget = targets.find(
     (t) =>
@@ -56,7 +59,7 @@ export const DreamHouseVisualizer: React.FC<DreamHouseVisualizerProps> = ({
   const currentStageInfo = getStage(percent);
 
   return (
-    <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-stone-900 via-stone-850 to-emerald-950/40 border border-emerald-500/30 p-5 sm:p-6 shadow-2xl">
+    <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-stone-900 via-stone-850 to-emerald-950/40 border border-emerald-500/30 p-5 sm:p-6 shadow-2xl space-y-4">
       {/* Decorative glows */}
       <div className="absolute -right-12 -top-12 w-48 h-48 bg-emerald-500/15 rounded-full blur-3xl pointer-events-none" />
       <div className="absolute -left-12 -bottom-12 w-48 h-48 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
@@ -89,6 +92,34 @@ export const DreamHouseVisualizer: React.FC<DreamHouseVisualizerProps> = ({
         </div>
 
         <div className="flex items-center space-x-2">
+          {/* Mode Switcher */}
+          <div className="flex bg-stone-950/80 p-1 rounded-xl border border-stone-800">
+            <button
+              type="button"
+              onClick={() => {
+                soundFx.playCashChime();
+                setViewMode('BUILD');
+              }}
+              className={`px-2.5 py-1 rounded-lg text-xs font-bold transition cursor-pointer ${
+                viewMode === 'BUILD' ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40' : 'text-stone-400'
+              }`}
+            >
+              🛠️ {lang === 'ro' ? 'Atelier' : 'Workshop'}
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                soundFx.playEngineRev();
+                setViewMode('DRIVE');
+              }}
+              className={`px-2.5 py-1 rounded-lg text-xs font-bold transition cursor-pointer ${
+                viewMode === 'DRIVE' ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40' : 'text-stone-400'
+              }`}
+            >
+              🛣️ {lang === 'ro' ? 'La Drum' : 'Night Drive'}
+            </button>
+          </div>
+
           {percent >= 100 ? (
             <span
               onClick={handleCarClick}
@@ -107,12 +138,23 @@ export const DreamHouseVisualizer: React.FC<DreamHouseVisualizerProps> = ({
               className="px-3 py-1.5 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-500/40 text-emerald-300 text-xs font-bold transition flex items-center space-x-1 cursor-pointer active:scale-95"
             >
               <Sparkles className="w-3.5 h-3.5" />
-              <span>{lang === 'ro' ? 'Adaugă la Seif' : 'Deposit'}</span>
+              <span>{lang === 'ro' ? 'Adaugă' : 'Deposit'}</span>
             </button>
           )}
         </div>
       </div>
 
+      {/* Conditionally Render Night Drive Animation vs Workshop SVG */}
+      {viewMode === 'DRIVE' ? (
+        <SeatAtecaDriveAnimation
+          percent={percent}
+          currentAmount={carTarget.currentSavedAmount}
+          targetAmount={carTarget.targetAmount}
+          currencySymbol={currencySymbol}
+          lang={lang}
+        />
+      ) : (
+        <>
       {/* Visual Car Illustration (Seat Ateca SUV 4-Stage Animated SVG) */}
       <div
         onClick={handleCarClick}
@@ -357,6 +399,8 @@ export const DreamHouseVisualizer: React.FC<DreamHouseVisualizerProps> = ({
           );
         })}
       </div>
+        </>
+      )}
     </div>
   );
 };

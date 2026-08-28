@@ -16,6 +16,8 @@ import {
   SavingsTarget,
   WindfallSplitRule
 } from '../types';
+import { soundFx } from '../utils/audioEffects';
+import { triggerCoinRain } from '../utils/confetti';
 
 interface CollectPaymentModalProps {
   project: FreelanceProject;
@@ -61,6 +63,10 @@ export const CollectPaymentModal: React.FC<CollectPaymentModalProps> = ({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (collectionAmount <= 0) return;
+
+    // Play chime & Golden Coin Rain
+    soundFx.playCashChime();
+    triggerCoinRain();
 
     // Trigger celebratory confetti
     confetti({
