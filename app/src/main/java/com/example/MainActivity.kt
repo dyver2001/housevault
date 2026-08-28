@@ -7,6 +7,7 @@ import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.compose.foundation.background
 import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -52,6 +53,16 @@ fun MainAppScreen(viewModel: HouseVaultViewModel) {
     val profile by viewModel.profile.collectAsState()
     val projects by viewModel.projects.collectAsState()
     val debts by viewModel.debts.collectAsState()
+    val currentUser by viewModel.currentUser.collectAsState()
+    var dismissedAuth by remember { mutableStateOf(false) }
+
+    if (currentUser == null && !dismissedAuth) {
+        AuthScreen(
+            viewModel = viewModel,
+            onContinueOffline = { dismissedAuth = true }
+        )
+        return
+    }
 
     val pendingCount = projects.count { !it.isFullyCollected }
 
@@ -108,6 +119,31 @@ fun MainAppScreen(viewModel: HouseVaultViewModel) {
                     }
                 },
                 actions = {
+                    if (currentUser != null) {
+                        Surface(
+                            shape = RoundedCornerShape(8.dp),
+                            color = Emerald100,
+                            modifier = Modifier
+                                .clickable { viewModel.selectTab(AppTab.SHARE_APK) }
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = "👤 ${currentUser?.name?.split(" ")?.firstOrNull() ?: "Haytham"}",
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Emerald800
+                                )
+                            }
+                        }
+                    } else {
+                        TextButton(onClick = { dismissedAuth = false }) {
+                            Text("🔐 Login", fontSize = 12.sp, color = Emerald600, fontWeight = FontWeight.Bold)
+                        }
+                    }
+
                     IconButton(onClick = { viewModel.selectTab(AppTab.AI_ADVISOR) }) {
                         Icon(
                             Icons.Default.AutoAwesome,

@@ -145,3 +145,11 @@ data class HouseholdProfile(
     val themePreset: String = "emerald",
     val themeMode: String = "dark"
 )
+
+data class AuthUser(
+    val id: String,
+    val email: String,
+    val name: String,
+    val role: String = "husband",
+    val vaultCode: String? = null
+)

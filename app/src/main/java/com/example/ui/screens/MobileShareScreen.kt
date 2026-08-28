@@ -46,6 +46,7 @@ fun MobileShareScreen(viewModel: HouseVaultViewModel) {
     val syncStatusMsg by viewModel.syncStatusMessage.collectAsState()
     val deviceId by viewModel.deviceId.collectAsState()
     val deviceName by viewModel.deviceName.collectAsState()
+    val currentUser by viewModel.currentUser.collectAsState()
     val lang = profile.language
 
     var showExportDialog by remember { mutableStateOf(false) }
@@ -180,6 +181,38 @@ fun MobileShareScreen(viewModel: HouseVaultViewModel) {
                                 showRenameDialog = true
                             }) {
                                 Icon(Icons.Default.Edit, contentDescription = "Rename", modifier = Modifier.size(18.dp))
+                            }
+                        }
+                    }
+
+                    // --- LOGGED-IN USER ACCOUNT CARD ---
+                    if (currentUser != null) {
+                        Surface(
+                            shape = RoundedCornerShape(12.dp),
+                            color = Emerald50,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(12.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Surface(shape = RoundedCornerShape(8.dp), color = Emerald100) {
+                                        Icon(Icons.Default.Person, contentDescription = null, tint = Emerald700, modifier = Modifier.padding(6.dp).size(20.dp))
+                                    }
+                                    Spacer(modifier = Modifier.width(10.dp))
+                                    Column {
+                                        Text(currentUser!!.name, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.bodyMedium, color = Emerald900)
+                                        Text(currentUser!!.email, style = MaterialTheme.typography.labelSmall, color = Slate500)
+                                    }
+                                }
+
+                                TextButton(onClick = { viewModel.logout() }) {
+                                    Text(if (lang == "ro") "Ieșire" else "Logout", color = Rose700, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                                }
                             }
                         }
                     }

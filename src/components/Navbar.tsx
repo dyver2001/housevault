@@ -8,10 +8,13 @@ import {
   Sparkles,
   Settings,
   ShieldCheck,
-  Smartphone
+  Smartphone,
+  User,
+  LogOut
 } from 'lucide-react';
 import { HouseholdProfile } from '../types';
 import { translations, Language } from '../data/i18n';
+import { AuthUser } from '../data/authService';
 
 export type TabType =
   | 'dashboard'
@@ -31,6 +34,9 @@ interface NavbarProps {
   overdueCount: number;
   syncCode?: string | null;
   isSyncConnected?: boolean;
+  currentUser?: AuthUser | null;
+  onOpenAuth?: () => void;
+  onLogout?: () => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -42,7 +48,10 @@ export const Navbar: React.FC<NavbarProps> = ({
   uncollectedCount,
   overdueCount,
   syncCode,
-  isSyncConnected
+  isSyncConnected,
+  currentUser,
+  onOpenAuth,
+  onLogout
 }) => {
   const lang: Language = (profile.language as Language) || 'ro';
   const t = translations[lang] || translations.ro;
@@ -168,6 +177,28 @@ export const Navbar: React.FC<NavbarProps> = ({
                 <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
                 <span className="hidden sm:inline">{lang === 'ro' ? 'Neconectat' : 'Offline'}</span>
                 <span className="sm:hidden font-bold">{lang === 'ro' ? 'Seif' : 'Sync'}</span>
+              </button>
+            )}
+
+            {currentUser ? (
+              <button
+                onClick={onOpenAuth}
+                className="px-2.5 py-1.5 rounded-xl bg-stone-800 hover:bg-stone-750 border border-stone-700 text-stone-200 transition flex items-center space-x-1.5 text-xs font-bold cursor-pointer"
+                title={`${currentUser.name} (${currentUser.email})`}
+              >
+                <span className="w-4 h-4 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-[10px]">
+                  👤
+                </span>
+                <span className="hidden sm:inline">{currentUser.name.split(' ')[0]}</span>
+              </button>
+            ) : (
+              <button
+                onClick={onOpenAuth}
+                className="px-2.5 py-1.5 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/30 text-emerald-300 transition flex items-center space-x-1.5 text-xs font-semibold cursor-pointer"
+                title="Autentificare Cont"
+              >
+                <User className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">{lang === 'ro' ? 'Cont' : 'Account'}</span>
               </button>
             )}
 

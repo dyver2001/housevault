@@ -2,6 +2,7 @@ import express, { Request, Response } from 'express';
 import cors from 'cors';
 import path from 'path';
 import fs from 'fs';
+import crypto from 'crypto';
 import { GoogleGenAI } from '@google/genai';
 
 const app = express();
@@ -10,8 +11,69 @@ const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
 app.use(cors());
 app.use(express.json({ limit: '10mb' }));
 
-// --- PERSISTENT CLOUD VAULT SYNC STORE ---
-const VAULTS_FILE = path.join(process.cwd(), 'data', 'vaults_store.json');
+// Ensure data directory exists
+const DATA_DIR = path.join(process.cwd(), 'data');
+if (!fs.existsSync(DATA_DIR)) {
+  fs.mkdirSync(DATA_DIR, { recursive: true });
+}
+
+// --- PERSISTENT USER & CLOUD VAULT SYNC STORE ---
+const VAULTS_FILE = path.join(DATA_DIR, 'vaults_store.json');
+const USERS_FILE = path.join(DATA_DIR, 'users_store.json');
+
+interface UserEntry {
+  id: string;
+  email: string;
+  name: string;
+  role: 'husband' | 'wife';
+  passwordHash: string;
+  salt: string;
+  vaultCode: string;
+  createdAt: string;
+}
+
+let usersMap: Record<string, UserEntry> = {};
+
+try {
+  if (fs.existsSync(USERS_FILE)) {
+    const raw = fs.readFileSync(USERS_FILE, 'utf-8');
+    usersMap = JSON.parse(raw);
+    console.log(`[Auth] Loaded ${Object.keys(usersMap).length} users from disk.`);
+  }
+} catch (e) {
+  console.warn('[Auth] Initializing fresh users store.');
+}
+
+function saveUsersToDisk() {
+  try {
+    fs.writeFileSync(USERS_FILE, JSON.stringify(usersMap, null, 2), 'utf-8');
+  } catch (err) {
+    console.error('[Auth] Error saving users to disk:', err);
+  }
+}
+
+function hashPassword(password: string, salt: string): string {
+  return crypto.pbkdf2Sync(password, salt, 1000, 64, 'sha512').toString('hex');
+}
+
+function generateToken(userId: string): string {
+  const payload = Buffer.from(JSON.stringify({ userId, timestamp: Date.now() })).toString('base64');
+  const signature = crypto.createHmac('sha256', 'housevault-couple-secret-key-2026').update(payload).digest('hex');
+  return `${payload}.${signature}`;
+}
+
+function verifyToken(token: string): string | null {
+  try {
+    const [payloadBase64, signature] = token.split('.');
+    if (!payloadBase64 || !signature) return null;
+    const expectedSig = crypto.createHmac('sha256', 'housevault-couple-secret-key-2026').update(payloadBase64).digest('hex');
+    if (expectedSig !== signature) return null;
+    const payload = JSON.parse(Buffer.from(payloadBase64, 'base64').toString('utf-8'));
+    return payload.userId || null;
+  } catch {
+    return null;
+  }
+}
 
 interface DeviceEntry {
   deviceId: string;
@@ -95,6 +157,196 @@ function upsertDevice(vault: VaultPayload, device?: DeviceEntry) {
     vault.devices.push(updatedDevice);
   }
 }
+
+// --- AUTHENTICATION API ENDPOINTS ---
+
+// 1. Register a new user account
+app.post('/api/auth/register', (req: Request, res: Response) => {
+  try {
+    const { email, password, name, role, vaultCode, device } = req.body;
+    if (!email || !password || !name) {
+      return res.status(400).json({ success: false, error: 'Email, parolă și nume sunt obligatorii.' });
+    }
+
+    const cleanEmail = email.trim().toLowerCase();
+    const existing = Object.values(usersMap).find(u => u.email === cleanEmail);
+    if (existing) {
+      return res.status(400).json({ success: false, error: 'Un cont cu această adresă de email există deja.' });
+    }
+
+    let code = (vaultCode || '').toUpperCase().trim().replace(/[^A-Z0-9-]/g, '');
+    if (!code || !vaultsMap[code]) {
+      // Create new vault room if none provided or not existing
+      code = code || generateVaultCode();
+      if (!vaultsMap[code]) {
+        vaultsMap[code] = {
+          vaultCode: code,
+          version: 1,
+          lastUpdated: new Date().toISOString(),
+          lastUpdatedBy: name,
+          devices: device ? [{ ...device, lastSeen: new Date().toISOString() }] : [],
+          data: {}
+        };
+        saveVaultsToDisk();
+      }
+    } else if (device && vaultsMap[code]) {
+      upsertDevice(vaultsMap[code], device);
+      saveVaultsToDisk();
+    }
+
+    const salt = crypto.randomBytes(16).toString('hex');
+    const passwordHash = hashPassword(password, salt);
+    const userId = `USR-${crypto.randomBytes(4).toString('hex').toUpperCase()}`;
+
+    const newUser: UserEntry = {
+      id: userId,
+      email: cleanEmail,
+      name: name.trim(),
+      role: role === 'husband' ? 'husband' : 'wife',
+      passwordHash,
+      salt,
+      vaultCode: code,
+      createdAt: new Date().toISOString()
+    };
+
+    usersMap[userId] = newUser;
+    saveUsersToDisk();
+
+    const token = generateToken(userId);
+    console.log(`[Auth] Registered user: ${cleanEmail} (${name}) linked to vault ${code}`);
+
+    res.json({
+      success: true,
+      token,
+      user: {
+        id: newUser.id,
+        email: newUser.email,
+        name: newUser.name,
+        role: newUser.role,
+        vaultCode: newUser.vaultCode
+      },
+      vault: vaultsMap[code]
+    });
+  } catch (error: any) {
+    res.status(500).json({ success: false, error: error?.message });
+  }
+});
+
+// 2. Login with email & password
+app.post('/api/auth/login', (req: Request, res: Response) => {
+  try {
+    const { email, password, device } = req.body;
+    if (!email || !password) {
+      return res.status(400).json({ success: false, error: 'Email și parola sunt obligatorii.' });
+    }
+
+    const cleanEmail = email.trim().toLowerCase();
+    const user = Object.values(usersMap).find(u => u.email === cleanEmail);
+    if (!user) {
+      return res.status(401).json({ success: false, error: 'Email sau parolă incorectă.' });
+    }
+
+    const incomingHash = hashPassword(password, user.salt);
+    if (incomingHash !== user.passwordHash) {
+      return res.status(401).json({ success: false, error: 'Email sau parolă incorectă.' });
+    }
+
+    // Upsert device to user's vault if connected
+    if (device && user.vaultCode && vaultsMap[user.vaultCode]) {
+      upsertDevice(vaultsMap[user.vaultCode], device);
+      saveVaultsToDisk();
+      broadcastVaultUpdate(user.vaultCode, vaultsMap[user.vaultCode]);
+    }
+
+    const token = generateToken(user.id);
+    console.log(`[Auth] User logged in: ${cleanEmail} (${user.name})`);
+
+    res.json({
+      success: true,
+      token,
+      user: {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        role: user.role,
+        vaultCode: user.vaultCode
+      },
+      vault: user.vaultCode ? vaultsMap[user.vaultCode] : null
+    });
+  } catch (error: any) {
+    res.status(500).json({ success: false, error: error?.message });
+  }
+});
+
+// 3. Get current authenticated user
+app.get('/api/auth/me', (req: Request, res: Response) => {
+  try {
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return res.status(401).json({ success: false, error: 'Neautorizat' });
+    }
+
+    const token = authHeader.substring(7);
+    const userId = verifyToken(token);
+    if (!userId || !usersMap[userId]) {
+      return res.status(401).json({ success: false, error: 'Sesiune expirată sau invalidă' });
+    }
+
+    const user = usersMap[userId];
+    res.json({
+      success: true,
+      user: {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        role: user.role,
+        vaultCode: user.vaultCode
+      },
+      vault: user.vaultCode ? vaultsMap[user.vaultCode] : null
+    });
+  } catch (error: any) {
+    res.status(500).json({ success: false, error: error?.message });
+  }
+});
+
+// 4. Link user account to another vault
+app.post('/api/auth/link-vault', (req: Request, res: Response) => {
+  try {
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return res.status(401).json({ success: false, error: 'Neautorizat' });
+    }
+
+    const token = authHeader.substring(7);
+    const userId = verifyToken(token);
+    if (!userId || !usersMap[userId]) {
+      return res.status(401).json({ success: false, error: 'Sesiune invalidă' });
+    }
+
+    const { vaultCode, device } = req.body;
+    const cleanCode = (vaultCode || '').toUpperCase().trim();
+    if (!vaultsMap[cleanCode]) {
+      return res.status(404).json({ success: false, error: 'Codul de seif nu a fost găsit.' });
+    }
+
+    usersMap[userId].vaultCode = cleanCode;
+    saveUsersToDisk();
+
+    if (device) {
+      upsertDevice(vaultsMap[cleanCode], device);
+      saveVaultsToDisk();
+      broadcastVaultUpdate(cleanCode, vaultsMap[cleanCode]);
+    }
+
+    res.json({
+      success: true,
+      vaultCode: cleanCode,
+      vault: vaultsMap[cleanCode]
+    });
+  } catch (error: any) {
+    res.status(500).json({ success: false, error: error?.message });
+  }
+});
 
 // --- SYNC API ENDPOINTS ---
 

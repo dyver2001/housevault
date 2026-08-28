@@ -48,9 +48,29 @@ class HouseVaultViewModel(application: Application) : AndroidViewModel(applicati
     val serverUrl: StateFlow<String> = repository.serverUrl
     val deviceId: StateFlow<String> = repository.deviceId
     val deviceName: StateFlow<String> = repository.deviceName
+    val currentUser: StateFlow<AuthUser?> = repository.currentUser
+    val authToken: StateFlow<String?> = repository.authToken
 
     private val _syncStatusMessage = MutableStateFlow<String?>(null)
     val syncStatusMessage: StateFlow<String?> = _syncStatusMessage.asStateFlow()
+
+    fun login(email: String, pass: String, onDone: (Boolean, String?) -> Unit) {
+        viewModelScope.launch {
+            val res = repository.login(email, pass)
+            onDone(res.success, res.errorMessage)
+        }
+    }
+
+    fun register(email: String, pass: String, name: String, role: String, vaultCode: String?, onDone: (Boolean, String?) -> Unit) {
+        viewModelScope.launch {
+            val res = repository.register(email, pass, name, role, vaultCode)
+            onDone(res.success, res.errorMessage)
+        }
+    }
+
+    fun logout() {
+        repository.logout()
+    }
 
     fun updateDeviceName(name: String) {
         repository.updateDeviceName(name)

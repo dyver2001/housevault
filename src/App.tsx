@@ -13,6 +13,7 @@ import { DebtFormModal } from './components/DebtFormModal';
 import { TargetFormModal } from './components/TargetFormModal';
 import { ExpenseFormModal } from './components/ExpenseFormModal';
 import { InstallPhoneModal } from './components/InstallPhoneModal';
+import { AuthModal } from './components/AuthModal';
 
 import {
   loadProfile,
@@ -41,6 +42,12 @@ import {
   subscribeToLiveVault
 } from './data/syncService';
 import {
+  AuthUser,
+  getStoredUser,
+  checkAuthMe,
+  logoutAccount
+} from './data/authService';
+import {
   HouseholdProfile,
   FreelanceProject,
   BankDebt,
@@ -60,11 +67,31 @@ export const App: React.FC = () => {
   const [expenses, setExpenses] = useState<HouseholdExpense[]>(loadExpenses);
   const [splitRule, setSplitRule] = useState<WindfallSplitRule>(loadSplitRule);
 
+  // Authentication State
+  const [currentUser, setCurrentUser] = useState<AuthUser | null>(getStoredUser);
+  const [showAuthModal, setShowAuthModal] = useState<boolean>(false);
+
   // Cloud Sync State
   const [syncCode, setSyncCode] = useState<string | null>(getStoredVaultCode);
   const [isSyncConnected, setIsSyncConnected] = useState<boolean>(false);
   const [lastSyncTime, setLastSyncTime] = useState<string | null>(null);
   const isInternalUpdate = useRef<boolean>(false);
+
+  // Check auth on mount
+  useEffect(() => {
+    checkAuthMe().then((res) => {
+      if (res.success && res.user) {
+        setCurrentUser(res.user);
+        if (res.user.vaultCode) {
+          setSyncCode(res.user.vaultCode);
+          setStoredVaultCode(res.user.vaultCode);
+        }
+        if (res.vault?.data) {
+          applyRemoteSnapshot(res.vault.data);
+        }
+      }
+    });
+  }, []);
 
   // Modals state
   const [collectProject, setCollectProject] = useState<FreelanceProject | null>(null);
@@ -429,6 +456,12 @@ export const App: React.FC = () => {
         overdueCount={overdueCount}
         syncCode={syncCode}
         isSyncConnected={isSyncConnected}
+        currentUser={currentUser}
+        onOpenAuth={() => setShowAuthModal(true)}
+        onLogout={() => {
+          logoutAccount();
+          setCurrentUser(null);
+        }}
       />
 
       {/* Main Tab View */}
@@ -600,6 +633,23 @@ export const App: React.FC = () => {
           onSave={handleSaveExpense}
         />
       )}
+
+      {/* Auth Modal */}
+      <AuthModal
+        isOpen={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
+        onAuthSuccess={(user, vaultData) => {
+          setCurrentUser(user);
+          if (user.vaultCode) {
+            setSyncCode(user.vaultCode);
+            setStoredVaultCode(user.vaultCode);
+          }
+          if (vaultData) {
+            applyRemoteSnapshot(vaultData);
+          }
+        }}
+        lang={profile.language || 'ro'}
+      />
     </div>
   );
 };

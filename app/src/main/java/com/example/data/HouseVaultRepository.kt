@@ -48,6 +48,75 @@ class HouseVaultRepository(context: Context) {
     private val _deviceName = MutableStateFlow(prefs.getString("device_name", "📱 Telefon Haytham (Android)") ?: "📱 Telefon Haytham (Android)")
     val deviceName: StateFlow<String> = _deviceName.asStateFlow()
 
+    private val _currentUser = MutableStateFlow<AuthUser?>(loadStoredUser())
+    val currentUser: StateFlow<AuthUser?> = _currentUser.asStateFlow()
+
+    private val _authToken = MutableStateFlow<String?>(prefs.getString("auth_token", null))
+    val authToken: StateFlow<String?> = _authToken.asStateFlow()
+
+    private fun loadStoredUser(): AuthUser? {
+        val id = prefs.getString("user_id", null) ?: return null
+        val email = prefs.getString("user_email", "") ?: ""
+        val name = prefs.getString("user_name", "") ?: ""
+        val role = prefs.getString("user_role", "husband") ?: "husband"
+        val code = prefs.getString("user_vault_code", null)
+        return AuthUser(id = id, email = email, name = name, role = role, vaultCode = code)
+    }
+
+    private fun saveStoredUser(user: AuthUser?, token: String?) {
+        _currentUser.value = user
+        _authToken.value = token
+        val editor = prefs.edit()
+        if (user != null && token != null) {
+            editor.putString("auth_token", token)
+            editor.putString("user_id", user.id)
+            editor.putString("user_email", user.email)
+            editor.putString("user_name", user.name)
+            editor.putString("user_role", user.role)
+            editor.putString("user_vault_code", user.vaultCode)
+        } else {
+            editor.remove("auth_token")
+            editor.remove("user_id")
+            editor.remove("user_email")
+            editor.remove("user_name")
+            editor.remove("user_role")
+            editor.remove("user_vault_code")
+        }
+        editor.apply()
+    }
+
+    suspend fun login(email: String, pass: String): AuthResult {
+        val res = AuthService.login(_serverUrl.value, email, pass, getDeviceInfoJson())
+        if (res.success && res.user != null && res.token != null) {
+            saveStoredUser(res.user, res.token)
+            if (res.user.vaultCode != null) {
+                setSyncCode(res.user.vaultCode)
+            }
+            if (res.vaultData != null) {
+                importFullDataFromJsonObject(res.vaultData)
+            }
+        }
+        return res
+    }
+
+    suspend fun register(email: String, pass: String, name: String, role: String, vaultCode: String?): AuthResult {
+        val res = AuthService.register(_serverUrl.value, email, pass, name, role, vaultCode, getDeviceInfoJson())
+        if (res.success && res.user != null && res.token != null) {
+            saveStoredUser(res.user, res.token)
+            if (res.user.vaultCode != null) {
+                setSyncCode(res.user.vaultCode)
+            }
+            if (res.vaultData != null) {
+                importFullDataFromJsonObject(res.vaultData)
+            }
+        }
+        return res
+    }
+
+    fun logout() {
+        saveStoredUser(null, null)
+    }
+
     private fun getOrCreateDeviceId(): String {
         var id = prefs.getString("device_id", null)
         if (id == null) {
