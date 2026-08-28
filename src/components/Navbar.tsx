@@ -84,9 +84,12 @@ export const Navbar: React.FC<NavbarProps> = ({
   ];
 
   return (
-    <header className="sticky top-0 z-40 bg-stone-900/90 backdrop-blur-md border-b border-stone-800">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
+    <header
+      className="sticky top-0 z-40 bg-stone-900/95 backdrop-blur-md border-b border-stone-800 transition-all"
+      style={{ paddingTop: 'max(env(safe-area-inset-top, 0px), 12px)' }}
+    >
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-1">
+        <div className="flex items-center justify-between h-14 sm:h-16">
           {/* Logo & Couple Tag */}
           <div className="flex items-center space-x-3 cursor-pointer" onClick={() => onSelectTab('dashboard')}>
             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500 via-orange-500 to-emerald-600 flex items-center justify-center shadow-lg shadow-amber-500/10">

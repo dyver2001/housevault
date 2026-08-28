@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Navbar, TabType } from './components/Navbar';
 import { DashboardView } from './components/DashboardView';
 import { FreelanceCollectorView } from './components/FreelanceCollectorView';
@@ -502,7 +502,10 @@ export const App: React.FC = () => {
       </main>
 
       {/* Footer */}
-      <footer className="border-t border-stone-800/80 py-6 text-center text-xs text-stone-400">
+      <footer
+        className="border-t border-stone-800/80 py-6 text-center text-xs text-stone-400"
+        style={{ paddingBottom: 'max(env(safe-area-inset-bottom, 0px), 24px)' }}
+      >
         <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
           <span>HouseVault • Steady Foundation & Accelerated Wealth Engine</span>
           <span>{profile.husbandName} & {profile.wifeName}</span>
