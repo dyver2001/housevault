@@ -421,7 +421,10 @@ fun CashFlowCalendarScreen(
                                         if (isPaid) {
                                             Surface(
                                                 shape = RoundedCornerShape(8.dp),
-                                                color = EmeraldPrimary.copy(alpha = 0.2f)
+                                                color = EmeraldPrimary.copy(alpha = 0.2f),
+                                                modifier = Modifier.clickable {
+                                                    paidEvents.remove(event.title)
+                                                }
                                             ) {
                                                 Row(
                                                     modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
@@ -429,7 +432,7 @@ fun CashFlowCalendarScreen(
                                                     horizontalArrangement = Arrangement.spacedBy(4.dp)
                                                 ) {
                                                     Icon(Icons.Default.CheckCircle, contentDescription = null, tint = EmeraldPrimary, modifier = Modifier.size(14.dp))
-                                                    Text(if (event.isIncome) "Încasat" else "Plătit cu Succes", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = EmeraldPrimary)
+                                                    Text(if (event.isIncome) "Încasat ✓ (Apasă pt. anulare)" else "Plătit cu Succes ✓ (Apasă pt. anulare)", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = EmeraldPrimary)
                                                 }
                                             }
                                         } else {
@@ -443,7 +446,7 @@ fun CashFlowCalendarScreen(
                                                 modifier = Modifier.height(32.dp)
                                             ) {
                                                 Text(
-                                                    if (event.isIncome) "Marchează Încasat" else "Plătește Acum",
+                                                    if (event.isIncome) "Marchează Încasat" else "Plătește Rata",
                                                     fontSize = 11.sp,
                                                     fontWeight = FontWeight.Bold,
                                                     color = if (event.isIncome) Slate900 else Color.White

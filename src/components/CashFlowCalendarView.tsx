@@ -12,7 +12,8 @@ import {
   Sparkles,
   ArrowDownRight,
   ArrowUpRight,
-  X
+  X,
+  RotateCcw
 } from 'lucide-react';
 import { HouseholdProfile, FreelanceProject, BankDebt, HouseholdExpense } from '../types';
 
@@ -158,14 +159,17 @@ export const CashFlowCalendarView: React.FC<CashFlowCalendarViewProps> = ({
     year: 'numeric'
   });
 
-  const handlePayEvent = (ev: CalendarEvent) => {
-    setPaidEventIds((prev) => ({ ...prev, [ev.id]: true }));
-    if (ev.type === 'DEBT' && onPayDebt && ev.rawId) {
-      onPayDebt(ev.rawId, ev.amount);
-    } else if (ev.type === 'BILL' && onPayExpense && ev.rawId) {
-      onPayExpense(ev.rawId, ev.amount, ev.title);
-    } else if (ev.type === 'INCOME' && onCollectProject && ev.rawId) {
-      onCollectProject(ev.rawId, ev.amount);
+  const handleTogglePayEvent = (ev: CalendarEvent) => {
+    const wasPaid = !!paidEventIds[ev.id];
+    setPaidEventIds((prev) => ({ ...prev, [ev.id]: !wasPaid }));
+    if (!wasPaid) {
+      if (ev.type === 'DEBT' && onPayDebt && ev.rawId) {
+        onPayDebt(ev.rawId, ev.amount);
+      } else if (ev.type === 'BILL' && onPayExpense && ev.rawId) {
+        onPayExpense(ev.rawId, ev.amount, ev.title);
+      } else if (ev.type === 'INCOME' && onCollectProject && ev.rawId) {
+        onCollectProject(ev.rawId, ev.amount);
+      }
     }
   };
 
@@ -426,14 +430,21 @@ export const CashFlowCalendarView: React.FC<CashFlowCalendarViewProps> = ({
                         </span>
 
                         {isPaid ? (
-                          <div className="inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-xs font-bold shadow-sm">
-                            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
-                            <span>{isIncome ? 'Încasat' : 'Plătit cu Succes'}</span>
-                          </div>
+                          <button
+                            type="button"
+                            onClick={() => handleTogglePayEvent(ev)}
+                            className="inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-emerald-500/20 hover:bg-rose-500/20 border border-emerald-500/40 hover:border-rose-500/40 text-emerald-300 hover:text-rose-300 text-xs font-bold shadow-sm transition group cursor-pointer active:scale-95"
+                            title="Apasă pentru a anula și a reveni la neplătit"
+                          >
+                            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 group-hover:hidden" />
+                            <RotateCcw className="w-3.5 h-3.5 text-rose-400 hidden group-hover:inline" />
+                            <span className="group-hover:hidden">{isIncome ? 'Încasat ✓' : 'Plătit cu Succes ✓'}</span>
+                            <span className="hidden group-hover:inline">Anulează / Revino</span>
+                          </button>
                         ) : (
                           <button
                             type="button"
-                            onClick={() => handlePayEvent(ev)}
+                            onClick={() => handleTogglePayEvent(ev)}
                             className={`px-4 py-2 rounded-xl text-xs font-black transition active:scale-95 shadow-md flex items-center space-x-1.5 cursor-pointer ${
                               isIncome
                                 ? 'bg-emerald-500 hover:bg-emerald-400 text-stone-950 shadow-emerald-500/20'
