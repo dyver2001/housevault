@@ -2,15 +2,22 @@ package com.example.data
 
 import android.content.Context
 import android.content.SharedPreferences
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
 import org.json.JSONArray
 import org.json.JSONObject
 
 class HouseVaultRepository(context: Context) {
     private val prefs: SharedPreferences =
         context.getSharedPreferences("house_vault_data", Context.MODE_PRIVATE)
+
+    private val repoScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
 
     private val _profile = MutableStateFlow(loadProfile())
     val profile: StateFlow<HouseholdProfile> = _profile.asStateFlow()
@@ -32,6 +39,43 @@ class HouseVaultRepository(context: Context) {
 
     private val _vaultSyncCode = MutableStateFlow(prefs.getString("vault_sync_code", null))
     val vaultSyncCode: StateFlow<String?> = _vaultSyncCode.asStateFlow()
+
+    init {
+        // Continuous Live Polling loop for couple sync (every 4 seconds)
+        repoScope.launch {
+            while (true) {
+                try {
+                    val code = _vaultSyncCode.value
+                    if (code != null && !_isSyncing.value) {
+                        val (ok, dataJson) = CloudSyncService.fetchVaultSnapshot(_serverUrl.value, code)
+                        if (ok && dataJson != null) {
+                            importFullDataFromJsonObject(dataJson)
+                        }
+                    }
+                } catch (e: Exception) {
+                    // network retry
+                }
+                delay(4000)
+            }
+        }
+    }
+
+    private fun triggerAutoPush() {
+        val code = _vaultSyncCode.value ?: return
+        repoScope.launch {
+            try {
+                CloudSyncService.pushVaultUpdate(
+                    _serverUrl.value,
+                    code,
+                    exportFullDataAsJsonObject(),
+                    _deviceName.value,
+                    getDeviceInfoJson()
+                )
+            } catch (e: Exception) {
+                // ignore
+            }
+        }
+    }
 
     private val _isSyncing = MutableStateFlow(false)
     val isSyncing: StateFlow<Boolean> = _isSyncing.asStateFlow()
@@ -217,6 +261,7 @@ class HouseVaultRepository(context: Context) {
     fun updateProfile(newProfile: HouseholdProfile) {
         _profile.value = newProfile
         saveProfile(newProfile)
+        triggerAutoPush()
     }
 
     // --- Freelance Projects Actions ---
@@ -224,18 +269,21 @@ class HouseVaultRepository(context: Context) {
         val updated = listOf(project) + _projects.value
         _projects.value = updated
         saveProjects(updated)
+        triggerAutoPush()
     }
 
     fun updateProject(project: FreelanceProject) {
         val updated = _projects.value.map { if (it.id == project.id) project else it }
         _projects.value = updated
         saveProjects(updated)
+        triggerAutoPush()
     }
 
     fun deleteProject(projectId: String) {
         val updated = _projects.value.filterNot { it.id == projectId }
         _projects.value = updated
         saveProjects(updated)
+        triggerAutoPush()
     }
 
     fun collectProjectPayment(projectId: String, collectedAmount: Double, autoSplit: Boolean = true) {
@@ -243,7 +291,9 @@ class HouseVaultRepository(context: Context) {
         val newDeposit = (project.depositReceived + collectedAmount).coerceAtMost(project.totalFee)
         val newStatus = if (newDeposit >= project.totalFee) ProjectStatus.COLLECTED else project.status
         val updatedProject = project.copy(depositReceived = newDeposit, status = newStatus)
-        updateProject(updatedProject)
+        val updated = _projects.value.map { if (it.id == updatedProject.id) updatedProject else it }
+        _projects.value = updated
+        saveProjects(updated)
 
         if (autoSplit && collectedAmount > 0) {
             val splits = _splitRule.value.calculateSplit(collectedAmount)
@@ -257,6 +307,7 @@ class HouseVaultRepository(context: Context) {
                 applyDepositToTopTarget(savingsPart)
             }
         }
+        triggerAutoPush()
     }
 
     // --- Debt Actions ---
@@ -264,25 +315,31 @@ class HouseVaultRepository(context: Context) {
         val updated = _debts.value + debt
         _debts.value = updated
         saveDebts(updated)
+        triggerAutoPush()
     }
 
     fun updateDebt(debt: BankDebt) {
         val updated = _debts.value.map { if (it.id == debt.id) debt else it }
         _debts.value = updated
         saveDebts(updated)
+        triggerAutoPush()
     }
 
     fun deleteDebt(debtId: String) {
         val updated = _debts.value.filterNot { it.id == debtId }
         _debts.value = updated
         saveDebts(updated)
+        triggerAutoPush()
     }
 
     fun makeDebtPayment(debtId: String, paymentAmount: Double) {
         val debt = _debts.value.find { it.id == debtId } ?: return
         val newBalance = (debt.currentBalance - paymentAmount).coerceAtLeast(0.0)
         val updatedDebt = debt.copy(currentBalance = newBalance)
-        updateDebt(updatedDebt)
+        val updated = _debts.value.map { if (it.id == updatedDebt.id) updatedDebt else it }
+        _debts.value = updated
+        saveDebts(updated)
+        triggerAutoPush()
     }
 
     private fun applyPaymentToTopDebt(amount: Double) {
@@ -299,25 +356,31 @@ class HouseVaultRepository(context: Context) {
         val updated = _targets.value + target
         _targets.value = updated
         saveTargets(updated)
+        triggerAutoPush()
     }
 
     fun updateTarget(target: SavingsTarget) {
         val updated = _targets.value.map { if (it.id == target.id) target else it }
         _targets.value = updated
         saveTargets(updated)
+        triggerAutoPush()
     }
 
     fun deleteTarget(targetId: String) {
         val updated = _targets.value.filterNot { it.id == targetId }
         _targets.value = updated
         saveTargets(updated)
+        triggerAutoPush()
     }
 
     fun depositToTarget(targetId: String, depositAmount: Double) {
         val target = _targets.value.find { it.id == targetId } ?: return
         val newAmount = target.currentSavedAmount + depositAmount
         val updated = target.copy(currentSavedAmount = newAmount)
-        updateTarget(updated)
+        val updatedList = _targets.value.map { if (it.id == updated.id) updated else it }
+        _targets.value = updatedList
+        saveTargets(updatedList)
+        triggerAutoPush()
     }
 
     private fun applyDepositToTopTarget(amount: Double) {
@@ -332,24 +395,28 @@ class HouseVaultRepository(context: Context) {
         val updated = _expenses.value + expense
         _expenses.value = updated
         saveExpenses(updated)
+        triggerAutoPush()
     }
 
     fun updateExpense(expense: HouseholdExpense) {
         val updated = _expenses.value.map { if (it.id == expense.id) expense else it }
         _expenses.value = updated
         saveExpenses(updated)
+        triggerAutoPush()
     }
 
     fun deleteExpense(expenseId: String) {
         val updated = _expenses.value.filterNot { it.id == expenseId }
         _expenses.value = updated
         saveExpenses(updated)
+        triggerAutoPush()
     }
 
     // --- Split Rule Actions ---
     fun updateSplitRule(rule: WindfallSplitRule) {
         _splitRule.value = rule
         saveSplitRule(rule)
+        triggerAutoPush()
     }
 
     fun resetToDefaultSampleData() {
@@ -557,15 +624,21 @@ class HouseVaultRepository(context: Context) {
             val root = JSONObject(jsonString)
             if (root.has("profile")) {
                 val p = root.getJSONObject("profile")
+                val current = _profile.value
                 val loadedProfile = HouseholdProfile(
-                    currencySymbol = p.optString("currencySymbol", "$"),
-                    currencyCode = p.optString("currencyCode", "USD"),
-                    husbandName = p.optString("husbandName", "Alex (Videographer)"),
-                    wifeName = p.optString("wifeName", "Elena (IT Support)"),
-                    wifeMonthlySalary = p.optDouble("wifeMonthlySalary", 3200.0),
-                    husbandEstMonthlyGross = p.optDouble("husbandEstMonthlyGross", 5500.0)
+                    currencySymbol = p.optString("currencySymbol", current.currencySymbol),
+                    currencyCode = p.optString("currencyCode", current.currencyCode),
+                    husbandName = p.optString("husbandName", current.husbandName),
+                    wifeName = p.optString("wifeName", current.wifeName),
+                    wifeMonthlySalary = p.optDouble("wifeMonthlySalary", current.wifeMonthlySalary),
+                    husbandEstMonthlyGross = p.optDouble("husbandEstMonthlyGross", current.husbandEstMonthlyGross),
+                    emergencyFundMonthsGoal = p.optInt("emergencyFundMonthsGoal", current.emergencyFundMonthsGoal),
+                    language = p.optString("language", current.language),
+                    themePreset = p.optString("themePreset", current.themePreset),
+                    themeMode = p.optString("themeMode", current.themeMode)
                 )
-                updateProfile(loadedProfile)
+                _profile.value = loadedProfile
+                saveProfile(loadedProfile)
             }
 
             if (root.has("projects")) {
