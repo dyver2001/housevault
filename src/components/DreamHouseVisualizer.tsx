@@ -1,5 +1,5 @@
-﻿import React, { useState } from 'react';
-import { Home, Sparkles, Key, CheckCircle, ChevronRight, Award, Flame } from 'lucide-react';
+import React from 'react';
+import { Car, Sparkles, Key, CheckCircle, ChevronRight, Gauge, Zap } from 'lucide-react';
 import { SavingsTarget } from '../types';
 
 interface DreamHouseVisualizerProps {
@@ -15,28 +15,36 @@ export const DreamHouseVisualizer: React.FC<DreamHouseVisualizerProps> = ({
   onDepositMore,
   lang = 'ro'
 }) => {
-  // Find the primary house target (or default to the largest target)
-  const houseTarget = targets.find(
-    (t) => t.title.toLowerCase().includes('cas') || t.title.toLowerCase().includes('house') || t.title.toLowerCase().includes('avans')
+  // Find primary car/auto target (or default to top savings target)
+  const carTarget = targets.find(
+    (t) =>
+      t.title.toLowerCase().includes('masin') ||
+      t.title.toLowerCase().includes('mașin') ||
+      t.title.toLowerCase().includes('car') ||
+      t.title.toLowerCase().includes('auto') ||
+      t.title.toLowerCase().includes('bmw') ||
+      t.title.toLowerCase().includes('audi') ||
+      t.title.toLowerCase().includes('porsche') ||
+      t.title.toLowerCase().includes('tesla')
   ) || targets[0] || {
-    id: 'default-house',
-    title: 'Avans Casă de Vis (3 Camere)',
-    targetAmount: 150000,
+    id: 'default-car',
+    title: 'Mașina Noastră de Vis (BMW / Sport Edition)',
+    targetAmount: 85000,
     currentSavedAmount: 38500,
     priority: 'CRITICAL',
-    category: 'HOUSING',
+    category: 'VEHICLE',
     deadline: '2027-12-31',
-    iconName: 'home'
+    iconName: 'car'
   };
 
-  const percent = Math.min(100, Math.round((houseTarget.currentSavedAmount / (houseTarget.targetAmount || 1)) * 100));
+  const percent = Math.min(100, Math.round((carTarget.currentSavedAmount / (carTarget.targetAmount || 1)) * 100));
 
-  // Determine construction stage
+  // Determine car assembly stage
   const getStage = (pct: number) => {
-    if (pct < 25) return { stage: 1, label: lang === 'ro' ? 'Fundație & Terasament' : 'Foundation & Groundwork', icon: '🏗️', next: 25 };
-    if (pct < 50) return { stage: 2, label: lang === 'ro' ? 'Zidărie Cărămidă & Geamuri' : 'Brick Walls & Windows', icon: '🧱', next: 50 };
-    if (pct < 75) return { stage: 3, label: lang === 'ro' ? 'Acoperiș & Panouri Solare' : 'Roof & Solar Panels', icon: '🏠', next: 75 };
-    return { stage: 4, label: lang === 'ro' ? 'Casa Finalizată • Cheia în Mână!' : 'Completed • Keys in Hand!', icon: '🔑', next: 100 };
+    if (pct < 25) return { stage: 1, label: lang === 'ro' ? 'Șasiu Sport, Suspensie & Jante Aliaj' : 'Sport Chassis & Alloy Wheels', icon: '🛞', next: 25 };
+    if (pct < 50) return { stage: 2, label: lang === 'ro' ? 'Caroserie Aerodinamică & Geamuri Fumurii' : 'Aerodynamic Body & Tinted Glass', icon: '🏎️', next: 50 };
+    if (pct < 75) return { stage: 3, label: lang === 'ro' ? 'Motor Twin-Turbo, Cockpit & Faruri Matrix LED' : 'Twin-Turbo Engine & Matrix LEDs', icon: '⚡', next: 75 };
+    return { stage: 4, label: lang === 'ro' ? 'Mașina Visurilor Gata de Drum • Cheia în Mână!' : 'Dream Car Ready • Keys in Hand!', icon: '🔑', next: 100 };
   };
 
   const currentStageInfo = getStage(percent);
@@ -50,22 +58,22 @@ export const DreamHouseVisualizer: React.FC<DreamHouseVisualizerProps> = ({
       {/* Top Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 relative z-10">
         <div className="flex items-center space-x-3">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-500 to-emerald-500 p-0.5 shadow-lg shadow-emerald-500/20">
-            <div className="w-full h-full bg-stone-950 rounded-[14px] flex items-center justify-center text-amber-400">
-              <Home className="w-6 h-6" />
+          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-500 via-emerald-500 to-cyan-500 p-0.5 shadow-lg shadow-emerald-500/20">
+            <div className="w-full h-full bg-stone-950 rounded-[14px] flex items-center justify-center text-emerald-400">
+              <Car className="w-6 h-6" />
             </div>
           </div>
           <div>
             <div className="flex items-center space-x-2">
               <h3 className="text-base font-black text-white font-display">
-                {lang === 'ro' ? 'Constructorul Casei Noastre de Vis' : 'Dream House Visual Builder'}
+                {lang === 'ro' ? 'Constructorul Mașinii Noastre de Vis' : 'Dream Car Visual Builder'}
               </h3>
               <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 text-[10px] font-bold">
-                {percent}% {lang === 'ro' ? 'Gata' : 'Built'}
+                {percent}% {lang === 'ro' ? 'Construit' : 'Built'}
               </span>
             </div>
             <p className="text-xs text-stone-400">
-              {houseTarget.title} • {houseTarget.currentSavedAmount.toLocaleString()} / {houseTarget.targetAmount.toLocaleString()} {currencySymbol}
+              {carTarget.title} • {carTarget.currentSavedAmount.toLocaleString()} / {carTarget.targetAmount.toLocaleString()} {currencySymbol}
             </p>
           </div>
         </div>
@@ -79,7 +87,7 @@ export const DreamHouseVisualizer: React.FC<DreamHouseVisualizerProps> = ({
           ) : (
             <button
               type="button"
-              onClick={() => onDepositMore && onDepositMore(houseTarget.id)}
+              onClick={() => onDepositMore && onDepositMore(carTarget.id)}
               className="px-3 py-1.5 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-500/40 text-emerald-300 text-xs font-bold transition flex items-center space-x-1 cursor-pointer"
             >
               <Sparkles className="w-3.5 h-3.5" />
@@ -89,116 +97,166 @@ export const DreamHouseVisualizer: React.FC<DreamHouseVisualizerProps> = ({
         </div>
       </div>
 
-      {/* Visual House Illustration (4-Stage Architectural SVG) */}
-      <div className="my-5 p-4 rounded-2xl bg-stone-950/70 border border-stone-800/80 flex flex-col items-center justify-center relative z-10">
+      {/* Visual Car Illustration (4-Stage Animated SVG) */}
+      <div className="my-5 p-4 rounded-2xl bg-stone-950/80 border border-stone-800/80 flex flex-col items-center justify-center relative z-10 overflow-hidden">
         <svg
-          viewBox="0 0 400 220"
-          className="w-full max-w-md h-44 transition-all duration-700 select-none"
+          viewBox="0 0 460 210"
+          className="w-full max-w-lg h-44 transition-all duration-700 select-none"
         >
-          {/* Ground Base */}
-          <rect x="20" y="195" width="360" height="15" rx="7" fill="#292524" />
-          <path d="M 20 195 Q 200 190 380 195" stroke="#10b981" strokeWidth="3" fill="none" opacity="0.6" />
+          <defs>
+            {/* Gradients for car body & neon glow */}
+            <linearGradient id="carBodyGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stopColor="#059669" />
+              <stop offset="50%" stopColor="#10b981" />
+              <stop offset="100%" stopColor="#047857" />
+            </linearGradient>
+            <linearGradient id="carGlassGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" stopColor="#38bdf8" stopOpacity="0.9" />
+              <stop offset="100%" stopColor="#0369a1" stopOpacity="0.6" />
+            </linearGradient>
+            <linearGradient id="headlightBeam" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stopColor="#38bdf8" stopOpacity="0.8" />
+              <stop offset="100%" stopColor="#38bdf8" stopOpacity="0" />
+            </linearGradient>
+          </defs>
 
-          {/* STAGE 1: FOUNDATION (Visible always, glowing if >= 25%) */}
+          {/* Asphalt Road & Animated Speed Lines */}
+          <rect x="10" y="180" width="440" height="18" rx="9" fill="#1c1917" />
+          <line x1="30" y1="189" x2="430" y2="189" stroke="#44403c" strokeWidth="2" strokeDasharray="14 12" />
+
+          {/* Dynamic Neon Underglow (Green/Cyan) when >= 50% */}
+          {percent >= 50 && (
+            <ellipse cx="230" cy="180" rx="140" ry="10" fill="#10b981" opacity={percent >= 75 ? '0.4' : '0.2'} filter="blur(6px)" />
+          )}
+
+          {/* Headlight Beams projecting forward when >= 75% */}
+          {percent >= 75 && (
+            <polygon points="390,140 455,120 455,175 390,150" fill="url(#headlightBeam)" />
+          )}
+
+          {/* STAGE 1: CHASSIS & WHEELS (0% - 24%) */}
           <g className="transition-all duration-500">
+            {/* Chassis Frame Bar */}
             <rect
-              x="80"
-              y="170"
-              width="240"
-              height="25"
+              x="85"
+              y="160"
+              width="290"
+              height="14"
               rx="4"
-              fill={percent >= 5 ? '#44403c' : '#292524'}
+              fill={percent >= 5 ? '#292524' : '#1c1917'}
               stroke={percent >= 25 ? '#10b981' : '#57534e'}
               strokeWidth="2"
               strokeDasharray={percent < 25 ? '4 4' : 'none'}
             />
-            {/* Foundation pillars */}
-            <rect x="95" y="180" width="10" height="15" fill={percent >= 10 ? '#78716c' : '#292524'} />
-            <rect x="195" y="180" width="10" height="15" fill={percent >= 15 ? '#78716c' : '#292524'} />
-            <rect x="295" y="180" width="10" height="15" fill={percent >= 20 ? '#78716c' : '#292524'} />
+
+            {/* Rear Wheel (Left) */}
+            <circle cx="140" cy="172" r="22" fill="#09090b" stroke="#78716c" strokeWidth="3" />
+            <circle cx="140" cy="172" r="14" fill="#27272a" stroke={percent >= 25 ? '#10b981' : '#71717a'} strokeWidth="2" />
+            <circle cx="140" cy="172" r="6" fill="#10b981" />
+            {/* Wheel Spokes */}
+            <line x1="140" y1="158" x2="140" y2="186" stroke="#a1a1aa" strokeWidth="1.5" />
+            <line x1="126" y1="172" x2="154" y2="172" stroke="#a1a1aa" strokeWidth="1.5" />
+
+            {/* Front Wheel (Right) */}
+            <circle cx="340" cy="172" r="22" fill="#09090b" stroke="#78716c" strokeWidth="3" />
+            <circle cx="340" cy="172" r="14" fill="#27272a" stroke={percent >= 25 ? '#10b981' : '#71717a'} strokeWidth="2" />
+            <circle cx="340" cy="172" r="6" fill="#10b981" />
+            {/* Wheel Spokes */}
+            <line x1="340" y1="158" x2="340" y2="186" stroke="#a1a1aa" strokeWidth="1.5" />
+            <line x1="326" y1="172" x2="354" y2="172" stroke="#a1a1aa" strokeWidth="1.5" />
+
+            {/* Brake Calipers in Brembo Red */}
+            {percent >= 15 && (
+              <>
+                <rect x="150" y="162" width="6" height="12" rx="2" fill="#ef4444" />
+                <rect x="350" y="162" width="6" height="12" rx="2" fill="#ef4444" />
+              </>
+            )}
+
             {percent < 25 && (
-              <text x="200" y="160" textAnchor="middle" fill="#a8a29e" fontSize="11" fontWeight="bold">
-                🏗️ {lang === 'ro' ? 'Fundație în construcție...' : 'Building Foundation...'}
+              <text x="240" y="145" textAnchor="middle" fill="#a8a29e" fontSize="11" fontWeight="bold">
+                🛞 {lang === 'ro' ? 'Montare Șasiu & Jante Aliaj...' : 'Assembling Sport Chassis & Rims...'}
               </text>
             )}
           </g>
 
-          {/* STAGE 2: BRICK WALLS & WINDOWS (Visible if >= 25%) */}
+          {/* STAGE 2: AERODYNAMIC CAR BODY & GLASS (25% - 49%) */}
           {percent >= 25 && (
-            <g className="transition-all duration-700 animate-fadeIn">
-              {/* Main Body Walls */}
-              <rect
-                x="90"
-                y="95"
-                width="220"
-                height="75"
-                rx="4"
-                fill={percent >= 50 ? '#7c2d12' : '#451a03'}
-                stroke={percent >= 50 ? '#f97316' : '#7c2d12'}
+            <g className="transition-all duration-700">
+              {/* Lower Body Shell */}
+              <path
+                d="M 75 162 L 95 135 L 155 125 L 365 125 L 405 150 L 400 165 L 75 165 Z"
+                fill={percent >= 50 ? 'url(#carBodyGrad)' : '#064e3b'}
+                stroke="#10b981"
+                strokeWidth="2.5"
+              />
+
+              {/* Cabin Roof & Windshield (Sport Coupe Curve) */}
+              <path
+                d="M 160 125 L 195 80 L 295 80 L 345 125 Z"
+                fill="#0f172a"
+                stroke="#10b981"
                 strokeWidth="2"
               />
-              {/* Brick Lines Texture */}
-              <line x1="90" y1="120" x2="310" y2="120" stroke="#9a3412" strokeWidth="1" strokeDasharray="6 4" opacity="0.6" />
-              <line x1="90" y1="145" x2="310" y2="145" stroke="#9a3412" strokeWidth="1" strokeDasharray="6 4" opacity="0.6" />
 
-              {/* Windows (Left & Right) */}
-              <rect x="115" y="110" width="35" height="35" rx="4" fill="#06b6d4" fillOpacity={percent >= 40 ? '0.85' : '0.4'} stroke="#22d3ee" strokeWidth="2" />
-              <line x1="132" y1="110" x2="132" y2="145" stroke="#083344" strokeWidth="1.5" />
-              <line x1="115" y1="127" x2="150" y2="127" stroke="#083344" strokeWidth="1.5" />
+              {/* Tinted Windows */}
+              {/* Rear Window */}
+              <polygon points="170,120 198,87 235,87 235,120" fill="url(#carGlassGrad)" stroke="#0284c7" strokeWidth="1" />
+              {/* Front Windshield Window */}
+              <polygon points="245,120 245,87 290,87 335,120" fill="url(#carGlassGrad)" stroke="#0284c7" strokeWidth="1" />
 
-              <rect x="250" y="110" width="35" height="35" rx="4" fill="#06b6d4" fillOpacity={percent >= 40 ? '0.85' : '0.4'} stroke="#22d3ee" strokeWidth="2" />
-              <line x1="267" y1="110" x2="267" y2="145" stroke="#083344" strokeWidth="1.5" />
-              <line x1="250" y1="127" x2="285" y2="127" stroke="#083344" strokeWidth="1.5" />
-
-              {/* Front Door */}
-              <rect x="180" y="120" width="40" height="50" rx="3" fill="#b45309" stroke="#f59e0b" strokeWidth="2" />
-              <circle cx="212" cy="146" r="2.5" fill="#fef08a" />
+              {/* Side Door & Handle Lines */}
+              <line x1="240" y1="125" x2="240" y2="160" stroke="#047857" strokeWidth="2" />
+              <rect x="250" y="132" width="12" height="3" rx="1.5" fill="#e2e8f0" />
             </g>
           )}
 
-          {/* STAGE 3: ROOF & CHIMNEY (Visible if >= 50%) */}
+          {/* STAGE 3: TWIN TURBO ENGINE, SPOILER & MATRIX LEDS (50% - 74%) */}
           {percent >= 50 && (
-            <g className="transition-all duration-700 animate-fadeIn">
-              {/* Chimney */}
-              <rect x="260" y="30" width="22" height="45" fill="#991b1b" stroke="#dc2626" strokeWidth="1.5" />
-              {/* Roof Triangle */}
-              <polygon points="70,95 200,25 330,95" fill={percent >= 75 ? '#065f46' : '#14532d'} stroke="#10b981" strokeWidth="2.5" />
+            <g className="transition-all duration-700">
+              {/* Rear Aerodynamic Spoiler */}
+              <path d="M 65 130 L 95 130 L 85 136 L 70 136 Z" fill="#0f172a" stroke="#10b981" strokeWidth="2" />
+              <line x1="72" y1="136" x2="72" y2="148" stroke="#10b981" strokeWidth="2.5" />
+              <line x1="88" y1="136" x2="88" y2="148" stroke="#10b981" strokeWidth="2.5" />
 
-              {/* Solar Panels on Roof */}
+              {/* Front Matrix LED Headlight */}
+              <polygon points="380,138 402,142 390,148 375,145" fill="#38bdf8" stroke="#bae6fd" strokeWidth="1.5" />
+
+              {/* Rear Sport Tail Light (Neon Red Strip) */}
+              <rect x="75" y="140" width="10" height="6" rx="2" fill="#ef4444" stroke="#f87171" strokeWidth="1" />
+
+              {/* Front Sport Grille / Intercooler */}
+              <rect x="395" y="152" width="8" height="10" rx="2" fill="#18181b" stroke="#71717a" strokeWidth="1" />
+
+              {/* Dual Exhaust Pipes with Blue Flame effect */}
+              <rect x="68" y="162" width="8" height="4" rx="1" fill="#71717a" />
               {percent >= 65 && (
-                <g opacity="0.9">
-                  <polygon points="120,85 180,50 195,50 145,85" fill="#0284c7" stroke="#38bdf8" strokeWidth="1" />
-                  <polygon points="205,50 220,50 280,85 255,85" fill="#0284c7" stroke="#38bdf8" strokeWidth="1" />
-                </g>
+                <circle cx="64" cy="164" r="3" fill="#38bdf8" opacity="0.8" />
               )}
             </g>
           )}
 
-          {/* STAGE 4: LANDSCAPING, LIGHTS & KEY (Visible if >= 75%) */}
+          {/* STAGE 4: GLOWING BADGES, LIGHTS & KEY UNLOCKED (75% - 100%) */}
           {percent >= 75 && (
-            <g className="transition-all duration-700 animate-fadeIn">
-              {/* Garden bushes */}
-              <circle cx="65" cy="185" r="16" fill="#059669" />
-              <circle cx="80" cy="180" r="12" fill="#10b981" />
-              <circle cx="320" cy="180" r="12" fill="#10b981" />
-              <circle cx="335" cy="185" r="16" fill="#059669" />
+            <g className="transition-all duration-700">
+              {/* Sport Racing Stripe */}
+              <path d="M 195 80 L 295 80 L 365 125 L 400 155" stroke="#f59e0b" strokeWidth="3" fill="none" opacity="0.8" />
 
-              {/* Flowers */}
-              <circle cx="60" cy="180" r="3" fill="#f43f5e" />
-              <circle cx="75" cy="176" r="3" fill="#fbbf24" />
-              <circle cx="325" cy="176" r="3" fill="#fbbf24" />
-              <circle cx="340" cy="180" r="3" fill="#f43f5e" />
+              {/* Side Mirror */}
+              <polygon points="288,118 302,114 300,122" fill="#047857" stroke="#10b981" strokeWidth="1" />
 
-              {/* Porch Warm Light */}
-              <polygon points="180,120 200,105 220,120" fill="#fef08a" opacity="0.4" />
+              {/* Speed Dash Particles */}
+              <line x1="30" y1="110" x2="55" y2="110" stroke="#10b981" strokeWidth="2" strokeLinecap="round" opacity="0.6" />
+              <line x1="15" y1="130" x2="45" y2="130" stroke="#38bdf8" strokeWidth="2" strokeLinecap="round" opacity="0.6" />
+              <line x1="25" y1="150" x2="50" y2="150" stroke="#10b981" strokeWidth="2" strokeLinecap="round" opacity="0.6" />
             </g>
           )}
 
           {/* 100% Complete Golden Key Badge */}
           {percent >= 100 && (
             <g className="animate-bounce">
-              <circle cx="200" cy="65" r="22" fill="#f59e0b" stroke="#fef08a" strokeWidth="3" />
-              <text x="200" y="73" textAnchor="middle" fontSize="20">🔑</text>
+              <circle cx="230" cy="50" r="22" fill="#f59e0b" stroke="#fef08a" strokeWidth="3" />
+              <text x="230" y="58" textAnchor="middle" fontSize="20">🔑</text>
             </g>
           )}
         </svg>
@@ -215,9 +273,9 @@ export const DreamHouseVisualizer: React.FC<DreamHouseVisualizerProps> = ({
               <span className="text-[11px] text-stone-400">
                 {percent < 100
                   ? (lang === 'ro'
-                      ? `Mai sunt ${Math.max(0, Math.round(houseTarget.targetAmount * (currentStageInfo.next / 100) - houseTarget.currentSavedAmount)).toLocaleString()} ${currencySymbol} până la următoarea etapă`
-                      : `${Math.max(0, Math.round(houseTarget.targetAmount * (currentStageInfo.next / 100) - houseTarget.currentSavedAmount)).toLocaleString()} ${currencySymbol} until next milestone`)
-                  : (lang === 'ro' ? '🎉 Felicitări Haytham & Cati! Obiectiv atins!' : '🎉 Congratulations Haytham & Cati! Goal Achieved!')}
+                      ? `Mai sunt ${Math.max(0, Math.round(carTarget.targetAmount * (currentStageInfo.next / 100) - carTarget.currentSavedAmount)).toLocaleString()} ${currencySymbol} până la următoarea etapă`
+                      : `${Math.max(0, Math.round(carTarget.targetAmount * (currentStageInfo.next / 100) - carTarget.currentSavedAmount)).toLocaleString()} ${currencySymbol} until next milestone`)
+                  : (lang === 'ro' ? '🎉 Felicitări Haytham & Cati! Mașina este complet deblocată!' : '🎉 Congratulations Haytham & Cati! Dream Car Unlocked!')}
               </span>
             </div>
           </div>
@@ -231,10 +289,10 @@ export const DreamHouseVisualizer: React.FC<DreamHouseVisualizerProps> = ({
       {/* 4-Step Milestone Pills */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 relative z-10">
         {[
-          { step: 1, label: lang === 'ro' ? 'Fundație' : 'Foundation', threshold: 25, icon: '🏗️' },
-          { step: 2, label: lang === 'ro' ? 'Ziduri' : 'Walls', threshold: 50, icon: '🧱' },
-          { step: 3, label: lang === 'ro' ? 'Acoperiș' : 'Roof', threshold: 75, icon: '🏠' },
-          { step: 4, label: lang === 'ro' ? 'Cheia' : 'Key', threshold: 100, icon: '🔑' }
+          { step: 1, label: lang === 'ro' ? 'Șasiu & Jante' : 'Chassis & Rims', threshold: 25, icon: '🛞' },
+          { step: 2, label: lang === 'ro' ? 'Caroserie' : 'Bodywork', threshold: 50, icon: '🏎️' },
+          { step: 3, label: lang === 'ro' ? 'Motor & LED' : 'Engine & LEDs', threshold: 75, icon: '⚡' },
+          { step: 4, label: lang === 'ro' ? 'La Drum!' : 'Ready to Drive', threshold: 100, icon: '🔑' }
         ].map((m) => {
           const isDone = percent >= m.threshold;
           const isCurrent = !isDone && (m.step === 1 ? percent < 25 : percent >= (m.threshold - 25));

@@ -6,7 +6,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.DirectionsCar
 import androidx.compose.material.icons.filled.Key
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -28,20 +28,20 @@ fun DreamHouseComponent(
     profile: HouseholdProfile,
     onDepositClick: () -> Unit = {}
 ) {
-    val houseTarget = targets.find {
-        it.title.contains("cas", ignoreCase = true) || it.title.contains("house", ignoreCase = true) || it.title.contains("avans", ignoreCase = true)
+    val carTarget = targets.find {
+        it.title.contains("masin", ignoreCase = true) || it.title.contains("mașin", ignoreCase = true) || it.title.contains("car", ignoreCase = true) || it.title.contains("auto", ignoreCase = true) || it.title.contains("bmw", ignoreCase = true)
     } ?: targets.firstOrNull() ?: SavingsTarget(
-        id = "default-house",
-        title = "Avans Casă de Vis (3 Camere)",
-        targetAmount = 150000.0,
+        id = "default-car",
+        title = "Mașina Noastră de Vis (BMW / Sport Edition)",
+        targetAmount = 85000.0,
         currentSavedAmount = 38500.0,
         priority = com.example.data.TargetPriority.CRITICAL,
-        category = "HOUSING",
+        category = "VEHICLE",
         deadline = "2027-12-31",
-        iconName = "home"
+        iconName = "car"
     )
 
-    val percent = ((houseTarget.currentSavedAmount / (if (houseTarget.targetAmount > 0) houseTarget.targetAmount else 1.0)) * 100).toInt().coerceIn(0, 100)
+    val percent = ((carTarget.currentSavedAmount / (if (carTarget.targetAmount > 0) carTarget.targetAmount else 1.0)) * 100).toInt().coerceIn(0, 100)
 
     val stage = when {
         percent < 25 -> 1
@@ -51,10 +51,10 @@ fun DreamHouseComponent(
     }
 
     val stageName = when (stage) {
-        1 -> "Fundație & Terasament 🏗️"
-        2 -> "Zidărie Cărămidă & Geamuri 🧱"
-        3 -> "Acoperiș & Panouri Solare 🏠"
-        else -> "Casa Finalizată • Cheia în Mână! 🔑"
+        1 -> "Șasiu Sport, Suspensie & Jante Aliaj 🛞"
+        2 -> "Caroserie Aerodinamică & Geamuri Fumurii 🏎️"
+        3 -> "Motor Twin-Turbo & Faruri Matrix LED ⚡"
+        else -> "Mașina Visurilor Gata de Drum • Cheia în Mână! 🔑"
     }
 
     Card(
@@ -84,13 +84,13 @@ fun DreamHouseComponent(
                                 .background(CardBackground, RoundedCornerShape(11.dp)),
                             contentAlignment = Alignment.Center
                         ) {
-                            Icon(Icons.Default.Home, contentDescription = null, tint = AmberGold, modifier = Modifier.size(22.dp))
+                            Icon(Icons.Default.DirectionsCar, contentDescription = null, tint = EmeraldPrimary, modifier = Modifier.size(22.dp))
                         }
                     }
                     Column {
-                        Text("Casa Noastră de Vis", fontWeight = FontWeight.Black, color = Color.White, fontSize = 15.sp)
+                        Text("Mașina Noastră de Vis", fontWeight = FontWeight.Black, color = Color.White, fontSize = 15.sp)
                         Text(
-                            "${houseTarget.currentSavedAmount.toInt()} / ${houseTarget.targetAmount.toInt()} ${profile.currencySymbol}",
+                            "${carTarget.currentSavedAmount.toInt()} / ${carTarget.targetAmount.toInt()} ${profile.currencySymbol}",
                             fontSize = 11.sp,
                             color = TextSecondary
                         )
@@ -139,10 +139,10 @@ fun DreamHouseComponent(
                 horizontalArrangement = Arrangement.spacedBy(6.dp)
             ) {
                 listOf(
-                    Triple("1. Fundație", 25, "🏗️"),
-                    Triple("2. Ziduri", 50, "🧱"),
-                    Triple("3. Acoperiș", 75, "🏠"),
-                    Triple("4. Cheia", 100, "🔑")
+                    Triple("1. Șasiu", 25, "🛞"),
+                    Triple("2. Caroserie", 50, "🏎️"),
+                    Triple("3. Motor", 75, "⚡"),
+                    Triple("4. La Drum!", 100, "🔑")
                 ).forEach { (label, threshold, icon) ->
                     val isCompleted = percent >= threshold
                     val isCurrent = !isCompleted && (if (threshold == 25) percent < 25 else percent >= (threshold - 25))
