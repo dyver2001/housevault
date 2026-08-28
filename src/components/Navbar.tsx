@@ -12,7 +12,9 @@ import {
   Calendar,
   Bell,
   ArrowUpDown,
-  Check
+  Check,
+  X,
+  Camera
 } from 'lucide-react';
 import { HouseholdProfile } from '../types';
 import { translations, Language } from '../data/i18n';
@@ -55,23 +57,48 @@ export const Navbar: React.FC<NavbarProps> = ({
   isSyncConnected,
   currentUser,
   onOpenAuth,
-  onOpenActivityFeed
+  onOpenActivityFeed,
+  onOpenScanner
 }) => {
   const lang: Language = (profile.language as Language) || 'ro';
   const t = translations[lang] || translations.ro;
   const [isFloatingMenuOpen, setIsFloatingMenuOpen] = useState(false);
   const floatingMenuRef = useRef<HTMLDivElement>(null);
 
+  // Close floating menu safely
+  const closeFloatingMenu = () => {
+    setIsFloatingMenuOpen(false);
+  };
+
+  // Close on outside click
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
+    const handleClickOutside = (event: MouseEvent | TouchEvent) => {
       if (floatingMenuRef.current && !floatingMenuRef.current.contains(event.target as Node)) {
-        setIsFloatingMenuOpen(false);
+        closeFloatingMenu();
       }
     };
     if (isFloatingMenuOpen) {
       document.addEventListener('mousedown', handleClickOutside);
+      document.addEventListener('touchstart', handleClickOutside);
     }
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('touchstart', handleClickOutside);
+    };
+  }, [isFloatingMenuOpen]);
+
+  // Handle phone Back button (Android & Mobile browsers) to dismiss floating menu
+  useEffect(() => {
+    if (isFloatingMenuOpen) {
+      window.history.pushState({ floatingMenu: true }, '');
+      const handlePopState = () => {
+        setIsFloatingMenuOpen(false);
+      };
+      window.addEventListener('popstate', handlePopState);
+      return () => {
+        window.removeEventListener('popstate', handlePopState);
+      };
+    }
   }, [isFloatingMenuOpen]);
 
   const allTabs = [
@@ -240,58 +267,131 @@ export const Navbar: React.FC<NavbarProps> = ({
       {isFloatingMenuOpen && (
         <div
           className="fixed inset-0 z-45 bg-black/60 backdrop-blur-xs lg:hidden transition-opacity"
-          onClick={() => setIsFloatingMenuOpen(false)}
+          onClick={closeFloatingMenu}
+          onTouchStart={closeFloatingMenu}
         />
       )}
 
-      {/* Floating Revolut-Style Popup Menu (Image 1 Style) */}
+      {/* Floating Revolut-Style Popup Menu (Only shows secondary options) */}
       {isFloatingMenuOpen && (
         <div
           ref={floatingMenuRef}
-          className="fixed bottom-20 left-3 right-3 sm:left-6 sm:right-6 z-50 rounded-3xl bg-stone-900/98 backdrop-blur-3xl border border-stone-750/90 shadow-2xl p-2 space-y-1 lg:hidden animate-in fade-in slide-in-from-bottom-5 duration-200"
+          className="fixed bottom-20 left-3 right-3 sm:left-6 sm:right-6 z-50 rounded-3xl bg-stone-900/98 backdrop-blur-3xl border border-stone-750/90 shadow-2xl p-2.5 space-y-1 lg:hidden animate-in fade-in slide-in-from-bottom-5 duration-200"
           style={{ maxHeight: 'calc(100vh - 160px)', overflowY: 'auto' }}
         >
-          <div className="px-3 py-1.5 text-xs font-semibold text-stone-400 uppercase tracking-wider">
-            Meniu Financiar
+          {/* Header of Floating Menu with Close Button */}
+          <div className="flex items-center justify-between px-3 py-1.5 border-b border-stone-800/80 mb-1">
+            <span className="text-xs font-bold text-stone-400 uppercase tracking-wider">
+              Meniu Secțiuni & Utilități
+            </span>
+            <button
+              onClick={closeFloatingMenu}
+              className="p-1 rounded-full text-stone-400 hover:text-white hover:bg-stone-800 transition cursor-pointer"
+              title="Închide Meniul"
+            >
+              <X className="w-4 h-4" />
+            </button>
           </div>
 
-          {allTabs.map((t, idx) => {
-            const Icon = t.icon;
-            const isSelected = currentTab === t.id;
-            return (
-              <React.Fragment key={t.id}>
-                {idx === 5 && <div className="h-px bg-stone-800/80 my-1 mx-2" />}
-                <button
-                  onClick={() => {
-                    onSelectTab(t.id);
-                    setIsFloatingMenuOpen(false);
-                  }}
-                  className={`w-full flex items-center justify-between px-3.5 py-3 rounded-2xl text-sm font-semibold transition-all cursor-pointer ${
-                    isSelected
-                      ? 'bg-stone-800 text-white shadow-sm border border-stone-700'
-                      : 'text-stone-300 hover:bg-stone-800/60 hover:text-white'
-                  }`}
-                >
-                  <div className="flex items-center space-x-3.5">
-                    <div className={`w-8 h-8 rounded-xl flex items-center justify-center ${isSelected ? 'bg-emerald-500/20 text-emerald-400' : 'bg-stone-800 text-stone-400'}`}>
-                      <Icon className="w-4.5 h-4.5" />
-                    </div>
-                    <span className={isSelected ? 'font-bold text-white' : 'font-medium text-stone-200'}>
-                      {t.label}
-                    </span>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    {t.badge !== undefined && (
-                      <span className="px-2 py-0.5 rounded-full text-xs font-bold bg-amber-500 text-stone-950">
-                        {t.badge}
-                      </span>
-                    )}
-                    {isSelected && <Check className="w-4 h-4 text-emerald-400" />}
-                  </div>
-                </button>
-              </React.Fragment>
-            );
-          })}
+          {/* 1. Savings Targets / Obiective Economii */}
+          <button
+            onClick={() => {
+              onSelectTab('targets');
+              closeFloatingMenu();
+            }}
+            className={`w-full flex items-center justify-between px-3.5 py-3 rounded-2xl text-sm font-semibold transition-all cursor-pointer ${
+              currentTab === 'targets'
+                ? 'bg-stone-800 text-white shadow-sm border border-stone-700'
+                : 'text-stone-300 hover:bg-stone-800/60 hover:text-white'
+            }`}
+          >
+            <div className="flex items-center space-x-3.5">
+              <div className={`w-8 h-8 rounded-xl flex items-center justify-center ${currentTab === 'targets' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-stone-800 text-stone-400'}`}>
+                <Vault className="w-4.5 h-4.5" />
+              </div>
+              <span className={currentTab === 'targets' ? 'font-bold text-white' : 'font-medium text-stone-200'}>
+                {t.tabs.targets}
+              </span>
+            </div>
+            {currentTab === 'targets' && <Check className="w-4 h-4 text-emerald-400" />}
+          </button>
+
+          {/* 2. Cash Flow Calendar / Calendar Plăți */}
+          <button
+            onClick={() => {
+              onSelectTab('calendar');
+              closeFloatingMenu();
+            }}
+            className={`w-full flex items-center justify-between px-3.5 py-3 rounded-2xl text-sm font-semibold transition-all cursor-pointer ${
+              currentTab === 'calendar'
+                ? 'bg-stone-800 text-white shadow-sm border border-stone-700'
+                : 'text-stone-300 hover:bg-stone-800/60 hover:text-white'
+            }`}
+          >
+            <div className="flex items-center space-x-3.5">
+              <div className={`w-8 h-8 rounded-xl flex items-center justify-center ${currentTab === 'calendar' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-stone-800 text-stone-400'}`}>
+                <Calendar className="w-4.5 h-4.5" />
+              </div>
+              <span className={currentTab === 'calendar' ? 'font-bold text-white' : 'font-medium text-stone-200'}>
+                {lang === 'ro' ? 'Calendar Plăți & Cash Flow' : 'Bills & Cash Flow Calendar'}
+              </span>
+            </div>
+            {currentTab === 'calendar' && <Check className="w-4 h-4 text-emerald-400" />}
+          </button>
+
+          <div className="h-px bg-stone-800/80 my-1.5 mx-2" />
+
+          {/* 3. AI Receipt Scanner Quick Access */}
+          {onOpenScanner && (
+            <button
+              onClick={() => {
+                closeFloatingMenu();
+                onOpenScanner();
+              }}
+              className="w-full flex items-center justify-between px-3.5 py-3 rounded-2xl text-sm font-medium text-stone-300 hover:bg-stone-800/60 hover:text-white transition-all cursor-pointer"
+            >
+              <div className="flex items-center space-x-3.5">
+                <div className="w-8 h-8 rounded-xl bg-stone-800 text-cyan-400 flex items-center justify-center">
+                  <Camera className="w-4.5 h-4.5" />
+                </div>
+                <span>{lang === 'ro' ? 'Scaner Bonuri AI' : 'Scan Receipt AI'}</span>
+              </div>
+            </button>
+          )}
+
+          {/* 4. Settings & Household Config */}
+          <button
+            onClick={() => {
+              closeFloatingMenu();
+              onOpenSettings();
+            }}
+            className="w-full flex items-center justify-between px-3.5 py-3 rounded-2xl text-sm font-medium text-stone-300 hover:bg-stone-800/60 hover:text-white transition-all cursor-pointer"
+          >
+            <div className="flex items-center space-x-3.5">
+              <div className="w-8 h-8 rounded-xl bg-stone-800 text-stone-400 flex items-center justify-center">
+                <Settings className="w-4.5 h-4.5" />
+              </div>
+              <span>{lang === 'ro' ? 'Setări & Sincronizare Cuplu' : 'Settings & Couple Sync'}</span>
+            </div>
+          </button>
+
+          {/* 5. User Account */}
+          {onOpenAuth && (
+            <button
+              onClick={() => {
+                closeFloatingMenu();
+                onOpenAuth();
+              }}
+              className="w-full flex items-center justify-between px-3.5 py-3 rounded-2xl text-sm font-medium text-stone-300 hover:bg-stone-800/60 hover:text-white transition-all cursor-pointer"
+            >
+              <div className="flex items-center space-x-3.5">
+                <div className="w-8 h-8 rounded-xl bg-stone-800 text-emerald-400 flex items-center justify-center">
+                  <User className="w-4.5 h-4.5" />
+                </div>
+                <span>{currentUser ? `${currentUser.name} (${currentUser.email})` : (lang === 'ro' ? 'Autentificare Cont' : 'Account Login')}</span>
+              </div>
+            </button>
+          )}
         </div>
       )}
 
@@ -308,7 +408,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               key={t.id}
               onClick={() => {
                 onSelectTab(t.id);
-                setIsFloatingMenuOpen(false);
+                closeFloatingMenu();
               }}
               className={`flex-1 flex flex-col items-center justify-center py-1.5 px-2 rounded-full transition-all cursor-pointer relative ${
                 isActive
@@ -331,7 +431,7 @@ export const Navbar: React.FC<NavbarProps> = ({
           );
         })}
 
-        {/* Floating Menu Toggle Button (Revolut Switcher Icon) */}
+        {/* Floating Menu Toggle Button (Toggles open/close cleanly) */}
         <button
           onClick={() => setIsFloatingMenuOpen(!isFloatingMenuOpen)}
           className={`flex-1 flex flex-col items-center justify-center py-1.5 px-2 rounded-full transition-all cursor-pointer relative ${
