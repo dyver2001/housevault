@@ -39,7 +39,7 @@ class HouseVaultRepository(context: Context) {
     private val _lastSyncTimestamp = MutableStateFlow(prefs.getString("last_sync_timestamp", null))
     val lastSyncTimestamp: StateFlow<String?> = _lastSyncTimestamp.asStateFlow()
 
-    private val _serverUrl = MutableStateFlow(prefs.getString("server_url", "http://10.0.2.2:3000") ?: "http://10.0.2.2:3000")
+    private val _serverUrl = MutableStateFlow(prefs.getString("server_url", "https://housevault.onrender.com") ?: "https://housevault.onrender.com")
     val serverUrl: StateFlow<String> = _serverUrl.asStateFlow()
 
     fun updateServerUrl(url: String) {
