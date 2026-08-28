@@ -1,6 +1,8 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
 import { Camera, Calculator, Plus, Trash2, CheckCircle2, TrendingUp, ShieldAlert, X } from 'lucide-react';
 import { GearItem } from '../types';
+import { soundFx } from '../utils/audioEffects';
+import { triggerConfetti } from '../utils/confetti';
 
 interface GearTaxToolsModalProps {
   isOpen: boolean;
@@ -78,9 +80,12 @@ export const GearTaxToolsModal: React.FC<GearTaxToolsModalProps> = ({
     setNewGearName('');
     setNewGearCost('');
     setNewGearFee('');
+    soundFx.playCashChime();
+    triggerConfetti(50, 40);
   };
 
   const handleIncrementShoot = (gearId: string) => {
+    soundFx.playCashChime();
     setGearList(
       gearList.map((g) => (g.id === gearId ? { ...g, shootsCompleted: g.shootsCompleted + 1 } : g))
     );

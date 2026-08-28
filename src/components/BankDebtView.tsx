@@ -5,9 +5,11 @@ import {
   Trash2,
   Edit2,
   Calendar,
-  ArrowDownCircle
+  ArrowDownCircle,
+  Calculator
 } from 'lucide-react';
 import { BankDebt, HouseholdProfile } from '../types';
+import { DebtPayoffSimulatorModal } from './DebtPayoffSimulatorModal';
 
 interface BankDebtViewProps {
   profile: HouseholdProfile;
@@ -30,6 +32,7 @@ export const BankDebtView: React.FC<BankDebtViewProps> = ({
   const [strategy, setStrategy] = useState<'AVALANCHE' | 'SNOWBALL'>('AVALANCHE');
   const [paymentModalDebt, setPaymentModalDebt] = useState<BankDebt | null>(null);
   const [paymentInput, setPaymentInput] = useState<string>('');
+  const [isSimulatorOpen, setIsSimulatorOpen] = useState(false);
 
   const totalCurrentDebt = debts.reduce((acc, d) => acc + d.currentBalance, 0);
   const totalOriginalDebt = debts.reduce((acc, d) => acc + d.originalBalance, 0);
@@ -69,14 +72,25 @@ export const BankDebtView: React.FC<BankDebtViewProps> = ({
           </p>
         </div>
 
-        <button
-          id="btn-add-new-debt"
-          onClick={onOpenNewDebt}
-          className="flex items-center space-x-2 px-4 py-2.5 rounded-xl bg-rose-500 hover:bg-rose-400 text-stone-950 font-bold text-sm shadow-lg shadow-rose-500/20 transition-all cursor-pointer self-start sm:self-auto"
-        >
-          <Plus className="w-4 h-4" />
-          <span>Add Bank Debt</span>
-        </button>
+        <div className="flex items-center space-x-2.5 self-start sm:self-auto">
+          <button
+            type="button"
+            onClick={() => setIsSimulatorOpen(true)}
+            className="flex items-center space-x-2 px-4 py-2.5 rounded-xl bg-purple-600/30 hover:bg-purple-600/40 text-purple-200 font-bold text-sm border border-purple-500/40 transition shadow-lg cursor-pointer"
+          >
+            <Calculator className="w-4 h-4 text-purple-300" />
+            <span>Simulator</span>
+          </button>
+
+          <button
+            id="btn-add-new-debt"
+            onClick={onOpenNewDebt}
+            className="flex items-center space-x-2 px-4 py-2.5 rounded-xl bg-rose-500 hover:bg-rose-400 text-stone-950 font-bold text-sm shadow-lg shadow-rose-500/20 transition-all cursor-pointer"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Add Bank Debt</span>
+          </button>
+        </div>
       </div>
 
       {/* Payoff Progress Banner */}
@@ -292,6 +306,14 @@ export const BankDebtView: React.FC<BankDebtViewProps> = ({
           </form>
         </div>
       )}
+
+      {/* Debt Payoff Simulator Modal */}
+      <DebtPayoffSimulatorModal
+        isOpen={isSimulatorOpen}
+        onClose={() => setIsSimulatorOpen(false)}
+        debts={debts}
+        profile={profile}
+      />
     </div>
   );
 };

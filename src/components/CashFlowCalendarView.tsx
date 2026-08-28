@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Calendar as CalendarIcon,
   ChevronLeft,
@@ -16,6 +16,8 @@ import {
   RotateCcw
 } from 'lucide-react';
 import { HouseholdProfile, FreelanceProject, BankDebt, HouseholdExpense } from '../types';
+import { soundFx } from '../utils/audioEffects';
+import { triggerConfetti } from '../utils/confetti';
 
 interface CashFlowCalendarViewProps {
   profile: HouseholdProfile;
@@ -206,6 +208,10 @@ export const CashFlowCalendarView: React.FC<CashFlowCalendarViewProps> = ({
     const nextState = !wasPaid;
     const updated = { ...paidEventIds, [ev.id]: nextState };
     savePaidEvents(updated);
+    if (nextState) {
+      soundFx.playCashChime();
+      triggerConfetti(50, 45);
+    }
   };
 
   return (

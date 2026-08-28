@@ -1,6 +1,8 @@
-﻿import React, { useState } from 'react';
-import { FileText, Copy, Check, Printer, Share2, Sparkles, TrendingUp, ShieldCheck, Landmark, X } from 'lucide-react';
+import React, { useState } from 'react';
+import { FileText, Copy, Check, Printer, Share2, Sparkles, TrendingUp, ShieldCheck, Landmark, X, Download, Car } from 'lucide-react';
 import { HouseholdProfile, FreelanceProject, BankDebt, SavingsTarget, HouseholdExpense } from '../types';
+import { soundFx } from '../utils/audioEffects';
+import { triggerConfetti } from '../utils/confetti';
 
 interface MonthlyReportModalProps {
   isOpen: boolean;
@@ -45,25 +47,25 @@ export const MonthlyReportModal: React.FC<MonthlyReportModalProps> = ({
   const totalDebtRemaining = debts.reduce((sum, d) => sum + (d.currentBalance || 0), 0);
   const totalSavedInTargets = targets.reduce((sum, t) => sum + (t.currentSavedAmount || 0), 0);
 
-  const houseTarget = targets.find((t) => t.title.toLowerCase().includes('cas') || t.title.toLowerCase().includes('house')) || targets[0];
-  const houseSaved = houseTarget ? houseTarget.currentSavedAmount : 0;
-  const houseGoal = houseTarget ? houseTarget.targetAmount : 150000;
-  const housePercent = Math.min(100, Math.round((houseSaved / (houseGoal || 1)) * 100));
+  const carTarget = targets.find((t) => t.title.toLowerCase().includes('seat') || t.title.toLowerCase().includes('ateca') || t.title.toLowerCase().includes('car') || t.title.toLowerCase().includes('masin')) || targets[0];
+  const carSaved = carTarget ? carTarget.currentSavedAmount : 0;
+  const carGoal = carTarget ? carTarget.targetAmount : 75000;
+  const carPercent = Math.min(100, Math.round((carSaved / (carGoal || 1)) * 100));
 
   const runwayMonths = totalFixedExpenses > 0 ? (totalSavedInTargets / totalFixedExpenses).toFixed(1) : '12+';
 
   const generateWhatsAppMessage = () => {
-    return `🏡 *RAPORTUL SEIFULUI NOSTRU • ${currentMonthName.toUpperCase()}* 👫✨
+    return `🚙 *RAPORTUL SEIFULUI NOSTRU • ${currentMonthName.toUpperCase()}* 👫✨
 ━━━━━━━━━━━━━━━━━━━━
 💰 *Venituri Totale Luna Aceasta:* ${totalMonthlyIncome.toLocaleString()} ${currencySymbol}
   🎬 *Haytham (Încasări Video):* ${totalCollectedFreelance.toLocaleString()} ${currencySymbol}
   💻 *Cati (Salariu IT Fix):* ${(profile.wifeMonthlySalary || 0).toLocaleString()} ${currencySymbol}
 
-🏠 *Cheltuieli Fixe Acoperite:* ${totalFixedExpenses.toLocaleString()} ${currencySymbol} / lună
+🏠 *Cheltuieli Fixe Supraviețuire:* ${totalFixedExpenses.toLocaleString()} ${currencySymbol} / lună
 🛡️ *Luni de Siguranță Financiară (Runway):* ${runwayMonths} Luni
 
-🏦 *Datorii Rămase:* ${totalDebtRemaining.toLocaleString()} ${currencySymbol} (În scădere constantă! 📉)
-🏡 *Avans Casă de Vis:* ${houseSaved.toLocaleString()} / ${houseGoal.toLocaleString()} ${currencySymbol} (${housePercent}% Gata 🔑)
+🏦 *Datorii Bancare Rămase:* ${totalDebtRemaining.toLocaleString()} ${currencySymbol} (În scădere constantă! 📉)
+🚙 *Obiectiv Seat Ateca (15k €):* ${carSaved.toLocaleString()} / ${carGoal.toLocaleString()} ${currencySymbol} (${carPercent}% Construit 🔑)
 
 🎉 *Mândru de noi doi! Continuăm să construim viitorul nostru pas cu pas!* ❤️🚀
 ━━━━━━━━━━━━━━━━━━━━
@@ -72,12 +74,39 @@ _Generat cu HouseVault App_`;
 
   const handleCopyWhatsApp = () => {
     navigator.clipboard.writeText(generateWhatsAppMessage());
+    soundFx.playCashChime();
     setCopied(true);
     setTimeout(() => setCopied(false), 2500);
   };
 
   const handlePrint = () => {
+    soundFx.playCashChime();
     window.print();
+  };
+
+  const handleDownloadCSV = () => {
+    soundFx.playVictoryFanfare();
+    triggerConfetti(50, 50);
+
+    const rows = [
+      ['Categorie', 'Descriere', `Suma (${currencySymbol})`, 'Procent / Detalii'],
+      ['Venit Freelance', 'Încasări Proiecte Video Haytham', totalCollectedFreelance, 'Activ'],
+      ['Venit Salariu', 'Salariu IT Support Cati', profile.wifeMonthlySalary || 0, 'Fix Garantat'],
+      ['TOTAL VENITURI', 'Venit Cumulat Familie', totalMonthlyIncome, '100%'],
+      ['Cheltuieli Fixe', 'Total Cheltuieli Supraviețuire', totalFixedExpenses, `${runwayMonths} Luni Runway`],
+      ['Datorii Bancare', 'Total Sold Credite Rămase', totalDebtRemaining, 'În Scădere'],
+      ['Economii Obiectiv', 'Fond Seat Ateca (15.000 €)', carSaved, `${carPercent}% Atingere Obiectiv`],
+      ['Total Economii', 'Toate Fondurile și Rezervele', totalSavedInTargets, 'În Siguranță']
+    ];
+
+    const csvContent = 'data:text/csv;charset=utf-8,' + rows.map((e) => e.join(',')).join('\n');
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement('a');
+    link.setAttribute('href', encodedUri);
+    link.setAttribute('download', `HouseVault_Raport_Financiar_${currentMonthName.replace(/\s+/g, '_')}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   return (
@@ -146,30 +175,51 @@ _Generat cu HouseVault App_`;
               <span className="font-bold text-purple-300 font-mono">{totalDebtRemaining.toLocaleString()} {currencySymbol}</span>
             </div>
             <div className="flex justify-between py-1.5">
-              <span className="text-stone-400">🔑 {lang === 'ro' ? 'Progres Avans Casă' : 'House Down Payment'}:</span>
-              <span className="font-bold text-emerald-400 font-mono">{houseSaved.toLocaleString()} {currencySymbol} ({housePercent}%)</span>
+              <span className="text-stone-400">🚙 {lang === 'ro' ? 'Fond Seat Ateca (15k €)' : 'Seat Ateca Fund'}:</span>
+              <span className="font-bold text-emerald-400 font-mono">{carSaved.toLocaleString()} {currencySymbol} ({carPercent}%)</span>
+            </div>
+          </div>
+
+          {/* Couple Signatures Block for Print */}
+          <div className="pt-4 border-t border-stone-800/80 grid grid-cols-2 gap-4 text-center text-[11px] text-stone-400">
+            <div>
+              <p className="border-b border-dashed border-stone-600 pb-2 mb-1">✍️ {profile.husbandName.split(' ')[0]}</p>
+              <span className="text-[10px] text-stone-500">Aprobat & Revizuit</span>
+            </div>
+            <div>
+              <p className="border-b border-dashed border-stone-600 pb-2 mb-1">✍️ {profile.wifeName.split(' ')[0]}</p>
+              <span className="text-[10px] text-stone-500">Aprobat & Revizuit</span>
             </div>
           </div>
         </div>
 
         {/* Action Buttons */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 print:hidden">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 print:hidden">
           <button
             type="button"
             onClick={handleCopyWhatsApp}
-            className="py-2.5 px-4 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-stone-950 font-bold text-xs shadow-lg transition cursor-pointer flex items-center justify-center space-x-2"
+            className="py-2.5 px-3 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-stone-950 font-bold text-xs shadow-lg transition cursor-pointer flex items-center justify-center space-x-1.5 active:scale-95"
           >
             {copied ? <Check className="w-4 h-4 text-stone-950" /> : <Copy className="w-4 h-4" />}
-            <span>{copied ? (lang === 'ro' ? 'Copiat pe WhatsApp!' : 'Copied!') : (lang === 'ro' ? 'Copiază Text WhatsApp' : 'Copy for WhatsApp')}</span>
+            <span>{copied ? 'Copiat!' : 'WhatsApp'}</span>
           </button>
 
           <button
             type="button"
             onClick={handlePrint}
-            className="py-2.5 px-4 rounded-xl bg-stone-800 hover:bg-stone-750 text-white font-bold text-xs border border-stone-700 transition cursor-pointer flex items-center justify-center space-x-2"
+            className="py-2.5 px-3 rounded-xl bg-stone-800 hover:bg-stone-750 text-white font-bold text-xs border border-stone-700 transition cursor-pointer flex items-center justify-center space-x-1.5 active:scale-95"
           >
             <Printer className="w-4 h-4 text-stone-300" />
-            <span>{lang === 'ro' ? 'Exportă PDF / Printează' : 'Print / Export PDF'}</span>
+            <span>PDF / Print</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={handleDownloadCSV}
+            className="py-2.5 px-3 rounded-xl bg-teal-600/30 hover:bg-teal-600/40 text-teal-300 font-bold text-xs border border-teal-500/40 transition cursor-pointer flex items-center justify-center space-x-1.5 active:scale-95"
+          >
+            <Download className="w-4 h-4 text-teal-300" />
+            <span>Excel / CSV</span>
           </button>
         </div>
       </div>

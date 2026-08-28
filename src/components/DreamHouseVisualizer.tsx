@@ -2,6 +2,9 @@ import React from 'react';
 import { Car, Sparkles, Key, CheckCircle, ChevronRight, Gauge, Zap } from 'lucide-react';
 import { SavingsTarget } from '../types';
 
+import { soundFx } from '../utils/audioEffects';
+import { triggerConfetti } from '../utils/confetti';
+
 interface DreamHouseVisualizerProps {
   targets: SavingsTarget[];
   currencySymbol?: string;
@@ -37,6 +40,11 @@ export const DreamHouseVisualizer: React.FC<DreamHouseVisualizerProps> = ({
 
   const percent = Math.min(100, Math.round((carTarget.currentSavedAmount / (carTarget.targetAmount || 1)) * 100));
 
+  const handleCarClick = () => {
+    soundFx.playEngineRev();
+    triggerConfetti(50, 40);
+  };
+
   // Determine car assembly stage
   const getStage = (pct: number) => {
     if (pct < 25) return { stage: 1, label: lang === 'ro' ? 'Șasiu SUV, Suspensie & Jante Aliaj 18"' : 'SUV Chassis & 18" Alloy Wheels', icon: '🛞', next: 25 };
@@ -56,7 +64,11 @@ export const DreamHouseVisualizer: React.FC<DreamHouseVisualizerProps> = ({
       {/* Top Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 relative z-10">
         <div className="flex items-center space-x-3">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-500 via-emerald-500 to-cyan-500 p-0.5 shadow-lg shadow-emerald-500/20">
+          <div
+            onClick={handleCarClick}
+            className="w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-500 via-emerald-500 to-cyan-500 p-0.5 shadow-lg shadow-emerald-500/20 cursor-pointer active:scale-95 transition"
+            title="Apasă pentru sunet motor Seat Ateca!"
+          >
             <div className="w-full h-full bg-stone-950 rounded-[14px] flex items-center justify-center text-emerald-400">
               <Car className="w-6 h-6" />
             </div>
@@ -78,15 +90,21 @@ export const DreamHouseVisualizer: React.FC<DreamHouseVisualizerProps> = ({
 
         <div className="flex items-center space-x-2">
           {percent >= 100 ? (
-            <span className="px-3 py-1.5 rounded-xl bg-amber-500 text-stone-950 font-black text-xs flex items-center space-x-1.5 shadow-lg animate-bounce">
+            <span
+              onClick={handleCarClick}
+              className="px-3 py-1.5 rounded-xl bg-amber-500 text-stone-950 font-black text-xs flex items-center space-x-1.5 shadow-lg animate-bounce cursor-pointer"
+            >
               <Key className="w-4 h-4" />
               <span>{lang === 'ro' ? 'CHEIA ÎN MÂNĂ!' : 'KEYS UNLOCKED!'}</span>
             </span>
           ) : (
             <button
               type="button"
-              onClick={() => onDepositMore && onDepositMore(carTarget.id)}
-              className="px-3 py-1.5 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-500/40 text-emerald-300 text-xs font-bold transition flex items-center space-x-1 cursor-pointer"
+              onClick={() => {
+                soundFx.playCashChime();
+                if (onDepositMore) onDepositMore(carTarget.id);
+              }}
+              className="px-3 py-1.5 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-500/40 text-emerald-300 text-xs font-bold transition flex items-center space-x-1 cursor-pointer active:scale-95"
             >
               <Sparkles className="w-3.5 h-3.5" />
               <span>{lang === 'ro' ? 'Adaugă la Seif' : 'Deposit'}</span>
@@ -96,10 +114,14 @@ export const DreamHouseVisualizer: React.FC<DreamHouseVisualizerProps> = ({
       </div>
 
       {/* Visual Car Illustration (Seat Ateca SUV 4-Stage Animated SVG) */}
-      <div className="my-5 p-4 rounded-2xl bg-stone-950/80 border border-stone-800/80 flex flex-col items-center justify-center relative z-10 overflow-hidden">
+      <div
+        onClick={handleCarClick}
+        title="Apasă pe mașină pentru a tura motorul Seat Ateca!"
+        className="my-5 p-4 rounded-2xl bg-stone-950/80 hover:bg-stone-950/90 border border-stone-800/80 hover:border-emerald-500/40 flex flex-col items-center justify-center relative z-10 overflow-hidden cursor-pointer transition group"
+      >
         <svg
           viewBox="0 0 460 210"
-          className="w-full max-w-lg h-44 transition-all duration-700 select-none"
+          className="w-full max-w-lg h-44 transition-all duration-700 select-none group-hover:scale-[1.02]"
         >
           <defs>
             {/* Gradients for Seat Ateca body & neon glow */}
