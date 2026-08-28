@@ -1,0 +1,178 @@
+﻿package com.example.data
+
+object AppStrings {
+    fun get(key: String, lang: String = "ro"): String {
+        return if (lang == "ro") romanian[key] ?: english[key] ?: key
+        else english[key] ?: key
+    }
+
+    val romanian = mapOf(
+        "app_title" to "HouseVault",
+        "tagline" to "Elena susține cheltuielile fixe. Alex accelerează averea familiei.",
+        "nav_vault" to "Panou",
+        "nav_collect" to "Încasări",
+        "nav_budget" to "Buget Casă",
+        "nav_debts" to "Datorii",
+        "nav_targets" to "Seifuri",
+        "nav_settings" to "Setări",
+        "nav_ai" to "Consilier AI",
+        
+        // Dashboard
+        "dash_engine_title" to "Motor Financiar de Familie",
+        "dash_engine_desc" to "Salariul stabil IT al Elenei acoperă nevoile de bază, iar încasările din videografie ale lui Alex lichidează datoriile bancare și umplu seifurile de economii.",
+        "dash_log_gig" to "Adaugă Proiect",
+        "dash_ask_ai" to "Întreabă AI-ul",
+        "dash_uncollected" to "Încasări în Așteptare",
+        "dash_gigs_awaiting" to "facturi de colectat",
+        "dash_salary_anchor" to "Salariu Fix de Bază",
+        "dash_fixed_coverage" to "acoperire costuri fixe",
+        "dash_monthly_surplus" to "surplus lunar",
+        "dash_bank_debt" to "Datorii Bancare",
+        "dash_debts_cleared" to "achitat",
+        "dash_savings_vaults" to "Seifuri Economii",
+        "dash_savings_goal" to "Obiectiv total",
+        "dash_inflow_stream" to "Flux Încasări Freelance",
+        "dash_collect_split" to "Încasează & Împarte",
+        "dash_golden_rule" to "Regula de Aur a Împărțirii (35/35/15/15)",
+        "dash_debt_paydown" to "Achitare Datorii",
+        "dash_house_vault" to "Seif Casă",
+        "dash_tax_gear" to "Taxe & Echipamente",
+        "dash_safe_pocket" to "Bani de Buzunar",
+        
+        // Freelance Collector
+        "col_title" to "Încasări & Facturi Freelance",
+        "col_subtitle" to "Urmărește proiectele comerciale, generează mesaje WhatsApp și distribuie banii încasați.",
+        "col_new_gig" to "Proiect Nou",
+        "col_all" to "Toate",
+        "col_uncollected" to "Neîncasate",
+        "col_overdue" to "Întârziate ⚠️",
+        "col_invoiced" to "Facturate",
+        "col_in_progress" to "În Lucru",
+        "col_collected" to "Încasate ✅",
+        "col_whatsapp_script" to "Mesaj WhatsApp",
+        "col_email_script" to "Email Formal",
+        "col_collect_btn" to "Încasează & Distribuie",
+        "col_settled" to "Achitat Integral",
+        "col_remaining" to "rămas de încasat",
+        "col_deposit" to "Avans primit",
+        
+        // Budget
+        "bud_title" to "Bugetul Casei & Facturi",
+        "bud_subtitle" to "Ancorat de salariul stabil al Elenei pentru a garanta plata tuturor necesităților.",
+        "bud_new_bill" to "Adaugă Cheltuială",
+        "bud_fixed_bills" to "Cheltuieli Fixe Lunare",
+        "bud_covered_salary" to "100% acoperit de salariu",
+        "bud_freelance_buffer" to "Cheltuieli din Freelance",
+        "bud_total_overhead" to "Total Cheltuieli Lunare",
+        
+        // Debts
+        "debt_title" to "Strategie Achitare Datorii",
+        "debt_subtitle" to "Elimină cardurile de credit și creditele canalizând 35% din fiecare încasare.",
+        "debt_new_debt" to "Adaugă Datorie",
+        "debt_avalanche" to "Avalanșă (Dobândă mare)",
+        "debt_snowball" to "Bulgăre (Sold mic)",
+        "debt_remaining" to "Total Datorii Rămase",
+        "debt_log_payment" to "Înregistrează Plată",
+        
+        // Targets
+        "target_title" to "Seifuri de Economii",
+        "target_subtitle" to "Blochează 35% din încasări direct în avansul pentru casă și fondul de siguranță.",
+        "target_new_vault" to "Seif Nou",
+        "target_total_saved" to "Total Economisit",
+        "target_quick_deposit" to "Depune Rapid",
+        
+        // Settings & Customization
+        "set_title" to "Setări & Personalizare",
+        "set_subtitle" to "Monedă, teme de culori, limbă și sincronizare date",
+        "set_currency" to "Monedă",
+        "set_language" to "Limbă / Language",
+        "set_theme_color" to "Temă & Paletă Culori",
+        "set_profile" to "Profil Cuplu",
+        "set_export" to "Exportă Date JSON",
+        "set_import" to "Importă Date",
+        "set_reset" to "Resetează la Date Implicite",
+        "set_save" to "Salvează Modificările"
+    )
+
+    val english = mapOf(
+        "app_title" to "HouseVault",
+        "tagline" to "Elena anchors bills. Alex accelerates wealth.",
+        "nav_vault" to "Vault",
+        "nav_collect" to "Collect",
+        "nav_budget" to "House",
+        "nav_debts" to "Debts",
+        "nav_targets" to "Targets",
+        "nav_settings" to "Settings",
+        "nav_ai" to "AI Coach",
+        
+        "dash_engine_title" to "Couple Financial Engine",
+        "dash_engine_desc" to "Elena's IT salary guarantees fixed survival costs, leaving freelance windfalls to annihilate debt and fund your house vault.",
+        "dash_log_gig" to "Log Gig",
+        "dash_ask_ai" to "Ask AI Coach",
+        "dash_uncollected" to "Uncollected Inflow",
+        "dash_gigs_awaiting" to "gigs awaiting payment",
+        "dash_salary_anchor" to "Steady Salary Anchor",
+        "dash_fixed_coverage" to "coverage of fixed bills",
+        "dash_monthly_surplus" to "monthly surplus",
+        "dash_bank_debt" to "Bank Debt",
+        "dash_debts_cleared" to "paid off",
+        "dash_savings_vaults" to "Savings Vaults",
+        "dash_savings_goal" to "Total goal",
+        "dash_inflow_stream" to "Freelance Inflow Stream",
+        "dash_collect_split" to "Collect & Split",
+        "dash_golden_rule" to "Golden Windfall Rule (35/35/15/15)",
+        "dash_debt_paydown" to "Debt Paydown",
+        "dash_house_vault" to "House Vault",
+        "dash_tax_gear" to "Tax & Gear",
+        "dash_safe_pocket" to "Safe Pocket",
+        
+        "col_title" to "Freelance Cash Collector",
+        "col_subtitle" to "Track commercial gigs, send WhatsApp follow-ups, and split payments upon collection.",
+        "col_new_gig" to "New Freelance Gig",
+        "col_all" to "All",
+        "col_uncollected" to "Uncollected",
+        "col_overdue" to "Overdue ⚠️",
+        "col_invoiced" to "Invoiced",
+        "col_in_progress" to "In Progress",
+        "col_collected" to "Collected ✅",
+        "col_whatsapp_script" to "WhatsApp Script",
+        "col_email_script" to "Accounts Email",
+        "col_collect_btn" to "Collect & Distribute",
+        "col_settled" to "Fully Settled",
+        "col_remaining" to "remaining",
+        "col_deposit" to "Deposit received",
+        
+        "bud_title" to "Household Budget & Bills",
+        "bud_subtitle" to "Anchored by Elena's IT salary to guarantee all fixed family necessities.",
+        "bud_new_bill" to "Add Household Bill",
+        "bud_fixed_bills" to "Fixed Monthly Bills",
+        "bud_covered_salary" to "100% covered by wife's salary",
+        "bud_freelance_buffer" to "Freelance Buffer Bills",
+        "bud_total_overhead" to "Total Monthly Overhead",
+        
+        "debt_title" to "Bank Debt Payoff Strategist",
+        "debt_subtitle" to "Eliminate cards and loans by channeling 35% of freelance windfalls.",
+        "debt_new_debt" to "Add Bank Debt",
+        "debt_avalanche" to "Avalanche (High APR)",
+        "debt_snowball" to "Snowball (Smallest)",
+        "debt_remaining" to "Total Remaining Debt",
+        "debt_log_payment" to "Log Payment",
+        
+        "target_title" to "Family Savings Vaults",
+        "target_subtitle" to "Lock in 35% of windfalls directly into your house downpayment.",
+        "target_new_vault" to "New Savings Vault",
+        "target_total_saved" to "Total Saved Across Vaults",
+        "target_quick_deposit" to "Quick Deposit",
+        
+        "set_title" to "Settings & Customization",
+        "set_subtitle" to "Currency, theme colors, language, and data portability",
+        "set_currency" to "Currency",
+        "set_language" to "Language / Limbă",
+        "set_theme_color" to "Theme Color Palette",
+        "set_profile" to "Couple Profile",
+        "set_export" to "Export JSON Backup",
+        "set_import" to "Import Backup",
+        "set_reset" to "Reset to Defaults",
+        "set_save" to "Save Changes"
+    )
+}

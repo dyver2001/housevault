@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="vaultGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1c1917"/>
+      <stop offset="100%" stop-color="#0c0a09"/>
+    </linearGradient>
+    <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fbbf24"/>
+      <stop offset="100%" stop-color="#d97706"/>
+    </linearGradient>
+    <linearGradient id="emeraldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#34d399"/>
+      <stop offset="100%" stop-color="#059669"/>
+    </linearGradient>
+  </defs>
+  <!-- Background Rounded Squircle -->
+  <rect width="512" height="512" rx="128" fill="url(#vaultGrad)"/>
+  <rect x="16" y="16" width="480" height="480" rx="112" fill="none" stroke="#292524" stroke-width="8"/>
+  
+  <!-- Outer Shield / Vault outline -->
+  <path d="M256 80 L380 135 V240 C380 325 325 395 256 425 C187 395 132 325 132 240 V135 Z" fill="#292524" stroke="url(#goldGrad)" stroke-width="12" stroke-linejoin="round"/>
+  
+  <!-- Central Vault Dial -->
+  <circle cx="256" cy="245" r="70" fill="#1c1917" stroke="url(#emeraldGrad)" stroke-width="10"/>
+  <circle cx="256" cy="245" r="24" fill="url(#goldGrad)"/>
+  
+  <!-- Dial Notches -->
+  <line x1="256" y1="185" x2="256" y2="198" stroke="#a8a29e" stroke-width="6" stroke-linecap="round"/>
+  <line x1="256" y1="292" x2="256" y2="305" stroke="#a8a29e" stroke-width="6" stroke-linecap="round"/>
+  <line x1="196" y1="245" x2="209" y2="245" stroke="#a8a29e" stroke-width="6" stroke-linecap="round"/>
+  <line x1="303" y1="245" x2="316" y2="245" stroke="#a8a29e" stroke-width="6" stroke-linecap="round"/>
+  
+  <!-- Sparkle Accent -->
+  <path d="M370 120 L376 138 L394 144 L376 150 L370 168 L364 150 L346 144 L364 138 Z" fill="#fbbf24"/>
+</svg>
