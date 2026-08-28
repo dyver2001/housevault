@@ -74,12 +74,12 @@ fun MainAppScreen(viewModel: HouseVaultViewModel) {
                 title = {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
                         Box(
                             modifier = Modifier
                                 .size(34.dp)
-                                .clip(RoundedCornerShape(8.dp))
+                                .clip(RoundedCornerShape(9.dp))
                                 .background(Emerald600),
                             contentAlignment = Alignment.Center
                         ) {
@@ -87,44 +87,46 @@ fun MainAppScreen(viewModel: HouseVaultViewModel) {
                                 imageVector = Icons.Default.AccountBalance,
                                 contentDescription = null,
                                 tint = Color.White,
-                                modifier = Modifier.size(20.dp)
+                                modifier = Modifier.size(19.dp)
                             )
                         }
-                        Column {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Text(
-                                    text = "HouseVault",
-                                    fontWeight = FontWeight.ExtraBold,
-                                    fontSize = 18.sp,
-                                    color = MaterialTheme.colorScheme.onSurface
-                                )
-                                Spacer(modifier = Modifier.width(6.dp))
-                                Surface(
-                                    shape = RoundedCornerShape(6.dp),
-                                    color = Amber100
-                                ) {
-                                    Text(
-                                        text = profile.currencyCode,
-                                        style = MaterialTheme.typography.labelSmall,
-                                        color = Amber700,
-                                        fontWeight = FontWeight.Bold,
-                                        modifier = Modifier.padding(horizontal = 4.dp, vertical = 1.dp)
-                                    )
-                                }
-                            }
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                             Text(
-                                text = "${profile.husbandName} & ${profile.wifeName}",
-                                style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                text = "HouseVault",
+                                fontWeight = FontWeight.Black,
+                                fontSize = 18.sp,
+                                color = MaterialTheme.colorScheme.onSurface
                             )
+                            Surface(
+                                shape = RoundedCornerShape(6.dp),
+                                color = Emerald100
+                            ) {
+                                Text(
+                                    text = profile.currencyCode,
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = Emerald800,
+                                    fontWeight = FontWeight.Bold,
+                                    modifier = Modifier.padding(horizontal = 5.dp, vertical = 2.dp),
+                                    fontSize = 10.sp
+                                )
+                            }
                         }
                     }
                 },
                 actions = {
+                    IconButton(onClick = { viewModel.selectTab(AppTab.ACTIVITY) }) {
+                        Icon(
+                            Icons.Default.Notifications,
+                            contentDescription = "Feed Cuplu",
+                            tint = if (currentTab == AppTab.ACTIVITY) Amber500 else Slate500,
+                            modifier = Modifier.size(22.dp)
+                        )
+                    }
+
                     if (currentUser != null) {
                         Surface(
                             shape = RoundedCornerShape(8.dp),
-                            color = Emerald100,
+                            color = Slate800,
                             modifier = Modifier
                                 .clickable { viewModel.selectTab(AppTab.SHARE_APK) }
                         ) {
@@ -136,7 +138,7 @@ fun MainAppScreen(viewModel: HouseVaultViewModel) {
                                     text = "👤 ${currentUser?.name?.split(" ")?.firstOrNull() ?: "Haytham"}",
                                     fontSize = 11.sp,
                                     fontWeight = FontWeight.Bold,
-                                    color = Emerald800
+                                    color = Emerald400
                                 )
                             }
                         }
@@ -146,39 +148,12 @@ fun MainAppScreen(viewModel: HouseVaultViewModel) {
                         }
                     }
 
-                    IconButton(onClick = { viewModel.selectTab(AppTab.ACTIVITY) }) {
-                        Icon(
-                            Icons.Default.Notifications,
-                            contentDescription = "Feed Cuplu",
-                            tint = if (currentTab == AppTab.ACTIVITY) Amber500 else Slate500
-                        )
-                    }
-                    IconButton(onClick = { viewModel.selectTab(AppTab.CALENDAR) }) {
-                        Icon(
-                            Icons.Default.CalendarMonth,
-                            contentDescription = "Calendar",
-                            tint = if (currentTab == AppTab.CALENDAR) CyanAccent else Slate500
-                        )
-                    }
-                    IconButton(onClick = { viewModel.selectTab(AppTab.GEAR_TAX) }) {
-                        Icon(
-                            Icons.Default.Videocam,
-                            contentDescription = "Gear & Tax",
-                            tint = if (currentTab == AppTab.GEAR_TAX) Amber500 else Slate500
-                        )
-                    }
-                    IconButton(onClick = { viewModel.selectTab(AppTab.AI_ADVISOR) }) {
-                        Icon(
-                            Icons.Default.AutoAwesome,
-                            contentDescription = "AI Coach",
-                            tint = if (currentTab == AppTab.AI_ADVISOR) Amber500 else Slate500
-                        )
-                    }
                     IconButton(onClick = { viewModel.selectTab(AppTab.SHARE_APK) }) {
                         Icon(
                             Icons.Default.Settings,
                             contentDescription = "Settings",
-                            tint = if (currentTab == AppTab.SHARE_APK) Emerald600 else Slate500
+                            tint = if (currentTab == AppTab.SHARE_APK) Emerald600 else Slate500,
+                            modifier = Modifier.size(22.dp)
                         )
                     }
                 },
