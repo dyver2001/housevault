@@ -520,7 +520,7 @@ export const App: React.FC = () => {
       />
 
       {/* Main Tab View */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 pt-4 sm:pt-6 pb-28 lg:pb-8">
         {currentTab === 'dashboard' && (
           <DashboardView
             profile={profile}

@@ -160,7 +160,7 @@ export const Navbar: React.FC<NavbarProps> = ({
           </nav>
 
           {/* Right Action Toolbar */}
-          <div className="flex items-center space-x-1 sm:space-x-2">
+          <div className="flex items-center space-x-1 sm:space-x-1.5 flex-shrink-0">
             {/* AI Receipt Scanner Quick Button */}
             <button
               onClick={onOpenScanner}
@@ -184,23 +184,23 @@ export const Navbar: React.FC<NavbarProps> = ({
             {syncCode ? (
               <button
                 onClick={onOpenSettings}
-                className="px-2.5 py-1.5 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/30 text-emerald-300 transition flex items-center space-x-1.5 text-xs font-bold shadow-sm cursor-pointer"
+                className="px-2 py-1.5 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/30 text-emerald-300 transition flex items-center space-x-1 text-xs font-bold shadow-sm cursor-pointer"
                 title={lang === 'ro' ? `Conectat Live (${syncCode})` : `Live Synced (${syncCode})`}
               >
                 <span className="relative flex h-2 w-2">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
                   <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
                 </span>
-                <span className="font-mono text-emerald-200">{syncCode}</span>
+                <span className="font-mono text-emerald-200 text-[11px]">{syncCode}</span>
               </button>
             ) : (
               <button
                 onClick={onOpenSettings}
-                className="px-2.5 py-1.5 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/30 text-amber-300 transition flex items-center space-x-1.5 text-xs font-semibold cursor-pointer"
+                className="px-2 py-1.5 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/30 text-amber-300 transition flex items-center space-x-1 text-xs font-semibold cursor-pointer"
                 title={lang === 'ro' ? 'Apasă pentru sincronizare' : 'Click to pair'}
               >
                 <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
-                <span className="text-xs font-medium">{lang === 'ro' ? 'Offline' : 'Offline'}</span>
+                <span className="text-[11px] font-medium hidden sm:inline">{lang === 'ro' ? 'Offline' : 'Offline'}</span>
               </button>
             )}
 
@@ -208,65 +208,74 @@ export const Navbar: React.FC<NavbarProps> = ({
             {currentUser ? (
               <button
                 onClick={onOpenAuth}
-                className="px-2.5 py-1.5 rounded-xl bg-stone-800 hover:bg-stone-750 border border-stone-700 text-stone-200 transition flex items-center space-x-1.5 text-xs font-bold cursor-pointer"
+                className="px-2 py-1.5 rounded-xl bg-stone-800 hover:bg-stone-750 border border-stone-700 text-stone-200 transition flex items-center space-x-1 text-xs font-bold cursor-pointer"
                 title={`${currentUser.name} (${currentUser.email})`}
               >
                 <span className="w-4 h-4 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-[10px]">
                   👤
                 </span>
-                <span className="hidden sm:inline">{currentUser.name.split(' ')[0]}</span>
+                <span className="hidden sm:inline text-[11px]">{currentUser.name.split(' ')[0]}</span>
               </button>
             ) : (
               <button
                 onClick={onOpenAuth}
-                className="px-2.5 py-1.5 rounded-xl bg-stone-800 hover:bg-stone-750 border border-stone-700 text-stone-300 transition flex items-center space-x-1.5 text-xs font-medium cursor-pointer"
+                className="px-2 py-1.5 rounded-xl bg-stone-800 hover:bg-stone-750 border border-stone-700 text-stone-300 transition flex items-center space-x-1 text-xs font-medium cursor-pointer"
                 title="Autentificare Cont"
               >
                 <User className="w-3.5 h-3.5 text-emerald-400" />
-                <span className="hidden sm:inline">{lang === 'ro' ? 'Login' : 'Login'}</span>
+                <span className="hidden sm:inline text-[11px]">{lang === 'ro' ? 'Login' : 'Login'}</span>
               </button>
             )}
 
-            {/* Settings */}
+            {/* Settings Button */}
             <button
               id="btn-open-settings"
               onClick={onOpenSettings}
               className="p-2 rounded-xl text-stone-400 hover:text-white hover:bg-stone-800 transition flex items-center text-sm font-medium border border-transparent hover:border-stone-700 cursor-pointer"
               title="Setări & Configurare"
             >
-              <Settings className="w-4 h-4" />
+              <Settings className="w-4 h-4 text-stone-300" />
             </button>
           </div>
         </div>
+      </div>
 
-        {/* Mobile Sub-Navigation Bar */}
-        <div className="flex lg:hidden overflow-x-auto py-2 space-x-1.5 border-t border-stone-800/60 no-scrollbar">
-          {tabs.map((t) => {
-            const Icon = t.icon;
-            const isActive = currentTab === t.id;
-            return (
-              <button
-                key={t.id}
-                id={`mobile-tab-${t.id}`}
-                onClick={() => onSelectTab(t.id)}
-                className={`flex-shrink-0 flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-colors ${
-                  isActive
-                    ? 'bg-emerald-500/15 text-emerald-300 border border-emerald-500/30'
-                    : 'text-stone-400 bg-stone-800/40 hover:bg-stone-800'
-                }`}
-              >
-                <Icon className="w-3.5 h-3.5" />
-                <span>{t.label}</span>
+      {/* Modern 0-Swipe Fixed Bottom Navigation Bar for Mobile */}
+      <nav
+        className="fixed bottom-0 left-0 right-0 z-50 bg-stone-900/98 backdrop-blur-xl border-t border-stone-800 px-1 py-1 lg:hidden flex items-center justify-around shadow-2xl"
+        style={{ paddingBottom: 'max(env(safe-area-inset-bottom, 0px), 6px)' }}
+      >
+        {tabs.map((t) => {
+          const Icon = t.icon;
+          const isActive = currentTab === t.id;
+          return (
+            <button
+              key={t.id}
+              id={`mobile-nav-${t.id}`}
+              onClick={() => onSelectTab(t.id)}
+              className={`flex-1 flex flex-col items-center justify-center py-1 px-0.5 rounded-xl transition-all cursor-pointer relative ${
+                isActive
+                  ? t.highlight
+                    ? 'text-amber-400 bg-amber-500/10'
+                    : 'text-emerald-400 bg-emerald-500/10'
+                  : 'text-stone-400 hover:text-stone-200'
+              }`}
+            >
+              <div className="relative">
+                <Icon className={`w-5 h-5 ${isActive ? (t.highlight ? 'text-amber-400' : 'text-emerald-400') : 'text-stone-400'}`} />
                 {t.badge !== undefined && (
-                  <span className={`px-1 rounded-full text-[10px] ${t.badgeAlert ? 'bg-rose-500 text-white' : 'bg-stone-700 text-amber-300'}`}>
+                  <span className="absolute -top-1 -right-2 px-1 rounded-full text-[9px] font-bold bg-amber-500 text-stone-950">
                     {t.badge}
                   </span>
                 )}
-              </button>
-            );
-          })}
-        </div>
-      </div>
+              </div>
+              <span className={`text-[10px] tracking-tight mt-0.5 max-w-[50px] truncate ${isActive ? 'font-bold' : 'font-medium'}`}>
+                {t.label}
+              </span>
+            </button>
+          );
+        })}
+      </nav>
     </header>
   );
 };
