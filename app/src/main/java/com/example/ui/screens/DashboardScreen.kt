@@ -105,6 +105,84 @@ fun DashboardScreen(
                 }
             }
         }
+
+        // --- 🚀 QUICK POWERHOUSE TOOLS FOR HAYTHAM & CATI ---
+        item {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                // Calendar
+                Button(
+                    onClick = { onNavigate(AppTab.CALENDAR) },
+                    modifier = Modifier.weight(1f),
+                    colors = ButtonDefaults.buttonColors(containerColor = CardBackground),
+                    shape = RoundedCornerShape(14.dp),
+                    border = CardDefaults.outlinedCardBorder().copy(brush = androidx.compose.ui.graphics.SolidColor(Color(0xFF2A2E2C))),
+                    contentPadding = PaddingValues(8.dp)
+                ) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text("📅", fontSize = 16.sp)
+                        Text("Calendar", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                    }
+                }
+
+                // Gear & Taxes
+                Button(
+                    onClick = { onNavigate(AppTab.GEAR_TAX) },
+                    modifier = Modifier.weight(1f),
+                    colors = ButtonDefaults.buttonColors(containerColor = CardBackground),
+                    shape = RoundedCornerShape(14.dp),
+                    border = CardDefaults.outlinedCardBorder().copy(brush = androidx.compose.ui.graphics.SolidColor(Color(0xFF2A2E2C))),
+                    contentPadding = PaddingValues(8.dp)
+                ) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text("🎥", fontSize = 16.sp)
+                        Text("Gear & Tax", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                    }
+                }
+
+                // Couple Activity Feed
+                Button(
+                    onClick = { onNavigate(AppTab.ACTIVITY) },
+                    modifier = Modifier.weight(1f),
+                    colors = ButtonDefaults.buttonColors(containerColor = CardBackground),
+                    shape = RoundedCornerShape(14.dp),
+                    border = CardDefaults.outlinedCardBorder().copy(brush = androidx.compose.ui.graphics.SolidColor(Color(0xFF2A2E2C))),
+                    contentPadding = PaddingValues(8.dp)
+                ) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text("🔔", fontSize = 16.sp)
+                        Text("Feed Cuplu", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                    }
+                }
+
+                // AI Coach
+                Button(
+                    onClick = { onNavigate(AppTab.AI_ADVISOR) },
+                    modifier = Modifier.weight(1f),
+                    colors = ButtonDefaults.buttonColors(containerColor = CardBackground),
+                    shape = RoundedCornerShape(14.dp),
+                    border = CardDefaults.outlinedCardBorder().copy(brush = androidx.compose.ui.graphics.SolidColor(Color(0xFF2A2E2C))),
+                    contentPadding = PaddingValues(8.dp)
+                ) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text("✨", fontSize = 16.sp)
+                        Text("AI Coach", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                    }
+                }
+            }
+        }
+
+        // --- 🏡 DREAM HOUSE BUILDER COMPONENT ---
+        item {
+            DreamHouseComponent(
+                targets = targets,
+                profile = profile,
+                onDepositClick = { onNavigate(AppTab.TARGETS) }
+            )
+        }
+
         // --- HERO: FREELANCE CASH COLLECTOR BANNER ---
         item {
             Card(

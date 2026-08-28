@@ -13,6 +13,9 @@ enum class AppTab(val title: String) {
     HOUSE_BUDGET("House Budget"),
     BANK_DEBT("Bank Debts"),
     TARGETS("Savings Targets"),
+    CALENDAR("Calendar Plăți"),
+    GEAR_TAX("Gear & Taxe"),
+    ACTIVITY("Feed Cuplu"),
     AI_ADVISOR("AI Advisor"),
     SHARE_APK("APK & iPhone")
 }

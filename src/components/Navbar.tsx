@@ -10,7 +10,10 @@ import {
   ShieldCheck,
   Smartphone,
   User,
-  LogOut
+  LogOut,
+  Calendar,
+  Bell,
+  Camera
 } from 'lucide-react';
 import { HouseholdProfile } from '../types';
 import { translations, Language } from '../data/i18n';
@@ -22,6 +25,7 @@ export type TabType =
   | 'budget'
   | 'debt'
   | 'targets'
+  | 'calendar'
   | 'ai';
 
 interface NavbarProps {
@@ -37,6 +41,8 @@ interface NavbarProps {
   currentUser?: AuthUser | null;
   onOpenAuth?: () => void;
   onLogout?: () => void;
+  onOpenActivityFeed?: () => void;
+  onOpenScanner?: () => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -51,7 +57,9 @@ export const Navbar: React.FC<NavbarProps> = ({
   isSyncConnected,
   currentUser,
   onOpenAuth,
-  onLogout
+  onLogout,
+  onOpenActivityFeed,
+  onOpenScanner
 }) => {
   const lang: Language = (profile.language as Language) || 'ro';
   const t = translations[lang] || translations.ro;
@@ -83,6 +91,11 @@ export const Navbar: React.FC<NavbarProps> = ({
       id: 'targets' as TabType,
       label: t.tabs.targets,
       icon: Vault,
+    },
+    {
+      id: 'calendar' as TabType,
+      label: lang === 'ro' ? 'Calendar' : 'Calendar',
+      icon: Calendar,
     },
     {
       id: 'ai' as TabType,
@@ -140,9 +153,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                   {t.badge !== undefined && (
                     <span
                       className={`ml-1.5 px-1.5 py-0.5 text-xs font-bold rounded-full ${
-                        t.badgeAlert
-                          ? 'bg-rose-500 text-white animate-pulse'
-                          : 'bg-amber-500/20 text-amber-400'
+                        t.badgeAlert ? 'bg-rose-500 text-white animate-pulse' : 'bg-amber-500 text-stone-950'
                       }`}
                     >
                       {t.badge}
@@ -153,8 +164,27 @@ export const Navbar: React.FC<NavbarProps> = ({
             })}
           </nav>
 
-          {/* Right Action: Cloud Sync Status, Install on Phone & Settings */}
-          <div className="flex items-center space-x-1.5 sm:space-x-2">
+          {/* Right Action: Cloud Sync Status, Scanner, Activity Feed & Settings */}
+          <div className="flex items-center space-x-1 sm:space-x-1.5">
+            {/* AI Receipt Scanner Quick Button */}
+            <button
+              onClick={onOpenScanner}
+              className="p-2 rounded-xl text-stone-400 hover:text-cyan-400 hover:bg-stone-800 transition flex items-center cursor-pointer"
+              title={lang === 'ro' ? 'Scaner Bonuri AI' : 'Scan Receipt AI'}
+            >
+              <Camera className="w-4 h-4" />
+            </button>
+
+            {/* Couple Activity Feed Bell */}
+            <button
+              onClick={onOpenActivityFeed}
+              className="relative p-2 rounded-xl text-stone-400 hover:text-amber-400 hover:bg-stone-800 transition flex items-center cursor-pointer"
+              title={lang === 'ro' ? 'Activitate Live în Cuplu' : 'Couple Activity Feed'}
+            >
+              <Bell className="w-4 h-4" />
+              <span className="w-2 h-2 rounded-full bg-amber-400 absolute top-1.5 right-1.5" />
+            </button>
+
             {syncCode ? (
               <button
                 onClick={onOpenSettings}

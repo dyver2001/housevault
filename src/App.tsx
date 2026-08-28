@@ -5,6 +5,7 @@ import { FreelanceCollectorView } from './components/FreelanceCollectorView';
 import { HouseholdBudgetView } from './components/HouseholdBudgetView';
 import { BankDebtView } from './components/BankDebtView';
 import { SavingsTargetsView } from './components/SavingsTargetsView';
+import { CashFlowCalendarView } from './components/CashFlowCalendarView';
 import { AiAdvisorView } from './components/AiAdvisorView';
 import { CollectPaymentModal } from './components/CollectPaymentModal';
 import { SettingsShareModal } from './components/SettingsShareModal';
@@ -14,6 +15,10 @@ import { TargetFormModal } from './components/TargetFormModal';
 import { ExpenseFormModal } from './components/ExpenseFormModal';
 import { InstallPhoneModal } from './components/InstallPhoneModal';
 import { AuthModal } from './components/AuthModal';
+import { ActivityFeedModal } from './components/ActivityFeedModal';
+import { ReceiptScannerModal } from './components/ReceiptScannerModal';
+import { MonthlyReportModal } from './components/MonthlyReportModal';
+import { GearTaxToolsModal } from './components/GearTaxToolsModal';
 
 import {
   loadProfile,
@@ -53,7 +58,8 @@ import {
   BankDebt,
   SavingsTarget,
   HouseholdExpense,
-  WindfallSplitRule
+  WindfallSplitRule,
+  ActivityItem
 } from './types';
 
 export const App: React.FC = () => {
@@ -66,10 +72,17 @@ export const App: React.FC = () => {
   const [targets, setTargets] = useState<SavingsTarget[]>(loadTargets);
   const [expenses, setExpenses] = useState<HouseholdExpense[]>(loadExpenses);
   const [splitRule, setSplitRule] = useState<WindfallSplitRule>(loadSplitRule);
+  const [activities, setActivities] = useState<ActivityItem[]>([]);
 
   // Authentication State
   const [currentUser, setCurrentUser] = useState<AuthUser | null>(getStoredUser);
   const [showAuthModal, setShowAuthModal] = useState<boolean>(false);
+
+  // Modals state
+  const [isActivityFeedOpen, setIsActivityFeedOpen] = useState(false);
+  const [isReceiptScannerOpen, setIsReceiptScannerOpen] = useState(false);
+  const [isMonthlyReportOpen, setIsMonthlyReportOpen] = useState(false);
+  const [isGearTaxOpen, setIsGearTaxOpen] = useState(false);
 
   // Cloud Sync State
   const [syncCode, setSyncCode] = useState<string | null>(getStoredVaultCode);
@@ -136,6 +149,7 @@ export const App: React.FC = () => {
     if (data.targets) setTargets(data.targets);
     if (data.expenses) setExpenses(data.expenses);
     if (data.splitRule) setSplitRule(data.splitRule);
+    if (data.activities) setActivities(data.activities);
     setTimeout(() => {
       isInternalUpdate.current = false;
     }, 300);
@@ -149,6 +163,7 @@ export const App: React.FC = () => {
     targets?: SavingsTarget[];
     expenses?: HouseholdExpense[];
     splitRule?: WindfallSplitRule;
+    activities?: ActivityItem[];
   }) => {
     if (!syncCode || isInternalUpdate.current) return;
     const fullData = {
@@ -157,13 +172,63 @@ export const App: React.FC = () => {
       debts: override?.debts || debts,
       targets: override?.targets || targets,
       expenses: override?.expenses || expenses,
-      splitRule: override?.splitRule || splitRule
+      splitRule: override?.splitRule || splitRule,
+      activities: override?.activities || activities
     };
     pushCloudVault(syncCode, fullData, `${profile.husbandName} & ${profile.wifeName}`).then((res) => {
       if (res.success && res.vault) {
         setLastSyncTime(res.vault.lastUpdated || new Date().toISOString());
       }
     });
+  };
+
+  // Activity Logger Helper
+  const logActivity = (title: string, type: ActivityItem['type'], amount?: number) => {
+    const isHusband = currentUser?.name?.toLowerCase().includes('haytham') ?? true;
+    const newActivity: ActivityItem = {
+      id: `act-${Date.now()}`,
+      timestamp: new Date().toISOString(),
+      actorName: isHusband ? profile.husbandName.split(' ')[0] : profile.wifeName.split(' ')[0],
+      actorRole: isHusband ? 'husband' : 'wife',
+      type: type,
+      title: title,
+      amount: amount,
+      reactions: {}
+    };
+
+    const updated = [newActivity, ...activities].slice(0, 30);
+    setActivities(updated);
+    pushCurrentStateToCloud({ activities: updated });
+  };
+
+  // Emoji Reaction Handler
+  const handleReactToActivity = async (activityId: string, emoji: string) => {
+    // Optimistic local update
+    const updated = activities.map((a) => {
+      if (a.id === activityId) {
+        const reacts = { ...(a.reactions || {}) };
+        reacts[emoji] = (reacts[emoji] || 0) + 1;
+        return { ...a, reactions: reacts };
+      }
+      return a;
+    });
+    setActivities(updated);
+
+    if (syncCode) {
+      try {
+        await fetch(`/api/sync/${syncCode}/react`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            activityId,
+            emoji,
+            actorName: currentUser?.name || profile.husbandName
+          })
+        });
+      } catch (e) {
+        // ignore
+      }
+    }
   };
 
   // Subscribe to Live Cloud Vault when syncCode is present
@@ -462,6 +527,8 @@ export const App: React.FC = () => {
           logoutAccount();
           setCurrentUser(null);
         }}
+        onOpenActivityFeed={() => setIsActivityFeedOpen(true)}
+        onOpenScanner={() => setIsReceiptScannerOpen(true)}
       />
 
       {/* Main Tab View */}
@@ -478,8 +545,16 @@ export const App: React.FC = () => {
             onNavigate={setCurrentTab}
             onOpenCollectModal={(project) => setCollectProject(project)}
             onOpenNewProject={() => setEditingProject(null)}
-            onOpenNewExpense={() => {}}
+            onOpenNewExpense={() => setEditingExpense(null)}
             onOpenSettings={() => setIsSettingsOpen(true)}
+            onOpenScanner={() => setIsReceiptScannerOpen(true)}
+            onOpenReport={() => setIsMonthlyReportOpen(true)}
+            onOpenGearTax={() => setIsGearTaxOpen(true)}
+            onOpenActivityFeed={() => setIsActivityFeedOpen(true)}
+            onDepositMoreTarget={(targetId) => {
+              const target = targets.find((t) => t.id === targetId);
+              if (target) setEditingTarget(target);
+            }}
           />
         )}
 
@@ -526,6 +601,17 @@ export const App: React.FC = () => {
           />
         )}
 
+        {currentTab === 'calendar' && (
+          <CashFlowCalendarView
+            profile={profile}
+            projects={projects}
+            debts={debts}
+            expenses={expenses}
+            currencySymbol={profile.currencySymbol}
+            lang={profile.language || 'ro'}
+          />
+        )}
+
         {currentTab === 'ai' && (
           <AiAdvisorView
             profile={profile}
@@ -536,6 +622,49 @@ export const App: React.FC = () => {
           />
         )}
       </main>
+
+      {/* Couple Activity Feed Modal */}
+      <ActivityFeedModal
+        isOpen={isActivityFeedOpen}
+        onClose={() => setIsActivityFeedOpen(false)}
+        activities={activities}
+        onReact={handleReactToActivity}
+        currencySymbol={profile.currencySymbol}
+        lang={profile.language || 'ro'}
+      />
+
+      {/* AI Receipt Scanner Modal */}
+      <ReceiptScannerModal
+        isOpen={isReceiptScannerOpen}
+        onClose={() => setIsReceiptScannerOpen(false)}
+        onAddExpense={(exp) => {
+          handleSaveExpense(exp);
+          logActivity(`A adăugat cheltuiala scanată: ${exp.title} (${exp.amount} ${profile.currencySymbol})`, 'EXPENSE_PAID', exp.amount);
+        }}
+        currencySymbol={profile.currencySymbol}
+        lang={profile.language || 'ro'}
+      />
+
+      {/* Monthly Report Statement Modal */}
+      <MonthlyReportModal
+        isOpen={isMonthlyReportOpen}
+        onClose={() => setIsMonthlyReportOpen(false)}
+        profile={profile}
+        projects={projects}
+        debts={debts}
+        targets={targets}
+        expenses={expenses}
+        currencySymbol={profile.currencySymbol}
+        lang={profile.language || 'ro'}
+      />
+
+      {/* Haytham Pro Gear ROI & Tax Buffer Modal */}
+      <GearTaxToolsModal
+        isOpen={isGearTaxOpen}
+        onClose={() => setIsGearTaxOpen(false)}
+        currencySymbol={profile.currencySymbol}
+        lang={profile.language || 'ro'}
+      />
 
       {/* Footer */}
       <footer

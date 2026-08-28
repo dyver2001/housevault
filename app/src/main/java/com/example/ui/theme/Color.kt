@@ -1,4 +1,4 @@
-﻿package com.example.ui.theme
+package com.example.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
@@ -61,3 +61,10 @@ val SurfaceDark = Color(0xFF1E293B)
 val BackgroundLight = Color(0xFFF8FAFC)
 val BackgroundDark = Color(0xFF0F172A)
 val ObsidianDark = Color(0xFF090A0F)
+
+// Aliases for modern screens
+val EmeraldPrimary = Emerald500
+val AmberGold = Amber500
+val CyanAccent = Cyan500
+val CardBackground = Slate900
+val TextSecondary = Slate400

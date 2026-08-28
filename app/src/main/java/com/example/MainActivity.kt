@@ -53,6 +53,8 @@ fun MainAppScreen(viewModel: HouseVaultViewModel) {
     val profile by viewModel.profile.collectAsState()
     val projects by viewModel.projects.collectAsState()
     val debts by viewModel.debts.collectAsState()
+    val expenses by viewModel.expenses.collectAsState()
+    val targets by viewModel.targets.collectAsState()
     val currentUser by viewModel.currentUser.collectAsState()
     var dismissedAuth by remember { mutableStateOf(false) }
 
@@ -144,6 +146,27 @@ fun MainAppScreen(viewModel: HouseVaultViewModel) {
                         }
                     }
 
+                    IconButton(onClick = { viewModel.selectTab(AppTab.ACTIVITY) }) {
+                        Icon(
+                            Icons.Default.Notifications,
+                            contentDescription = "Feed Cuplu",
+                            tint = if (currentTab == AppTab.ACTIVITY) Amber500 else Slate500
+                        )
+                    }
+                    IconButton(onClick = { viewModel.selectTab(AppTab.CALENDAR) }) {
+                        Icon(
+                            Icons.Default.CalendarMonth,
+                            contentDescription = "Calendar",
+                            tint = if (currentTab == AppTab.CALENDAR) CyanAccent else Slate500
+                        )
+                    }
+                    IconButton(onClick = { viewModel.selectTab(AppTab.GEAR_TAX) }) {
+                        Icon(
+                            Icons.Default.Videocam,
+                            contentDescription = "Gear & Tax",
+                            tint = if (currentTab == AppTab.GEAR_TAX) Amber500 else Slate500
+                        )
+                    }
                     IconButton(onClick = { viewModel.selectTab(AppTab.AI_ADVISOR) }) {
                         Icon(
                             Icons.Default.AutoAwesome,
@@ -241,6 +264,9 @@ fun MainAppScreen(viewModel: HouseVaultViewModel) {
                 AppTab.HOUSE_BUDGET -> HouseholdBudgetScreen(viewModel = viewModel)
                 AppTab.BANK_DEBT -> BankDebtScreen(viewModel = viewModel)
                 AppTab.TARGETS -> SavingsTargetsScreen(viewModel = viewModel)
+                AppTab.CALENDAR -> CashFlowCalendarScreen(profile = profile, projects = projects, debts = debts, expenses = expenses)
+                AppTab.GEAR_TAX -> GearTaxScreen(profile = profile)
+                AppTab.ACTIVITY -> ActivityFeedScreen(profile = profile)
                 AppTab.AI_ADVISOR -> AiAdvisorScreen(viewModel = viewModel)
                 AppTab.SHARE_APK -> MobileShareScreen(viewModel = viewModel)
             }

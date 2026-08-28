@@ -100,7 +100,38 @@ export interface HouseholdProfile {
   wifeMonthlySalary: number;
   husbandEstMonthlyGross: number;
   emergencyFundMonthsGoal: number;
-  language?: 'ro' | 'en';
-  themePreset?: 'emerald' | 'amber' | 'cyan' | 'rose' | 'purple' | 'sunset' | 'obsidian';
-  themeMode?: 'dark' | 'light' | 'system';
+  language?: string;
+  themePreset?: string;
+  themeMode?: string;
+}
+
+export interface ActivityItem {
+  id: string;
+  timestamp: string;
+  actorName: string;
+  actorRole: 'husband' | 'wife';
+  type: 'PROJECT_COLLECTED' | 'EXPENSE_PAID' | 'DEBT_REDUCED' | 'TARGET_DEPOSIT' | 'PROFILE_UPDATED';
+  title: string;
+  amount?: number;
+  reactions: Record<string, number>;
+}
+
+export interface GearItem {
+  id: string;
+  name: string;
+  cost: number;
+  purchasedDate: string;
+  feePerShoot: number;
+  shootsCompleted: number;
+  notes?: string;
+}
+
+export interface ReceiptScanResult {
+  merchantName: string;
+  totalAmount: number;
+  currency: string;
+  date: string;
+  suggestedCategory: ExpenseCategory;
+  items?: string[];
+  rawSummary?: string;
 }

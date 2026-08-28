@@ -9,7 +9,11 @@ import {
   ArrowRight,
   Zap,
   DollarSign,
-  Plus
+  Plus,
+  Camera,
+  FileText,
+  Calendar,
+  Bell
 } from 'lucide-react';
 import {
   HouseholdProfile,
@@ -20,6 +24,7 @@ import {
   WindfallSplitRule
 } from '../types';
 import { TabType } from './Navbar';
+import { DreamHouseVisualizer } from './DreamHouseVisualizer';
 
 interface DashboardViewProps {
   profile: HouseholdProfile;
@@ -34,6 +39,11 @@ interface DashboardViewProps {
   onOpenNewProject: () => void;
   onOpenNewExpense: () => void;
   onOpenSettings?: () => void;
+  onOpenScanner?: () => void;
+  onOpenReport?: () => void;
+  onOpenGearTax?: () => void;
+  onOpenActivityFeed?: () => void;
+  onDepositMoreTarget?: (targetId: string) => void;
 }
 
 export const DashboardView: React.FC<DashboardViewProps> = ({
@@ -47,7 +57,12 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   onNavigate,
   onOpenCollectModal,
   onOpenNewProject,
-  onOpenSettings
+  onOpenSettings,
+  onOpenScanner,
+  onOpenReport,
+  onOpenGearTax,
+  onOpenActivityFeed,
+  onDepositMoreTarget
 }) => {
   const sym = profile.currencySymbol;
 
@@ -156,6 +171,73 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             </button>
           </div>
         </div>
+      </div>
+
+      {/* 🚀 Quick Powerhouse Action Suite for Haytham & Cati */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3">
+        <button
+          type="button"
+          onClick={onOpenScanner}
+          className="p-3 rounded-2xl bg-gradient-to-br from-stone-850 to-stone-900 border border-cyan-500/30 hover:border-cyan-500 text-left transition shadow-md group cursor-pointer"
+        >
+          <div className="w-8 h-8 rounded-xl bg-cyan-500/15 text-cyan-400 flex items-center justify-center mb-1.5 group-hover:scale-110 transition-transform">
+            <Camera className="w-4 h-4" />
+          </div>
+          <span className="text-xs font-black text-white block">
+            {profile.language === 'ro' ? 'Scaner Bonuri AI' : 'AI Receipt Scanner'}
+          </span>
+          <span className="text-[10px] text-stone-400">
+            {profile.language === 'ro' ? 'Pozează bonul în RON' : 'OCR Vision Import'}
+          </span>
+        </button>
+
+        <button
+          type="button"
+          onClick={onOpenReport}
+          className="p-3 rounded-2xl bg-gradient-to-br from-stone-850 to-stone-900 border border-emerald-500/30 hover:border-emerald-500 text-left transition shadow-md group cursor-pointer"
+        >
+          <div className="w-8 h-8 rounded-xl bg-emerald-500/15 text-emerald-400 flex items-center justify-center mb-1.5 group-hover:scale-110 transition-transform">
+            <FileText className="w-4 h-4" />
+          </div>
+          <span className="text-xs font-black text-white block">
+            {profile.language === 'ro' ? 'Raport WhatsApp' : 'Monthly Report'}
+          </span>
+          <span className="text-[10px] text-stone-400">
+            {profile.language === 'ro' ? '1-Click Sumar Cuplu' : 'WhatsApp Statement'}
+          </span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => onNavigate('calendar')}
+          className="p-3 rounded-2xl bg-gradient-to-br from-stone-850 to-stone-900 border border-amber-500/30 hover:border-amber-500 text-left transition shadow-md group cursor-pointer"
+        >
+          <div className="w-8 h-8 rounded-xl bg-amber-500/15 text-amber-400 flex items-center justify-center mb-1.5 group-hover:scale-110 transition-transform">
+            <Calendar className="w-4 h-4" />
+          </div>
+          <span className="text-xs font-black text-white block">
+            {profile.language === 'ro' ? 'Calendar Plăți' : 'Bills Calendar'}
+          </span>
+          <span className="text-[10px] text-stone-400">
+            {profile.language === 'ro' ? 'Scadențe & Salarii' : 'Cash Flow Due Dates'}
+          </span>
+        </button>
+
+        <button
+          type="button"
+          onClick={onOpenGearTax}
+          className="p-3 rounded-2xl bg-gradient-to-br from-stone-850 to-stone-900 border border-rose-500/30 hover:border-rose-500 text-left transition shadow-md group cursor-pointer"
+        >
+          <div className="w-8 h-8 rounded-xl bg-rose-500/15 text-rose-400 flex items-center justify-center mb-1.5 group-hover:scale-110 transition-transform">
+            <Sparkles className="w-4 h-4" />
+          </div>
+          <span className="text-xs font-black text-white block">
+            {profile.language === 'ro' ? 'Haytham Pro Gear' : 'Gear ROI & Tax'}
+          </span>
+          <span className="text-[10px] text-stone-400">
+            {profile.language === 'ro' ? 'Amortizare & PFA/SRL' : 'Video Gear Payoff'}
+          </span>
+        </button>
       </div>
 
       {/* 4 Core Financial Pillar Cards */}
@@ -277,6 +359,14 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           </div>
         </div>
       </div>
+
+      {/* 🏡 Interactive Dream House Construction Progress */}
+      <DreamHouseVisualizer
+        targets={targets}
+        currencySymbol={sym}
+        lang={profile.language || 'ro'}
+        onDepositMore={onDepositMoreTarget}
+      />
 
       {/* Middle Section: Active Inflow & 35/35/15/15 Windfall Split Visualizer */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
