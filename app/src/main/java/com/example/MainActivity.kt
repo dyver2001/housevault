@@ -110,15 +110,6 @@ fun MainAppScreen(viewModel: HouseVaultViewModel) {
                             modifier = Modifier.size(22.dp)
                         )
                     }
-
-                    IconButton(onClick = { viewModel.selectTab(AppTab.SHARE_APK) }) {
-                        Icon(
-                            Icons.Default.Settings,
-                            contentDescription = "Settings",
-                            tint = if (currentTab == AppTab.SHARE_APK) Emerald600 else Slate500,
-                            modifier = Modifier.size(22.dp)
-                        )
-                    }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.surface

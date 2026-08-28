@@ -238,15 +238,6 @@ export const Navbar: React.FC<NavbarProps> = ({
                 <Bell className="w-4 h-4" />
                 <span className="w-2 h-2 rounded-full bg-amber-400 absolute top-1.5 right-1.5 ring-2 ring-stone-900" />
               </button>
-
-              <button
-                id="btn-open-settings"
-                onClick={onOpenSettings}
-                className="w-8.5 h-8.5 sm:w-9 sm:h-9 rounded-full bg-stone-800/90 hover:bg-stone-750 border border-stone-700/70 text-stone-300 hover:text-white flex items-center justify-center transition cursor-pointer flex-shrink-0 active:scale-95 shadow-sm"
-                title="Setări & Configurare"
-              >
-                <Settings className="w-4 h-4 text-stone-300" />
-              </button>
             </div>
           </div>
         </div>
