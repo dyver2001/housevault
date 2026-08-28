@@ -107,19 +107,32 @@ export const Navbar: React.FC<NavbarProps> = ({
 
   return (
     <header
-      className="sticky top-0 z-40 bg-stone-900/95 backdrop-blur-md border-b border-stone-800 transition-all w-full"
+      className="sticky top-0 z-40 bg-stone-900/95 backdrop-blur-xl border-b border-stone-800/80 transition-all w-full"
       style={{ paddingTop: 'max(env(safe-area-inset-top, 0px), 8px)' }}
     >
-      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-14 sm:h-16 gap-1 sm:gap-4">
-          {/* Logo & Vault Brand */}
-          <div className="flex items-center space-x-2 sm:space-x-2.5 cursor-pointer flex-shrink-0" onClick={() => onSelectTab('dashboard')}>
-            <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-gradient-to-br from-amber-500 via-orange-500 to-emerald-600 flex items-center justify-center shadow-md shadow-amber-500/10 flex-shrink-0">
-              <ShieldCheck className="w-4.5 h-4.5 sm:w-5 sm:h-5 text-stone-950 stroke-[2.5]" />
-            </div>
-            <div className="flex items-center space-x-1.5">
-              <span className="font-display font-black text-base sm:text-lg tracking-tight text-white">HouseVault</span>
-              <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+      <div className="max-w-7xl mx-auto px-3.5 sm:px-6 lg:px-8">
+        <div className="flex items-center justify-between h-14 sm:h-16 gap-2">
+          {/* Left: Revolut-style Profile Avatar & Brand */}
+          <div className="flex items-center space-x-2.5 flex-shrink-0">
+            {/* User Profile Avatar with Live Status Dot */}
+            <button
+              onClick={onOpenAuth}
+              className="relative w-9 h-9 rounded-full bg-gradient-to-br from-emerald-500/20 to-stone-800 border border-emerald-500/40 flex items-center justify-center text-emerald-300 font-bold text-xs shadow-sm cursor-pointer hover:border-emerald-400 active:scale-95 transition flex-shrink-0"
+              title={currentUser ? `${currentUser.name} (${currentUser.email})` : 'Autentificare'}
+            >
+              {currentUser ? (
+                <span>{currentUser.name.charAt(0).toUpperCase()}</span>
+              ) : (
+                <User className="w-4 h-4 text-emerald-400" />
+              )}
+              {/* Online/Sync Dot */}
+              <span className={`absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full border-2 border-stone-900 ${isSyncConnected ? 'bg-emerald-400' : 'bg-amber-400'}`} />
+            </button>
+
+            {/* Brand Title */}
+            <div className="flex items-center space-x-1.5 cursor-pointer" onClick={() => onSelectTab('dashboard')}>
+              <span className="font-display font-black text-lg tracking-tight text-white">HouseVault</span>
+              <span className="text-[10px] font-extrabold px-1.5 py-0.5 rounded-md bg-stone-800 text-emerald-400 border border-stone-700/80">
                 {profile.currencyCode}
               </span>
             </div>
@@ -159,44 +172,25 @@ export const Navbar: React.FC<NavbarProps> = ({
             })}
           </nav>
 
-          {/* Right Action Toolbar */}
-          <div className="flex items-center space-x-1 sm:space-x-1.5 flex-shrink-0">
-            {/* AI Receipt Scanner Quick Button */}
-            <button
-              onClick={onOpenScanner}
-              className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-stone-800/80 hover:bg-stone-750 border border-stone-700/60 text-stone-300 hover:text-cyan-400 flex items-center justify-center transition cursor-pointer flex-shrink-0"
-              title={lang === 'ro' ? 'Scaner Bonuri AI' : 'Scan Receipt AI'}
-            >
-              <Camera className="w-4 h-4" />
-            </button>
-
-            {/* Couple Activity Feed Bell */}
-            <button
-              onClick={onOpenActivityFeed}
-              className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-stone-800/80 hover:bg-stone-750 border border-stone-700/60 text-stone-300 hover:text-amber-400 flex items-center justify-center transition cursor-pointer relative flex-shrink-0"
-              title={lang === 'ro' ? 'Activitate Live în Cuplu' : 'Couple Activity Feed'}
-            >
-              <Bell className="w-4 h-4" />
-              <span className="w-2 h-2 rounded-full bg-amber-400 absolute top-1.5 right-1.5" />
-            </button>
-
-            {/* Cloud Sync Status */}
+          {/* Right Action Toolbar (Revolut Style) */}
+          <div className="flex items-center space-x-1.5 sm:space-x-2 flex-shrink-0">
+            {/* Live Sync Pill */}
             {syncCode ? (
               <button
                 onClick={onOpenSettings}
-                className="h-8 sm:h-9 px-2 sm:px-2.5 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/30 text-emerald-300 transition flex items-center space-x-1 text-xs font-bold shadow-sm cursor-pointer whitespace-nowrap flex-shrink-0"
+                className="h-8 sm:h-9 px-2.5 rounded-full bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-300 transition flex items-center space-x-1.5 text-xs font-bold shadow-sm cursor-pointer whitespace-nowrap flex-shrink-0"
                 title={lang === 'ro' ? `Conectat Live (${syncCode})` : `Live Synced (${syncCode})`}
               >
                 <span className="relative flex h-2 w-2 flex-shrink-0">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
                   <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
                 </span>
-                <span className="font-mono text-emerald-200 text-[11px] whitespace-nowrap">{syncCode}</span>
+                <span className="font-mono text-emerald-200 text-[11px] font-bold tracking-wide whitespace-nowrap">{syncCode}</span>
               </button>
             ) : (
               <button
                 onClick={onOpenSettings}
-                className="h-8 sm:h-9 px-2 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/30 text-amber-300 transition flex items-center space-x-1 text-xs font-semibold cursor-pointer whitespace-nowrap flex-shrink-0"
+                className="h-8 sm:h-9 px-2.5 rounded-full bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 text-amber-300 transition flex items-center space-x-1 text-xs font-semibold cursor-pointer whitespace-nowrap flex-shrink-0"
                 title={lang === 'ro' ? 'Apasă pentru sincronizare' : 'Click to pair'}
               >
                 <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse flex-shrink-0" />
@@ -204,34 +198,21 @@ export const Navbar: React.FC<NavbarProps> = ({
               </button>
             )}
 
-            {/* User Account / Profile */}
-            {currentUser ? (
-              <button
-                onClick={onOpenAuth}
-                className="h-8 sm:h-9 px-2 sm:px-2.5 rounded-xl bg-stone-800/80 hover:bg-stone-750 border border-stone-700/60 text-stone-200 transition flex items-center space-x-1 text-xs font-bold cursor-pointer whitespace-nowrap flex-shrink-0"
-                title={`${currentUser.name} (${currentUser.email})`}
-              >
-                <span className="w-4 h-4 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-[10px] font-bold flex-shrink-0">
-                  {currentUser.name.charAt(0).toUpperCase()}
-                </span>
-                <span className="hidden sm:inline text-[11px] whitespace-nowrap">{currentUser.name.split(' ')[0]}</span>
-              </button>
-            ) : (
-              <button
-                onClick={onOpenAuth}
-                className="h-8 sm:h-9 px-2 rounded-xl bg-stone-800/80 hover:bg-stone-750 border border-stone-700/60 text-stone-300 transition flex items-center space-x-1 text-xs font-medium cursor-pointer whitespace-nowrap flex-shrink-0"
-                title="Autentificare Cont"
-              >
-                <User className="w-3.5 h-3.5 text-emerald-400 flex-shrink-0" />
-                <span className="hidden sm:inline text-[11px] whitespace-nowrap">{lang === 'ro' ? 'Login' : 'Login'}</span>
-              </button>
-            )}
+            {/* Couple Activity Feed Bell */}
+            <button
+              onClick={onOpenActivityFeed}
+              className="w-8.5 h-8.5 sm:w-9 sm:h-9 rounded-full bg-stone-800/90 hover:bg-stone-750 border border-stone-700/70 text-stone-300 hover:text-amber-400 flex items-center justify-center transition cursor-pointer relative flex-shrink-0 active:scale-95 shadow-sm"
+              title={lang === 'ro' ? 'Activitate Live în Cuplu' : 'Couple Activity Feed'}
+            >
+              <Bell className="w-4 h-4" />
+              <span className="w-2 h-2 rounded-full bg-amber-400 absolute top-1.5 right-1.5 ring-2 ring-stone-900" />
+            </button>
 
-            {/* Settings Button */}
+            {/* Settings Gear Button */}
             <button
               id="btn-open-settings"
               onClick={onOpenSettings}
-              className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-stone-800/80 hover:bg-stone-750 border border-stone-700/60 text-stone-300 hover:text-white flex items-center justify-center transition cursor-pointer flex-shrink-0"
+              className="w-8.5 h-8.5 sm:w-9 sm:h-9 rounded-full bg-stone-800/90 hover:bg-stone-750 border border-stone-700/70 text-stone-300 hover:text-white flex items-center justify-center transition cursor-pointer flex-shrink-0 active:scale-95 shadow-sm"
               title="Setări & Configurare"
             >
               <Settings className="w-4 h-4 text-stone-300" />

@@ -76,20 +76,23 @@ fun MainAppScreen(viewModel: HouseVaultViewModel) {
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
+                        // User Avatar Bubble (Revolut Style)
                         Box(
                             modifier = Modifier
                                 .size(34.dp)
-                                .clip(RoundedCornerShape(9.dp))
-                                .background(Emerald600),
+                                .clip(CircleShape)
+                                .background(Emerald800)
+                                .clickable { viewModel.selectTab(AppTab.SHARE_APK) },
                             contentAlignment = Alignment.Center
                         ) {
-                            Icon(
-                                imageVector = Icons.Default.AccountBalance,
-                                contentDescription = null,
-                                tint = Color.White,
-                                modifier = Modifier.size(19.dp)
+                            Text(
+                                text = (currentUser?.name?.firstOrNull() ?: 'H').toString().uppercase(),
+                                color = Color.White,
+                                fontWeight = FontWeight.Black,
+                                fontSize = 14.sp
                             )
                         }
+
                         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                             Text(
                                 text = "HouseVault",
@@ -121,31 +124,6 @@ fun MainAppScreen(viewModel: HouseVaultViewModel) {
                             tint = if (currentTab == AppTab.ACTIVITY) Amber500 else Slate500,
                             modifier = Modifier.size(22.dp)
                         )
-                    }
-
-                    if (currentUser != null) {
-                        Surface(
-                            shape = RoundedCornerShape(8.dp),
-                            color = Slate800,
-                            modifier = Modifier
-                                .clickable { viewModel.selectTab(AppTab.SHARE_APK) }
-                        ) {
-                            Row(
-                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Text(
-                                    text = "👤 ${currentUser?.name?.split(" ")?.firstOrNull() ?: "Haytham"}",
-                                    fontSize = 11.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = Emerald400
-                                )
-                            }
-                        }
-                    } else {
-                        TextButton(onClick = { dismissedAuth = false }) {
-                            Text("🔐 Login", fontSize = 12.sp, color = Emerald600, fontWeight = FontWeight.Bold)
-                        }
                     }
 
                     IconButton(onClick = { viewModel.selectTab(AppTab.SHARE_APK) }) {
