@@ -886,7 +886,11 @@ class HouseVaultRepository(context: Context) {
     }
 
     private fun loadTargets(): List<SavingsTarget> {
-        val json = prefs.getString("targets_json", null) ?: return createDefaultTargets()
+        val json = prefs.getString("targets_json", null) ?: run {
+            val defaults = createDefaultTargets()
+            saveTargets(defaults)   // seeds widget prefs on first install
+            return defaults
+        }
         return try {
             val arr = JSONArray(json)
             val list = mutableListOf<SavingsTarget>()
@@ -905,9 +909,12 @@ class HouseVaultRepository(context: Context) {
                     )
                 )
             }
+            saveTargets(list)   // refresh widget prefs every cold start
             list
         } catch (e: Exception) {
-            createDefaultTargets()
+            val defaults = createDefaultTargets()
+            saveTargets(defaults)
+            defaults
         }
     }
 
@@ -926,6 +933,25 @@ class HouseVaultRepository(context: Context) {
             })
         }
         prefs.edit().putString("targets_json", arr.toString()).apply()
+
+        // ─── Widget bridge: write Seat Ateca live progress to widget-readable prefs ───
+        val ateca = list.firstOrNull {
+            it.iconName == "car" || it.title.contains("Ateca", ignoreCase = true) || it.title.contains("Seat", ignoreCase = true)
+        }
+        if (ateca != null) {
+            val pct = if (ateca.targetAmount > 0)
+                ((ateca.currentSavedAmount / ateca.targetAmount) * 100).toInt().coerceIn(0, 100)
+            else 0
+            val savedFmt = ateca.currentSavedAmount.toLong()
+            val targetFmt = ateca.targetAmount.toLong()
+            prefs.edit()
+                .putInt("widget_car_percent", pct)
+                .putLong("widget_car_saved", savedFmt)
+                .putLong("widget_car_target", targetFmt)
+                .putString("widget_car_title", "🚙 ${ateca.title}")
+                .putString("widget_car_deadline", ateca.deadline)
+                .apply()
+        }
     }
 
     private fun loadExpenses(): List<HouseholdExpense> {

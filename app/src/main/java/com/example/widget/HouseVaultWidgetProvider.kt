@@ -1,4 +1,4 @@
-﻿package com.example.widget
+package com.example.widget
 
 import android.app.PendingIntent
 import android.appwidget.AppWidgetManager
@@ -30,10 +30,28 @@ class HouseVaultWidgetProvider : AppWidgetProvider() {
             val views = RemoteViews(context.packageName, R.layout.house_vault_widget)
             views.setOnClickPendingIntent(R.id.widget_root, pendingIntent)
 
-            // Read preferences if available
-            val prefs = context.getSharedPreferences("housevault_prefs", Context.MODE_PRIVATE)
+            // ─── Read live data written by HouseVaultRepository.saveTargets() ───
+            val prefs = context.getSharedPreferences("house_vault_data", Context.MODE_PRIVATE)
+
+            // Seat Ateca live savings data
+            val carTitle    = prefs.getString("widget_car_title", "🚙 Seat Ateca (15.000 €)") ?: "🚙 Seat Ateca (15.000 €)"
+            val carPct      = prefs.getInt("widget_car_percent", 30).coerceIn(0, 100)
+            val carSaved    = prefs.getLong("widget_car_saved", 22_500L)
+            val carTarget   = prefs.getLong("widget_car_target", 75_000L)
+            val carDeadline = prefs.getString("widget_car_deadline", "Dec 2027") ?: "Dec 2027"
             val isSyncActive = prefs.getString("vault_sync_code", null) != null
 
+            // Format amounts with thousands separator
+            val savedStr  = "%,d".format(carSaved)
+            val targetStr = "%,d".format(carTarget)
+
+            // Push live values into widget views
+            views.setTextViewText(R.id.widget_car_title, carTitle)
+            views.setProgressBar(R.id.widget_car_progress, 100, carPct, false)
+            views.setTextViewText(
+                R.id.widget_car_percent,
+                "$carPct% • $savedStr / $targetStr lei • $carDeadline"
+            )
             views.setTextViewText(
                 R.id.widget_sync_badge,
                 if (isSyncActive) "● Live Sync" else "● Local"
