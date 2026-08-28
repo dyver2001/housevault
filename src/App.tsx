@@ -260,113 +260,101 @@ export const App: React.FC = () => {
 
   // Project handlers
   const handleSaveProject = (project: FreelanceProject) => {
-    let nextProjects: FreelanceProject[];
     setProjects((prev) => {
       const idx = prev.findIndex((p) => p.id === project.id);
-      if (idx >= 0) {
-        nextProjects = [...prev];
-        nextProjects[idx] = project;
-      } else {
-        nextProjects = [project, ...prev];
-      }
+      const nextProjects = idx >= 0 ? prev.map((p) => (p.id === project.id ? project : p)) : [project, ...prev];
+      pushCurrentStateToCloud({ projects: nextProjects });
       return nextProjects;
     });
-    pushCurrentStateToCloud({ projects: nextProjects! });
   };
 
   const handleDeleteProject = (projectId: string) => {
-    const nextProjects = projects.filter((p) => p.id !== projectId);
-    setProjects(nextProjects);
-    pushCurrentStateToCloud({ projects: nextProjects });
+    setProjects((prev) => {
+      const nextProjects = prev.filter((p) => p.id !== projectId);
+      pushCurrentStateToCloud({ projects: nextProjects });
+      return nextProjects;
+    });
   };
 
   // Debt handlers
   const handleSaveDebt = (debt: BankDebt) => {
-    let nextDebts: BankDebt[];
     setDebts((prev) => {
       const idx = prev.findIndex((d) => d.id === debt.id);
-      if (idx >= 0) {
-        nextDebts = [...prev];
-        nextDebts[idx] = debt;
-      } else {
-        nextDebts = [...prev, debt];
-      }
+      const nextDebts = idx >= 0 ? prev.map((d) => (d.id === debt.id ? debt : d)) : [...prev, debt];
+      pushCurrentStateToCloud({ debts: nextDebts });
       return nextDebts;
     });
-    pushCurrentStateToCloud({ debts: nextDebts! });
   };
 
   const handleDeleteDebt = (debtId: string) => {
-    const nextDebts = debts.filter((d) => d.id !== debtId);
-    setDebts(nextDebts);
-    pushCurrentStateToCloud({ debts: nextDebts });
+    setDebts((prev) => {
+      const nextDebts = prev.filter((d) => d.id !== debtId);
+      pushCurrentStateToCloud({ debts: nextDebts });
+      return nextDebts;
+    });
   };
 
   const handleMakeDebtPayment = (debtId: string, amount: number) => {
-    const nextDebts = debts.map((d) => {
-      if (d.id === debtId) {
-        const newBal = Math.max(0, d.currentBalance - amount);
-        return { ...d, currentBalance: newBal };
-      }
-      return d;
+    setDebts((prev) => {
+      const nextDebts = prev.map((d) => {
+        if (d.id === debtId) {
+          const newBal = Math.max(0, d.currentBalance - amount);
+          return { ...d, currentBalance: newBal };
+        }
+        return d;
+      });
+      pushCurrentStateToCloud({ debts: nextDebts });
+      return nextDebts;
     });
-    setDebts(nextDebts);
-    pushCurrentStateToCloud({ debts: nextDebts });
   };
 
   // Target handlers
   const handleSaveTarget = (target: SavingsTarget) => {
-    let nextTargets: SavingsTarget[];
     setTargets((prev) => {
       const idx = prev.findIndex((t) => t.id === target.id);
-      if (idx >= 0) {
-        nextTargets = [...prev];
-        nextTargets[idx] = target;
-      } else {
-        nextTargets = [...prev, target];
-      }
+      const nextTargets = idx >= 0 ? prev.map((t) => (t.id === target.id ? target : t)) : [...prev, target];
+      pushCurrentStateToCloud({ targets: nextTargets });
       return nextTargets;
     });
-    pushCurrentStateToCloud({ targets: nextTargets! });
   };
 
   const handleDeleteTarget = (targetId: string) => {
-    const nextTargets = targets.filter((t) => t.id !== targetId);
-    setTargets(nextTargets);
-    pushCurrentStateToCloud({ targets: nextTargets });
+    setTargets((prev) => {
+      const nextTargets = prev.filter((t) => t.id !== targetId);
+      pushCurrentStateToCloud({ targets: nextTargets });
+      return nextTargets;
+    });
   };
 
   const handleDepositToTarget = (targetId: string, amount: number) => {
-    const nextTargets = targets.map((t) => {
-      if (t.id === targetId) {
-        return { ...t, currentSavedAmount: t.currentSavedAmount + amount };
-      }
-      return t;
+    setTargets((prev) => {
+      const nextTargets = prev.map((t) => {
+        if (t.id === targetId) {
+          return { ...t, currentSavedAmount: t.currentSavedAmount + amount };
+        }
+        return t;
+      });
+      pushCurrentStateToCloud({ targets: nextTargets });
+      return nextTargets;
     });
-    setTargets(nextTargets);
-    pushCurrentStateToCloud({ targets: nextTargets });
   };
 
   // Expense handlers
   const handleSaveExpense = (expense: HouseholdExpense) => {
-    let nextExpenses: HouseholdExpense[];
     setExpenses((prev) => {
       const idx = prev.findIndex((e) => e.id === expense.id);
-      if (idx >= 0) {
-        nextExpenses = [...prev];
-        nextExpenses[idx] = expense;
-      } else {
-        nextExpenses = [...prev, expense];
-      }
+      const nextExpenses = idx >= 0 ? prev.map((e) => (e.id === expense.id ? expense : e)) : [...prev, expense];
+      pushCurrentStateToCloud({ expenses: nextExpenses });
       return nextExpenses;
     });
-    pushCurrentStateToCloud({ expenses: nextExpenses! });
   };
 
   const handleDeleteExpense = (expenseId: string) => {
-    const nextExpenses = expenses.filter((e) => e.id !== expenseId);
-    setExpenses(nextExpenses);
-    pushCurrentStateToCloud({ expenses: nextExpenses });
+    setExpenses((prev) => {
+      const nextExpenses = prev.filter((e) => e.id !== expenseId);
+      pushCurrentStateToCloud({ expenses: nextExpenses });
+      return nextExpenses;
+    });
   };
 
   // Collect Inflow & Apply Windfall Split Rule
@@ -562,10 +550,10 @@ export const App: React.FC = () => {
           <FreelanceCollectorView
             projects={projects}
             profile={profile}
-            onOpenNewGig={() => setEditingProject(null)}
-            onEditGig={(p) => setEditingProject(p)}
-            onDeleteGig={handleDeleteProject}
-            onCollectPayment={(p) => setCollectProject(p)}
+            onOpenNewProject={() => setEditingProject(null)}
+            onEditProject={(p) => setEditingProject(p)}
+            onDeleteProject={handleDeleteProject}
+            onOpenCollectModal={(p) => setCollectProject(p)}
           />
         )}
 
@@ -597,7 +585,7 @@ export const App: React.FC = () => {
             onOpenNewTarget={() => setEditingTarget(null)}
             onEditTarget={(t) => setEditingTarget(t)}
             onDeleteTarget={handleDeleteTarget}
-            onDeposit={handleDepositToTarget}
+            onDepositToTarget={handleDepositToTarget}
           />
         )}
 

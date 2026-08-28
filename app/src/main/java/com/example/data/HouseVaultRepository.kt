@@ -40,13 +40,17 @@ class HouseVaultRepository(context: Context) {
     private val _vaultSyncCode = MutableStateFlow(prefs.getString("vault_sync_code", null))
     val vaultSyncCode: StateFlow<String?> = _vaultSyncCode.asStateFlow()
 
+    @Volatile
+    private var lastLocalModificationTime: Long = 0L
+
     init {
         // Continuous Live Polling loop for couple sync (every 4 seconds)
         repoScope.launch {
             while (true) {
                 try {
                     val code = _vaultSyncCode.value
-                    if (code != null && !_isSyncing.value) {
+                    val timeSinceLocalEdit = System.currentTimeMillis() - lastLocalModificationTime
+                    if (code != null && !_isSyncing.value && timeSinceLocalEdit > 3500) {
                         val (ok, dataJson) = CloudSyncService.fetchVaultSnapshot(_serverUrl.value, code)
                         if (ok && dataJson != null) {
                             importFullDataFromJsonObject(dataJson)
@@ -61,6 +65,7 @@ class HouseVaultRepository(context: Context) {
     }
 
     private fun triggerAutoPush() {
+        lastLocalModificationTime = System.currentTimeMillis()
         val code = _vaultSyncCode.value ?: return
         repoScope.launch {
             try {
