@@ -43,10 +43,51 @@ export const CashFlowCalendarView: React.FC<CashFlowCalendarViewProps> = ({
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDay, setSelectedDay] = useState<number>(new Date().getDate());
   const [isPopoutOpen, setIsPopoutOpen] = useState(false);
-  const [paidEventIds, setPaidEventIds] = useState<Record<string, boolean>>({});
 
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth();
+
+  const storageKey = `housevault_calendar_paid_${year}_${month}`;
+
+  const [paidEventIds, setPaidEventIds] = useState<Record<string, boolean>>(() => {
+    try {
+      const saved = localStorage.getItem(`housevault_calendar_paid_${new Date().getFullYear()}_${new Date().getMonth()}`);
+      return saved ? JSON.parse(saved) : {};
+    } catch (e) {
+      return {};
+    }
+  });
+
+  // Sync state when month/year changes
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(storageKey);
+      setPaidEventIds(saved ? JSON.parse(saved) : {});
+    } catch (e) {
+      setPaidEventIds({});
+    }
+  }, [storageKey]);
+
+  const savePaidEvents = (newPaid: Record<string, boolean>) => {
+    setPaidEventIds(newPaid);
+    try {
+      localStorage.setItem(storageKey, JSON.stringify(newPaid));
+    } catch (e) {}
+  };
+
+  // Handle phone Back button (Android & Mobile browsers) to dismiss pop-out modal
+  useEffect(() => {
+    if (isPopoutOpen) {
+      window.history.pushState({ calendarModal: true }, '');
+      const handlePopState = () => {
+        setIsPopoutOpen(false);
+      };
+      window.addEventListener('popstate', handlePopState);
+      return () => {
+        window.removeEventListener('popstate', handlePopState);
+      };
+    }
+  }, [isPopoutOpen]);
 
   const firstDayIndex = new Date(year, month, 1).getDay(); // 0 is Sunday
   const daysInMonth = new Date(year, month + 1, 0).getDate();
@@ -159,18 +200,12 @@ export const CashFlowCalendarView: React.FC<CashFlowCalendarViewProps> = ({
     year: 'numeric'
   });
 
-  const handleTogglePayEvent = (ev: CalendarEvent) => {
+  const handleTogglePayEvent = (ev: CalendarEvent, e?: React.MouseEvent) => {
+    e?.stopPropagation();
     const wasPaid = !!paidEventIds[ev.id];
-    setPaidEventIds((prev) => ({ ...prev, [ev.id]: !wasPaid }));
-    if (!wasPaid) {
-      if (ev.type === 'DEBT' && onPayDebt && ev.rawId) {
-        onPayDebt(ev.rawId, ev.amount);
-      } else if (ev.type === 'BILL' && onPayExpense && ev.rawId) {
-        onPayExpense(ev.rawId, ev.amount, ev.title);
-      } else if (ev.type === 'INCOME' && onCollectProject && ev.rawId) {
-        onCollectProject(ev.rawId, ev.amount);
-      }
-    }
+    const nextState = !wasPaid;
+    const updated = { ...paidEventIds, [ev.id]: nextState };
+    savePaidEvents(updated);
   };
 
   return (
