@@ -102,6 +102,12 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   const salaryCoveragePercent =
     fixedExpenses > 0 ? Math.min(150, Math.round((profile.wifeMonthlySalary / fixedExpenses) * 100)) : 100;
 
+  // Financial runway = months we can survive on savings + surplus alone
+  const monthlyBurn = fixedExpenses > 0 ? fixedExpenses : 1;
+  const runwayMonths = fixedExpenses > 0
+    ? (totalSaved / monthlyBurn + wifeSurplus / monthlyBurn).toFixed(1)
+    : '∞';
+
   // Quick Windfall preview on $3,000 typical shoot payout
   const sampleGigAmount = totalUncollected > 0 ? totalUncollected : 3000;
   const sampleSplit = {
