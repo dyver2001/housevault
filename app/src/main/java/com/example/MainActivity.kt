@@ -93,27 +93,12 @@ fun MainAppScreen(viewModel: HouseVaultViewModel) {
                             )
                         }
 
-                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                            Text(
-                                text = "HouseVault",
-                                fontWeight = FontWeight.Black,
-                                fontSize = 18.sp,
-                                color = MaterialTheme.colorScheme.onSurface
-                            )
-                            Surface(
-                                shape = RoundedCornerShape(6.dp),
-                                color = Emerald100
-                            ) {
-                                Text(
-                                    text = profile.currencyCode,
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = Emerald800,
-                                    fontWeight = FontWeight.Bold,
-                                    modifier = Modifier.padding(horizontal = 5.dp, vertical = 2.dp),
-                                    fontSize = 10.sp
-                                )
-                            }
-                        }
+                        Text(
+                            text = "HouseVault",
+                            fontWeight = FontWeight.Black,
+                            fontSize = 18.sp,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
                     }
                 },
                 actions = {

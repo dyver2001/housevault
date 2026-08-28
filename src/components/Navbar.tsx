@@ -130,11 +130,8 @@ export const Navbar: React.FC<NavbarProps> = ({
             </button>
 
             {/* Brand Title */}
-            <div className="flex items-center space-x-1.5 cursor-pointer" onClick={() => onSelectTab('dashboard')}>
+            <div className="flex items-center cursor-pointer" onClick={() => onSelectTab('dashboard')}>
               <span className="font-display font-black text-lg tracking-tight text-white">HouseVault</span>
-              <span className="text-[10px] font-extrabold px-1.5 py-0.5 rounded-md bg-stone-800 text-emerald-400 border border-stone-700/80">
-                {profile.currencyCode}
-              </span>
             </div>
           </div>
 
