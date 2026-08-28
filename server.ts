@@ -13,11 +13,21 @@ app.use(express.json({ limit: '10mb' }));
 // --- PERSISTENT CLOUD VAULT SYNC STORE ---
 const VAULTS_FILE = path.join(process.cwd(), 'data', 'vaults_store.json');
 
+interface DeviceEntry {
+  deviceId: string;
+  deviceName: string;
+  deviceType: 'ios' | 'android' | 'desktop';
+  ownerName: string;
+  lastSeen: string;
+}
+
 interface VaultPayload {
   vaultCode: string;
   version: number;
   lastUpdated: string;
   lastUpdatedBy?: string;
+  lastUpdatedDevice?: DeviceEntry;
+  devices: DeviceEntry[];
   data: {
     profile?: any;
     projects?: any[];
@@ -73,12 +83,25 @@ function generateVaultCode(): string {
   return code;
 }
 
+function upsertDevice(vault: VaultPayload, device?: DeviceEntry) {
+  if (!device || !device.deviceId) return;
+  if (!vault.devices) vault.devices = [];
+  const idx = vault.devices.findIndex(d => d.deviceId === device.deviceId);
+  const now = new Date().toISOString();
+  const updatedDevice = { ...device, lastSeen: now };
+  if (idx >= 0) {
+    vault.devices[idx] = updatedDevice;
+  } else {
+    vault.devices.push(updatedDevice);
+  }
+}
+
 // --- SYNC API ENDPOINTS ---
 
 // 1. Create a new shared couple vault room
 app.post('/api/sync/create', (req: Request, res: Response) => {
   try {
-    const { customCode, initialData, updatedBy } = req.body;
+    const { customCode, initialData, updatedBy, device } = req.body;
     let code = (customCode || generateVaultCode()).toUpperCase().trim().replace(/[^A-Z0-9-]/g, '');
     if (!code) code = generateVaultCode();
 
@@ -86,14 +109,16 @@ app.post('/api/sync/create', (req: Request, res: Response) => {
       vaultCode: code,
       version: 1,
       lastUpdated: new Date().toISOString(),
-      lastUpdatedBy: updatedBy || 'Alex & Elena',
+      lastUpdatedBy: updatedBy || device?.deviceName || 'Haytham & Cati',
+      lastUpdatedDevice: device,
+      devices: device ? [{ ...device, lastSeen: new Date().toISOString() }] : [],
       data: initialData || {}
     };
 
     vaultsMap[code] = newVault;
     saveVaultsToDisk();
 
-    console.log(`[CloudSync] Created shared vault room: ${code}`);
+    console.log(`[CloudSync] Created shared vault room: ${code} with device ${device?.deviceId || 'unknown'}`);
     res.json({ success: true, vaultCode: code, vault: newVault });
   } catch (error: any) {
     res.status(500).json({ success: false, error: error?.message });
@@ -103,7 +128,7 @@ app.post('/api/sync/create', (req: Request, res: Response) => {
 // 2. Join an existing shared couple vault room
 app.post('/api/sync/join', (req: Request, res: Response) => {
   try {
-    const { vaultCode } = req.body;
+    const { vaultCode, device } = req.body;
     const cleanCode = (vaultCode || '').toUpperCase().trim();
     const vault = vaultsMap[cleanCode];
 
@@ -114,14 +139,40 @@ app.post('/api/sync/join', (req: Request, res: Response) => {
       });
     }
 
-    console.log(`[CloudSync] Partner connected to vault room: ${cleanCode}`);
+    if (device) {
+      upsertDevice(vault, device);
+      saveVaultsToDisk();
+      broadcastVaultUpdate(cleanCode, vault);
+    }
+
+    console.log(`[CloudSync] Device ${device?.deviceName || device?.deviceId || 'unknown'} joined vault: ${cleanCode}`);
     res.json({ success: true, vaultCode: cleanCode, vault });
   } catch (error: any) {
     res.status(500).json({ success: false, error: error?.message });
   }
 });
 
-// 3. Fetch latest vault snapshot
+// 3. Register or heartbeat a device in the vault
+app.post('/api/sync/:vaultCode/device', (req: Request, res: Response) => {
+  try {
+    const code = req.params.vaultCode.toUpperCase().trim();
+    const { device } = req.body;
+    const vault = vaultsMap[code];
+    if (!vault) return res.status(404).json({ success: false, error: 'Vault not found' });
+
+    if (device) {
+      upsertDevice(vault, device);
+      saveVaultsToDisk();
+      broadcastVaultUpdate(code, vault);
+    }
+
+    res.json({ success: true, devices: vault.devices || [] });
+  } catch (error: any) {
+    res.status(500).json({ success: false, error: error?.message });
+  }
+});
+
+// 4. Fetch latest vault snapshot
 app.get('/api/sync/:vaultCode', (req: Request, res: Response) => {
   const code = req.params.vaultCode.toUpperCase().trim();
   const vault = vaultsMap[code];
@@ -131,25 +182,32 @@ app.get('/api/sync/:vaultCode', (req: Request, res: Response) => {
   res.json({ success: true, vault });
 });
 
-// 4. Push local changes to the shared couple vault (Bidirectional Sync)
+// 5. Push local changes to the shared couple vault (Bidirectional Sync)
 app.post('/api/sync/:vaultCode/push', (req: Request, res: Response) => {
   try {
     const code = req.params.vaultCode.toUpperCase().trim();
-    const { data, updatedBy, clientVersion } = req.body;
+    const { data, updatedBy, device } = req.body;
 
     const existing = vaultsMap[code] || {
       vaultCode: code,
       version: 0,
       lastUpdated: new Date().toISOString(),
+      devices: [],
       data: {}
     };
+
+    if (device) {
+      upsertDevice(existing, device);
+    }
 
     const newVersion = (existing.version || 0) + 1;
     const updatedVault: VaultPayload = {
       vaultCode: code,
       version: newVersion,
       lastUpdated: new Date().toISOString(),
-      lastUpdatedBy: updatedBy || existing.lastUpdatedBy || 'Alex & Elena',
+      lastUpdatedBy: updatedBy || device?.deviceName || existing.lastUpdatedBy || 'Haytham & Cati',
+      lastUpdatedDevice: device || existing.lastUpdatedDevice,
+      devices: existing.devices || [],
       data: {
         ...existing.data,
         ...data
@@ -162,7 +220,7 @@ app.post('/api/sync/:vaultCode/push', (req: Request, res: Response) => {
     // Broadcast instant update to all connected spouse devices
     broadcastVaultUpdate(code, updatedVault);
 
-    console.log(`[CloudSync] Vault ${code} updated to v${newVersion} by ${updatedVault.lastUpdatedBy}`);
+    console.log(`[CloudSync] Vault ${code} updated to v${newVersion} by ${updatedVault.lastUpdatedBy} [${device?.deviceId || ''}]`);
     res.json({ success: true, vault: updatedVault });
   } catch (error: any) {
     res.status(500).json({ success: false, error: error?.message });

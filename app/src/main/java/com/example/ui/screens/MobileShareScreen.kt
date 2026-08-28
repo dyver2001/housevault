@@ -44,6 +44,8 @@ fun MobileShareScreen(viewModel: HouseVaultViewModel) {
     val vaultSyncCode by viewModel.vaultSyncCode.collectAsState()
     val isSyncing by viewModel.isSyncing.collectAsState()
     val syncStatusMsg by viewModel.syncStatusMessage.collectAsState()
+    val deviceId by viewModel.deviceId.collectAsState()
+    val deviceName by viewModel.deviceName.collectAsState()
     val lang = profile.language
 
     var showExportDialog by remember { mutableStateOf(false) }
@@ -53,6 +55,8 @@ fun MobileShareScreen(viewModel: HouseVaultViewModel) {
     var showSplitRuleDialog by remember { mutableStateOf(false) }
     var showJoinDialog by remember { mutableStateOf(false) }
     var joinInputText by remember { mutableStateOf("") }
+    var showRenameDialog by remember { mutableStateOf(false) }
+    var renameInputText by remember { mutableStateOf("") }
 
     val themes = listOf(
         Triple("emerald", "Emerald Forest", Emerald500),
@@ -132,6 +136,50 @@ fun MobileShareScreen(viewModel: HouseVaultViewModel) {
                                     fontWeight = FontWeight.Bold,
                                     modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
                                 )
+                            }
+                        }
+                    }
+
+                    // --- THIS DEVICE ID CARD ---
+                    Surface(
+                        shape = RoundedCornerShape(12.dp),
+                        color = MaterialTheme.colorScheme.surfaceVariant,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(12.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Surface(shape = RoundedCornerShape(8.dp), color = Amber100) {
+                                    Icon(Icons.Default.Smartphone, contentDescription = null, tint = Amber700, modifier = Modifier.padding(6.dp).size(20.dp))
+                                }
+                                Spacer(modifier = Modifier.width(10.dp))
+                                Column {
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Text(deviceName, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.bodyMedium)
+                                        Spacer(modifier = Modifier.width(6.dp))
+                                        Surface(shape = RoundedCornerShape(4.dp), color = Color(0x22000000)) {
+                                            Text(
+                                                text = "ID: $deviceId",
+                                                fontSize = 10.sp,
+                                                fontWeight = FontWeight.Bold,
+                                                modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp)
+                                            )
+                                        }
+                                    }
+                                    Text("● " + (if (lang == "ro") "Acest Dispozitiv (Activ)" else "This Device (Active)"), style = MaterialTheme.typography.labelSmall, color = Emerald600)
+                                }
+                            }
+
+                            IconButton(onClick = {
+                                renameInputText = deviceName
+                                showRenameDialog = true
+                            }) {
+                                Icon(Icons.Default.Edit, contentDescription = "Rename", modifier = Modifier.size(18.dp))
                             }
                         }
                     }
@@ -668,6 +716,50 @@ fun MobileShareScreen(viewModel: HouseVaultViewModel) {
             },
             dismissButton = {
                 TextButton(onClick = { showJoinDialog = false }) {
+                    Text(if (lang == "ro") "Anulează" else "Cancel")
+                }
+            }
+        )
+    }
+
+    // --- RENAME DEVICE DIALOG ---
+    if (showRenameDialog) {
+        AlertDialog(
+            onDismissRequest = { showRenameDialog = false },
+            title = {
+                Text(if (lang == "ro") "📱 Redenumire Dispozitiv" else "📱 Rename Device", fontWeight = FontWeight.Bold)
+            },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(
+                        if (lang == "ro") "Alegeți un nume pentru acest dispozitiv (ID: $deviceId):"
+                        else "Choose a name for this device (ID: $deviceId):",
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                    OutlinedTextField(
+                        value = renameInputText,
+                        onValueChange = { renameInputText = it },
+                        placeholder = { Text("ex: Telefon Haytham (Android)") },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true
+                    )
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        if (renameInputText.isNotBlank()) {
+                            viewModel.updateDeviceName(renameInputText.trim())
+                            showRenameDialog = false
+                        }
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = Amber600)
+                ) {
+                    Text(if (lang == "ro") "Salvează" else "Save")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showRenameDialog = false }) {
                     Text(if (lang == "ro") "Anulează" else "Cancel")
                 }
             }

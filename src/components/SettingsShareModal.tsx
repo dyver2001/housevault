@@ -1,4 +1,4 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
 import {
   Settings,
   Download,
@@ -199,9 +199,48 @@ export const SettingsShareModal: React.FC<SettingsShareModalProps> = ({
 
           <p className="text-xs text-stone-300 leading-relaxed">
             {lang === 'ro'
-              ? 'Conectați telefonul lui Alex cu al Elenei. Orice proiect încasat, plată de datorie sau depunere la seif se actualizează instant pe ambele telefoane în timp real.'
-              : 'Sync Alex and Elena in real time. Invoices, debt payments, and house vault deposits appear instantly on both devices without manual file exports.'}
+              ? 'Conectați telefonul lui Haytham cu al lui Cati. Orice proiect încasat, plată de datorie sau depunere la seif se actualizează instant pe ambele telefoane în timp real.'
+              : 'Sync Haytham and Cati in real time. Invoices, debt payments, and house vault deposits appear instantly on both devices without manual file exports.'}
           </p>
+
+          {/* --- THIS DEVICE ID CARD --- */}
+          <div className="bg-stone-900/80 border border-stone-750 rounded-xl p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+            <div className="flex items-center space-x-2.5">
+              <div className="w-8 h-8 rounded-lg bg-stone-800 border border-stone-700 flex items-center justify-center text-amber-400">
+                <Smartphone className="w-4 h-4" />
+              </div>
+              <div>
+                <div className="flex items-center space-x-2">
+                  <span className="text-xs font-bold text-white">
+                    {typeof window !== 'undefined' && localStorage.getItem('housevault_device_name') || `Dispozitiv (${profile.wifeName.split(' ')[0]})`}
+                  </span>
+                  <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-stone-800 text-stone-300 border border-stone-700">
+                    ID: {typeof window !== 'undefined' && (localStorage.getItem('housevault_device_id') || 'DEV-8842')}
+                  </span>
+                </div>
+                <span className="text-[11px] text-emerald-400 font-medium">● {lang === 'ro' ? 'Acest Dispozitiv (Activ)' : 'This Device (Active)'}</span>
+              </div>
+            </div>
+
+            <div className="flex items-center space-x-1.5">
+              <button
+                type="button"
+                onClick={() => {
+                  const newName = window.prompt(
+                    lang === 'ro' ? 'Nume Dispozitiv (ex: iPhone Cati, Telefon Haytham):' : 'Device Name (e.g. Cati iPhone, Haytham Android):',
+                    localStorage.getItem('housevault_device_name') || ''
+                  );
+                  if (newName && newName.trim()) {
+                    localStorage.setItem('housevault_device_name', newName.trim());
+                    window.location.reload();
+                  }
+                }}
+                className="px-2.5 py-1 text-[11px] font-medium rounded-lg bg-stone-800 hover:bg-stone-700 text-stone-300 border border-stone-700 transition cursor-pointer"
+              >
+                ✏️ {lang === 'ro' ? 'Redenumește' : 'Rename'}
+              </button>
+            </div>
+          </div>
 
           {syncCode ? (
             /* Active Sync Room Card */

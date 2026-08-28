@@ -42,6 +42,38 @@ class HouseVaultRepository(context: Context) {
     private val _serverUrl = MutableStateFlow(prefs.getString("server_url", "https://housevault.onrender.com") ?: "https://housevault.onrender.com")
     val serverUrl: StateFlow<String> = _serverUrl.asStateFlow()
 
+    private val _deviceId = MutableStateFlow(getOrCreateDeviceId())
+    val deviceId: StateFlow<String> = _deviceId.asStateFlow()
+
+    private val _deviceName = MutableStateFlow(prefs.getString("device_name", "📱 Telefon Haytham (Android)") ?: "📱 Telefon Haytham (Android)")
+    val deviceName: StateFlow<String> = _deviceName.asStateFlow()
+
+    private fun getOrCreateDeviceId(): String {
+        var id = prefs.getString("device_id", null)
+        if (id == null) {
+            val chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
+            val rand = (1..4).map { chars.random() }.joinToString("")
+            id = "DEV-$rand"
+            prefs.edit().putString("device_id", id).apply()
+        }
+        return id
+    }
+
+    fun updateDeviceName(name: String) {
+        val clean = name.trim()
+        _deviceName.value = clean
+        prefs.edit().putString("device_name", clean).apply()
+    }
+
+    fun getDeviceInfoJson(): JSONObject {
+        return JSONObject().apply {
+            put("deviceId", _deviceId.value)
+            put("deviceName", _deviceName.value)
+            put("deviceType", "android")
+            put("ownerName", "Haytham")
+        }
+    }
+
     fun updateServerUrl(url: String) {
         val clean = url.trim()
         _serverUrl.value = clean
@@ -57,8 +89,8 @@ class HouseVaultRepository(context: Context) {
         val targetUrl = customUrl ?: _serverUrl.value
         _isSyncing.value = true
         val initialJson = exportFullDataAsJsonObject()
-        val partnerName = "${_profile.value.husbandName} & ${_profile.value.wifeName}"
-        val (ok, code) = CloudSyncService.createVaultRoom(targetUrl, initialJson, partnerName)
+        val partnerName = _deviceName.value
+        val (ok, code) = CloudSyncService.createVaultRoom(targetUrl, initialJson, partnerName, getDeviceInfoJson())
         _isSyncing.value = false
         if (ok && code != null) {
             setSyncCode(code)
@@ -71,7 +103,7 @@ class HouseVaultRepository(context: Context) {
     suspend fun joinCloudRoom(code: String, customUrl: String? = null): Boolean {
         val targetUrl = customUrl ?: _serverUrl.value
         _isSyncing.value = true
-        val (ok, dataJson) = CloudSyncService.joinVaultRoom(targetUrl, code)
+        val (ok, dataJson) = CloudSyncService.joinVaultRoom(targetUrl, code, getDeviceInfoJson())
         _isSyncing.value = false
         if (ok && dataJson != null) {
             importFullDataFromJsonObject(dataJson)
@@ -95,7 +127,8 @@ class HouseVaultRepository(context: Context) {
             targetUrl,
             code,
             exportFullDataAsJsonObject(),
-            "${_profile.value.husbandName} & ${_profile.value.wifeName}"
+            _deviceName.value,
+            getDeviceInfoJson()
         )
         _isSyncing.value = false
         if (pushOk) {

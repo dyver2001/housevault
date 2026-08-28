@@ -46,9 +46,15 @@ class HouseVaultViewModel(application: Application) : AndroidViewModel(applicati
     val isSyncing: StateFlow<Boolean> = repository.isSyncing
     val lastSyncTimestamp: StateFlow<String?> = repository.lastSyncTimestamp
     val serverUrl: StateFlow<String> = repository.serverUrl
+    val deviceId: StateFlow<String> = repository.deviceId
+    val deviceName: StateFlow<String> = repository.deviceName
 
     private val _syncStatusMessage = MutableStateFlow<String?>(null)
     val syncStatusMessage: StateFlow<String?> = _syncStatusMessage.asStateFlow()
+
+    fun updateDeviceName(name: String) {
+        repository.updateDeviceName(name)
+    }
 
     fun updateServerUrl(url: String) {
         repository.updateServerUrl(url)

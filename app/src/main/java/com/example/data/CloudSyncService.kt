@@ -1,4 +1,4 @@
-﻿package com.example.data
+package com.example.data
 
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -14,7 +14,8 @@ object CloudSyncService {
     suspend fun createVaultRoom(
         serverUrl: String,
         initialDataJson: JSONObject,
-        partnerName: String
+        partnerName: String,
+        deviceJson: JSONObject? = null
     ): Pair<Boolean, String?> = withContext(Dispatchers.IO) {
         try {
             val cleanUrl = serverUrl.trimEnd('/')
@@ -31,6 +32,7 @@ object CloudSyncService {
             val body = JSONObject().apply {
                 put("initialData", initialDataJson)
                 put("updatedBy", partnerName)
+                if (deviceJson != null) put("device", deviceJson)
             }
 
             OutputStreamWriter(conn.outputStream, "UTF-8").use { writer ->
@@ -54,7 +56,8 @@ object CloudSyncService {
 
     suspend fun joinVaultRoom(
         serverUrl: String,
-        vaultCode: String
+        vaultCode: String,
+        deviceJson: JSONObject? = null
     ): Pair<Boolean, JSONObject?> = withContext(Dispatchers.IO) {
         try {
             val cleanUrl = serverUrl.trimEnd('/')
@@ -70,6 +73,7 @@ object CloudSyncService {
 
             val body = JSONObject().apply {
                 put("vaultCode", vaultCode.trim().uppercase())
+                if (deviceJson != null) put("device", deviceJson)
             }
 
             OutputStreamWriter(conn.outputStream, "UTF-8").use { writer ->
@@ -96,7 +100,8 @@ object CloudSyncService {
         serverUrl: String,
         vaultCode: String,
         dataJson: JSONObject,
-        partnerName: String
+        partnerName: String,
+        deviceJson: JSONObject? = null
     ): Boolean = withContext(Dispatchers.IO) {
         try {
             val cleanUrl = serverUrl.trimEnd('/')
@@ -113,6 +118,7 @@ object CloudSyncService {
             val body = JSONObject().apply {
                 put("data", dataJson)
                 put("updatedBy", partnerName)
+                if (deviceJson != null) put("device", deviceJson)
             }
 
             OutputStreamWriter(conn.outputStream, "UTF-8").use { writer ->
