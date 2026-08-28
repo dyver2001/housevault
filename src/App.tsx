@@ -597,6 +597,8 @@ export const App: React.FC = () => {
             expenses={expenses}
             currencySymbol={profile.currencySymbol}
             lang={profile.language || 'ro'}
+            onPayDebt={handleMakeDebtPayment}
+            onCollectProject={(id, amt) => handleConfirmCollection(id, amt, false)}
           />
         )}
 

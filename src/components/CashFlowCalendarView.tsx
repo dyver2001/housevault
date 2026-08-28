@@ -23,6 +23,9 @@ interface CashFlowCalendarViewProps {
   expenses: HouseholdExpense[];
   currencySymbol?: string;
   lang?: string;
+  onPayDebt?: (debtId: string, amount: number) => void;
+  onPayExpense?: (expenseId: string, amount: number, title: string) => void;
+  onCollectProject?: (projectId: string, amount: number) => void;
 }
 
 export const CashFlowCalendarView: React.FC<CashFlowCalendarViewProps> = ({
@@ -31,11 +34,15 @@ export const CashFlowCalendarView: React.FC<CashFlowCalendarViewProps> = ({
   debts,
   expenses,
   currencySymbol = 'lei',
-  lang = 'ro'
+  lang = 'ro',
+  onPayDebt,
+  onPayExpense,
+  onCollectProject
 }) => {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDay, setSelectedDay] = useState<number>(new Date().getDate());
   const [isPopoutOpen, setIsPopoutOpen] = useState(false);
+  const [paidEventIds, setPaidEventIds] = useState<Record<string, boolean>>({});
 
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth();
@@ -61,6 +68,7 @@ export const CashFlowCalendarView: React.FC<CashFlowCalendarViewProps> = ({
   // Map events to day numbers with rich information
   interface CalendarEvent {
     id: string;
+    rawId?: string;
     title: string;
     amount: number;
     type: 'INCOME' | 'BILL' | 'DEBT';
@@ -75,7 +83,7 @@ export const CashFlowCalendarView: React.FC<CashFlowCalendarViewProps> = ({
   const salaryDay = 15;
   if (!eventsByDay[salaryDay]) eventsByDay[salaryDay] = [];
   eventsByDay[salaryDay].push({
-    id: 'salary-wife',
+    id: `salary-wife-${month}-${year}`,
     title: `Salariu ${profile.wifeName.split(' ')[0]} (IT Support)`,
     amount: profile.wifeMonthlySalary || 6500,
     type: 'INCOME',
@@ -89,7 +97,8 @@ export const CashFlowCalendarView: React.FC<CashFlowCalendarViewProps> = ({
     const dueDay = ((idx * 3 + 4) % 28) + 1; // spread across month
     if (!eventsByDay[dueDay]) eventsByDay[dueDay] = [];
     eventsByDay[dueDay].push({
-      id: exp.id,
+      id: `bill-${exp.id}-${month}-${year}`,
+      rawId: exp.id,
       title: exp.title,
       amount: exp.amount,
       type: 'BILL',
@@ -103,7 +112,8 @@ export const CashFlowCalendarView: React.FC<CashFlowCalendarViewProps> = ({
     const day = debt.dueDayOfMonth || 20;
     if (!eventsByDay[day]) eventsByDay[day] = [];
     eventsByDay[day].push({
-      id: debt.id,
+      id: `debt-${debt.id}-${month}-${year}`,
+      rawId: debt.id,
       title: `Rată Bancă: ${debt.bankName}`,
       amount: debt.minMonthlyPayment || 350,
       type: 'DEBT',
@@ -120,7 +130,8 @@ export const CashFlowCalendarView: React.FC<CashFlowCalendarViewProps> = ({
         const day = projDate.getDate();
         if (!eventsByDay[day]) eventsByDay[day] = [];
         eventsByDay[day].push({
-          id: proj.id,
+          id: `proj-${proj.id}-${month}-${year}`,
+          rawId: proj.id,
           title: `Încasare Freelance: ${proj.projectTitle}`,
           amount: proj.balanceRemaining > 0 ? proj.balanceRemaining : proj.totalFee,
           type: 'INCOME',
@@ -135,6 +146,7 @@ export const CashFlowCalendarView: React.FC<CashFlowCalendarViewProps> = ({
   const weekDays = lang === 'ro' ? ['Lun', 'Mar', 'Mie', 'Joi', 'Vin', 'Sâm', 'Dum'] : ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
   const selectedEvents = eventsByDay[selectedDay] || [];
+  const unpaidBillsAndDebts = selectedEvents.filter(e => e.type !== 'INCOME' && !paidEventIds[e.id]).reduce((s, e) => s + e.amount, 0);
   const totalBillsAndDebts = selectedEvents.filter(e => e.type !== 'INCOME').reduce((s, e) => s + e.amount, 0);
   const totalIncome = selectedEvents.filter(e => e.type === 'INCOME').reduce((s, e) => s + e.amount, 0);
 
@@ -145,6 +157,17 @@ export const CashFlowCalendarView: React.FC<CashFlowCalendarViewProps> = ({
     month: 'long',
     year: 'numeric'
   });
+
+  const handlePayEvent = (ev: CalendarEvent) => {
+    setPaidEventIds((prev) => ({ ...prev, [ev.id]: true }));
+    if (ev.type === 'DEBT' && onPayDebt && ev.rawId) {
+      onPayDebt(ev.rawId, ev.amount);
+    } else if (ev.type === 'BILL' && onPayExpense && ev.rawId) {
+      onPayExpense(ev.rawId, ev.amount, ev.title);
+    } else if (ev.type === 'INCOME' && onCollectProject && ev.rawId) {
+      onCollectProject(ev.rawId, ev.amount);
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -159,7 +182,7 @@ export const CashFlowCalendarView: React.FC<CashFlowCalendarViewProps> = ({
               {lang === 'ro' ? 'Calendarul Plăților & Încasărilor' : 'Cash Flow & Bills Calendar'}
             </h2>
             <p className="text-xs text-stone-400">
-              {lang === 'ro' ? 'Apasă pe orice zi pentru a deschide detaliile exacte ale scadențelor' : 'Click on any day to pop out scheduled payments'}
+              {lang === 'ro' ? 'Apasă pe orice zi pentru a deschide detaliile și a efectua plățile' : 'Click on any day to pop out scheduled payments'}
             </p>
           </div>
         </div>
@@ -213,6 +236,7 @@ export const CashFlowCalendarView: React.FC<CashFlowCalendarViewProps> = ({
             const hasIncome = dayEvents.some(e => e.type === 'INCOME');
             const hasDebt = dayEvents.some(e => e.type === 'DEBT');
             const hasBill = dayEvents.some(e => e.type === 'BILL');
+            const allPaid = dayEvents.length > 0 && dayEvents.every(e => paidEventIds[e.id]);
 
             return (
               <button
@@ -237,11 +261,15 @@ export const CashFlowCalendarView: React.FC<CashFlowCalendarViewProps> = ({
                   <span className={`text-xs font-black ${isSelected ? 'text-emerald-300 font-black' : isToday ? 'text-amber-400 font-bold' : 'text-stone-200'}`}>
                     {dayNum}
                   </span>
-                  {isToday && (
+                  {allPaid ? (
+                    <span className="text-[9px] px-1 py-0.2 rounded bg-emerald-500/20 text-emerald-400 font-bold">
+                      ✓
+                    </span>
+                  ) : isToday ? (
                     <span className="text-[9px] px-1 py-0.2 rounded bg-amber-500/20 text-amber-300 font-bold hidden sm:inline">
                       Azi
                     </span>
-                  )}
+                  ) : null}
                 </div>
 
                 {/* Event Dot Badges */}
@@ -254,8 +282,8 @@ export const CashFlowCalendarView: React.FC<CashFlowCalendarViewProps> = ({
                 {/* Day Summary micro-amount */}
                 <div className="text-[10px] text-right truncate font-mono">
                   {dayEvents.length > 0 && (
-                    <span className={`font-bold ${hasDebt || hasBill ? 'text-rose-400' : 'text-emerald-400'}`}>
-                      {dayEvents.length} {dayEvents.length === 1 ? 'eveniment' : 'scadențe'}
+                    <span className={`font-bold ${allPaid ? 'text-emerald-400' : hasDebt || hasBill ? 'text-rose-400' : 'text-emerald-400'}`}>
+                      {allPaid ? 'Plătit ✓' : `${dayEvents.length} ${dayEvents.length === 1 ? 'scadență' : 'scadențe'}`}
                     </span>
                   )}
                 </div>
@@ -298,9 +326,11 @@ export const CashFlowCalendarView: React.FC<CashFlowCalendarViewProps> = ({
             {selectedEvents.length > 0 && (
               <div className="grid grid-cols-2 gap-3">
                 <div className="p-3 rounded-2xl bg-rose-950/20 border border-rose-500/30">
-                  <div className="text-[10px] uppercase font-bold text-rose-400 tracking-wider">De Plătit</div>
+                  <div className="text-[10px] uppercase font-bold text-rose-400 tracking-wider">
+                    {unpaidBillsAndDebts > 0 ? 'Rămas de Plătit' : 'Total Achitat'}
+                  </div>
                   <div className="text-base sm:text-lg font-black font-mono text-rose-300">
-                    -{totalBillsAndDebts.toLocaleString()} {currencySymbol}
+                    {unpaidBillsAndDebts > 0 ? `-${unpaidBillsAndDebts.toLocaleString()} ${currencySymbol}` : '0 lei (Achitat ✓)'}
                   </div>
                 </div>
 
@@ -313,65 +343,123 @@ export const CashFlowCalendarView: React.FC<CashFlowCalendarViewProps> = ({
               </div>
             )}
 
-            {/* List of items scheduled on this day */}
+            {/* List of items scheduled on this day with Pay / Collect Buttons */}
             {selectedEvents.length > 0 ? (
-              <div className="space-y-2.5">
+              <div className="space-y-3">
                 {selectedEvents.map((ev) => {
                   const isIncome = ev.type === 'INCOME';
                   const isDebt = ev.type === 'DEBT';
+                  const isPaid = !!paidEventIds[ev.id];
+
                   return (
                     <div
                       key={ev.id}
-                      className={`p-3.5 sm:p-4 rounded-2xl border transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${
-                        isIncome
+                      className={`p-3.5 sm:p-4 rounded-2xl border transition-all flex flex-col gap-3 ${
+                        isPaid
+                          ? 'bg-emerald-950/25 border-emerald-500/40 opacity-90'
+                          : isIncome
                           ? 'bg-emerald-950/20 border-emerald-500/30'
                           : isDebt
                           ? 'bg-purple-950/20 border-purple-500/30'
                           : 'bg-rose-950/20 border-rose-500/30'
                       }`}
                     >
-                      <div className="flex items-start space-x-3">
-                        <div
-                          className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 mt-0.5 ${
-                            isIncome
-                              ? 'bg-emerald-500/20 text-emerald-400'
-                              : isDebt
-                              ? 'bg-purple-500/20 text-purple-400'
-                              : 'bg-rose-500/20 text-rose-400'
-                          }`}
-                        >
-                          {isIncome ? (
-                            <ArrowDownRight className="w-5 h-5" />
-                          ) : isDebt ? (
-                            <Landmark className="w-5 h-5" />
-                          ) : (
-                            <Receipt className="w-5 h-5" />
-                          )}
-                        </div>
-                        <div>
-                          <div className="flex items-center space-x-2">
-                            <span className="font-bold text-sm text-white">{ev.title}</span>
-                            {ev.category && (
-                              <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-stone-800 text-stone-300 border border-stone-700">
-                                {ev.category}
-                              </span>
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex items-start space-x-3">
+                          <div
+                            className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 mt-0.5 ${
+                              isPaid
+                                ? 'bg-emerald-500/20 text-emerald-400'
+                                : isIncome
+                                ? 'bg-emerald-500/20 text-emerald-400'
+                                : isDebt
+                                ? 'bg-purple-500/20 text-purple-400'
+                                : 'bg-rose-500/20 text-rose-400'
+                            }`}
+                          >
+                            {isPaid ? (
+                              <CheckCircle2 className="w-5 h-5 text-emerald-400" />
+                            ) : isIncome ? (
+                              <ArrowDownRight className="w-5 h-5" />
+                            ) : isDebt ? (
+                              <Landmark className="w-5 h-5" />
+                            ) : (
+                              <Receipt className="w-5 h-5" />
                             )}
                           </div>
-                          {ev.notes && (
-                            <p className="text-xs text-stone-400 mt-0.5">{ev.notes}</p>
-                          )}
+                          <div>
+                            <div className="flex items-center space-x-2">
+                              <span className="font-bold text-sm text-white">{ev.title}</span>
+                              {ev.category && (
+                                <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-stone-800 text-stone-300 border border-stone-700">
+                                  {ev.category}
+                                </span>
+                              )}
+                            </div>
+                            {ev.notes && (
+                              <p className="text-xs text-stone-400 mt-0.5">{ev.notes}</p>
+                            )}
+                          </div>
+                        </div>
+
+                        <div className="text-right flex-shrink-0">
+                          <span
+                            className={`text-base sm:text-lg font-black font-mono ${
+                              isPaid
+                                ? 'text-emerald-400 line-through opacity-75'
+                                : isIncome
+                                ? 'text-emerald-400'
+                                : isDebt
+                                ? 'text-purple-300'
+                                : 'text-rose-400'
+                            }`}
+                          >
+                            {isIncome ? '+' : '-'}{ev.amount.toLocaleString()} {currencySymbol}
+                          </span>
                         </div>
                       </div>
 
-                      <div className="text-right sm:self-center flex sm:flex-col items-center sm:items-end justify-between sm:justify-center">
-                        <span className="text-xs text-stone-400 sm:hidden">Sumă:</span>
-                        <span
-                          className={`text-base sm:text-lg font-black font-mono ${
-                            isIncome ? 'text-emerald-400' : isDebt ? 'text-purple-300' : 'text-rose-400'
-                          }`}
-                        >
-                          {isIncome ? '+' : '-'}{ev.amount.toLocaleString()} {currencySymbol}
+                      {/* Pay Button Action Row */}
+                      <div className="flex items-center justify-between pt-2 border-t border-stone-800/60">
+                        <span className="text-[11px] text-stone-400">
+                          {isPaid ? 'Tranzacție confirmată' : isIncome ? 'Așteaptă confirmare' : 'Scadentă la această dată'}
                         </span>
+
+                        {isPaid ? (
+                          <div className="inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-xs font-bold shadow-sm">
+                            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                            <span>{isIncome ? 'Încasat' : 'Plătit cu Succes'}</span>
+                          </div>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => handlePayEvent(ev)}
+                            className={`px-4 py-2 rounded-xl text-xs font-black transition active:scale-95 shadow-md flex items-center space-x-1.5 cursor-pointer ${
+                              isIncome
+                                ? 'bg-emerald-500 hover:bg-emerald-400 text-stone-950 shadow-emerald-500/20'
+                                : isDebt
+                                ? 'bg-purple-600 hover:bg-purple-500 text-white shadow-purple-600/20'
+                                : 'bg-rose-500 hover:bg-rose-400 text-white shadow-rose-500/20'
+                            }`}
+                          >
+                            {isIncome ? (
+                              <>
+                                <Coins className="w-3.5 h-3.5" />
+                                <span>Marchează Încasat</span>
+                              </>
+                            ) : isDebt ? (
+                              <>
+                                <Landmark className="w-3.5 h-3.5" />
+                                <span>Plătește Rata</span>
+                              </>
+                            ) : (
+                              <>
+                                <Receipt className="w-3.5 h-3.5" />
+                                <span>Plătește Factura</span>
+                              </>
+                            )}
+                          </button>
+                        )}
                       </div>
                     </div>
                   );

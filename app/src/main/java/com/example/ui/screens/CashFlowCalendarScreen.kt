@@ -308,8 +308,12 @@ fun CashFlowCalendarScreen(
         }
     }
 
+    val paidEvents = remember { mutableStateListOf<String>() }
+
     // Pop-out Dialog when a date is clicked
     if (showPopoutDialog) {
+        val unpaidTotal = selectedDayEvents.filter { !it.isIncome && !paidEvents.contains(it.title) }.sumOf { it.amount }
+
         AlertDialog(
             onDismissRequest = { showPopoutDialog = false },
             confirmButton = {
@@ -331,12 +335,19 @@ fun CashFlowCalendarScreen(
                             fontSize = 16.sp,
                             color = Color.White
                         )
-                        if (totalPay > 0 || totalInflow > 0) {
+                        if (unpaidTotal > 0) {
                             Text(
-                                "De plată: -${String.format(Locale.US, "%,.0f", totalPay)} ${profile.currencySymbol}",
+                                "Rămas de plată: -${String.format(Locale.US, "%,.0f", unpaidTotal)} ${profile.currencySymbol}",
                                 fontSize = 12.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = Color(0xFFF43F5E)
+                            )
+                        } else if (selectedDayEvents.any { !it.isIncome }) {
+                            Text(
+                                "Toate plățile au fost efectuate ✓",
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = EmeraldPrimary
                             )
                         }
                     }
@@ -363,37 +374,83 @@ fun CashFlowCalendarScreen(
                         }
                     } else {
                         selectedDayEvents.forEach { event ->
+                            val isPaid = paidEvents.contains(event.title)
+
                             Card(
                                 modifier = Modifier.fillMaxWidth(),
-                                shape = RoundedCornerShape(12.dp),
+                                shape = RoundedCornerShape(14.dp),
                                 colors = CardDefaults.cardColors(
-                                    containerColor = if (event.isIncome) Color(0xFF0F241A) else Color(0xFF24141A)
+                                    containerColor = if (isPaid) Color(0xFF0D2418) else if (event.isIncome) Color(0xFF0F241A) else Color(0xFF24141A)
                                 ),
                                 border = CardDefaults.outlinedCardBorder().copy(
                                     brush = androidx.compose.ui.graphics.SolidColor(
-                                        if (event.isIncome) EmeraldPrimary.copy(alpha = 0.4f) else Color(0xFFF43F5E).copy(alpha = 0.4f)
+                                        if (isPaid) EmeraldPrimary.copy(alpha = 0.6f) else if (event.isIncome) EmeraldPrimary.copy(alpha = 0.4f) else Color(0xFFF43F5E).copy(alpha = 0.4f)
                                     )
                                 )
                             ) {
-                                Row(
+                                Column(
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .padding(10.dp),
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                    verticalAlignment = Alignment.CenterVertically
+                                        .padding(12.dp),
+                                    verticalArrangement = Arrangement.spacedBy(8.dp)
                                 ) {
-                                    Column(modifier = Modifier.weight(1f)) {
-                                        Text(event.title, fontWeight = FontWeight.Bold, color = Color.White, fontSize = 13.sp)
-                                        if (event.notes.isNotEmpty()) {
-                                            Text(event.notes, fontSize = 11.sp, color = TextSecondary)
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Column(modifier = Modifier.weight(1f)) {
+                                            Text(event.title, fontWeight = FontWeight.Bold, color = Color.White, fontSize = 13.sp)
+                                            if (event.notes.isNotEmpty()) {
+                                                Text(event.notes, fontSize = 11.sp, color = TextSecondary)
+                                            }
+                                        }
+                                        Text(
+                                            text = "${if (event.isIncome) "+" else "-"}${String.format(Locale.US, "%,.0f", event.amount)} ${profile.currencySymbol}",
+                                            fontWeight = FontWeight.Black,
+                                            fontSize = 13.sp,
+                                            color = if (isPaid) EmeraldPrimary else if (event.isIncome) EmeraldPrimary else Color(0xFFF43F5E)
+                                        )
+                                    }
+
+                                    // Action Button Row
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.End
+                                    ) {
+                                        if (isPaid) {
+                                            Surface(
+                                                shape = RoundedCornerShape(8.dp),
+                                                color = EmeraldPrimary.copy(alpha = 0.2f)
+                                            ) {
+                                                Row(
+                                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                                                    verticalAlignment = Alignment.CenterVertically,
+                                                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                                ) {
+                                                    Icon(Icons.Default.CheckCircle, contentDescription = null, tint = EmeraldPrimary, modifier = Modifier.size(14.dp))
+                                                    Text(if (event.isIncome) "Încasat" else "Plătit cu Succes", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = EmeraldPrimary)
+                                                }
+                                            }
+                                        } else {
+                                            Button(
+                                                onClick = { paidEvents.add(event.title) },
+                                                shape = RoundedCornerShape(8.dp),
+                                                colors = ButtonDefaults.buttonColors(
+                                                    containerColor = if (event.isIncome) EmeraldPrimary else Color(0xFFF43F5E)
+                                                ),
+                                                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp),
+                                                modifier = Modifier.height(32.dp)
+                                            ) {
+                                                Text(
+                                                    if (event.isIncome) "Marchează Încasat" else "Plătește Acum",
+                                                    fontSize = 11.sp,
+                                                    fontWeight = FontWeight.Bold,
+                                                    color = if (event.isIncome) Slate900 else Color.White
+                                                )
+                                            }
                                         }
                                     }
-                                    Text(
-                                        text = "${if (event.isIncome) "+" else "-"}${String.format(Locale.US, "%,.0f", event.amount)} ${profile.currencySymbol}",
-                                        fontWeight = FontWeight.Black,
-                                        fontSize = 13.sp,
-                                        color = if (event.isIncome) EmeraldPrimary else Color(0xFFF43F5E)
-                                    )
                                 }
                             }
                         }
