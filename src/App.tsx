@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { Navbar, TabType } from './components/Navbar';
 import { DashboardView } from './components/DashboardView';
 import { FreelanceCollectorView } from './components/FreelanceCollectorView';
@@ -7,6 +7,7 @@ import { BankDebtView } from './components/BankDebtView';
 import { SavingsTargetsView } from './components/SavingsTargetsView';
 import { CashFlowCalendarView } from './components/CashFlowCalendarView';
 import { AiAdvisorView } from './components/AiAdvisorView';
+import { GroceryOptimizerView } from './components/GroceryOptimizerView';
 import { CollectPaymentModal } from './components/CollectPaymentModal';
 import { SettingsShareModal } from './components/SettingsShareModal';
 import { ProjectFormModal } from './components/ProjectFormModal';
@@ -33,6 +34,10 @@ import {
   saveExpenses,
   loadSplitRule,
   saveSplitRule,
+  loadGroceryList,
+  saveGroceryList,
+  loadGroceryCatalog,
+  saveGroceryCatalog,
   resetAllToDefaults,
   exportBackupJson,
   importBackupJson
@@ -59,7 +64,10 @@ import {
   SavingsTarget,
   HouseholdExpense,
   WindfallSplitRule,
-  ActivityItem
+  ActivityItem,
+  GroceryCatalogItem,
+  ShoppingListItem,
+  CashPocketsBalance
 } from './types';
 
 export const App: React.FC = () => {
@@ -72,7 +80,40 @@ export const App: React.FC = () => {
   const [targets, setTargets] = useState<SavingsTarget[]>(loadTargets);
   const [expenses, setExpenses] = useState<HouseholdExpense[]>(loadExpenses);
   const [splitRule, setSplitRule] = useState<WindfallSplitRule>(loadSplitRule);
+  const [groceryList, setGroceryList] = useState<ShoppingListItem[]>(loadGroceryList);
+  const [groceryCatalog, setGroceryCatalog] = useState<GroceryCatalogItem[]>(loadGroceryCatalog);
   const [activities, setActivities] = useState<ActivityItem[]>([]);
+
+  // Live Cash Pockets & Account Balances Calculation
+  const wifeSalaryBalance = useMemo(() => {
+    const wifeSpent = expenses
+      .filter((e) => e.assignedPayer === 'WIFE_SALARY')
+      .reduce((s, e) => s + e.amount, 0);
+    return Math.max(0, profile.wifeMonthlySalary - wifeSpent);
+  }, [profile.wifeMonthlySalary, expenses]);
+
+  const freelanceBufferBalance = useMemo(() => {
+    const totalCollected = projects.reduce((s, p) => s + (p.depositReceived || 0), 0);
+    const safePocketPool = totalCollected * (splitRule.safePocketPercent / 100);
+    const freelanceSpent = expenses
+      .filter((e) => e.assignedPayer === 'FREELANCE_BUFFER')
+      .reduce((s, e) => s + e.amount, 0);
+    return Math.max(0, safePocketPool - freelanceSpent);
+  }, [projects, splitRule, expenses]);
+
+  const sharedPoolBalance = useMemo(() => {
+    const sharedSpent = expenses
+      .filter((e) => e.assignedPayer === 'SHARED_POOL')
+      .reduce((s, e) => s + e.amount, 0);
+    const combinedAvailable = wifeSalaryBalance + freelanceBufferBalance;
+    return Math.max(0, combinedAvailable - sharedSpent);
+  }, [wifeSalaryBalance, freelanceBufferBalance, expenses]);
+
+  const cashBalances: CashPocketsBalance = useMemo(() => ({
+    wifeSalaryBalance,
+    freelanceBufferBalance,
+    sharedPoolBalance
+  }), [wifeSalaryBalance, freelanceBufferBalance, sharedPoolBalance]);
 
   // Authentication State
   const [currentUser, setCurrentUser] = useState<AuthUser | null>(getStoredUser);
@@ -133,12 +174,16 @@ export const App: React.FC = () => {
   }, [targets]);
 
   useEffect(() => {
-    saveExpenses(expenses);
-  }, [expenses]);
-
-  useEffect(() => {
     saveSplitRule(splitRule);
   }, [splitRule]);
+
+  useEffect(() => {
+    saveGroceryList(groceryList);
+  }, [groceryList]);
+
+  useEffect(() => {
+    saveGroceryCatalog(groceryCatalog);
+  }, [groceryCatalog]);
 
   // Apply a remote snapshot received from cloud
   const applyRemoteSnapshot = (data: any) => {
@@ -150,6 +195,8 @@ export const App: React.FC = () => {
     if (data.expenses) setExpenses(data.expenses);
     if (data.splitRule) setSplitRule(data.splitRule);
     if (data.activities) setActivities(data.activities);
+    if (data.groceryList) setGroceryList(data.groceryList);
+    if (data.groceryCatalog) setGroceryCatalog(data.groceryCatalog);
     setTimeout(() => {
       isInternalUpdate.current = false;
     }, 300);
@@ -164,6 +211,8 @@ export const App: React.FC = () => {
     expenses?: HouseholdExpense[];
     splitRule?: WindfallSplitRule;
     activities?: ActivityItem[];
+    groceryList?: ShoppingListItem[];
+    groceryCatalog?: GroceryCatalogItem[];
   }) => {
     if (!syncCode || isInternalUpdate.current) return;
     const fullData = {
@@ -173,7 +222,9 @@ export const App: React.FC = () => {
       targets: override?.targets || targets,
       expenses: override?.expenses || expenses,
       splitRule: override?.splitRule || splitRule,
-      activities: override?.activities || activities
+      activities: override?.activities || activities,
+      groceryList: override?.groceryList || groceryList,
+      groceryCatalog: override?.groceryCatalog || groceryCatalog
     };
     pushCloudVault(syncCode, fullData, `${profile.husbandName} & ${profile.wifeName}`).then((res) => {
       if (res.success && res.vault) {
@@ -355,6 +406,42 @@ export const App: React.FC = () => {
       pushCurrentStateToCloud({ expenses: nextExpenses });
       return nextExpenses;
     });
+  };
+
+  // Grocery Handlers
+  const handleUpdateGroceryList = (nextList: ShoppingListItem[]) => {
+    setGroceryList(nextList);
+    saveGroceryList(nextList);
+    pushCurrentStateToCloud({ groceryList: nextList });
+  };
+
+  const handleUpdateGroceryCatalog = (nextCatalog: GroceryCatalogItem[]) => {
+    setGroceryCatalog(nextCatalog);
+    saveGroceryCatalog(nextCatalog);
+    pushCurrentStateToCloud({ groceryCatalog: nextCatalog });
+  };
+
+  const handleAddDirectExpense = (expenseData: Omit<HouseholdExpense, 'id'>) => {
+    const newExpense: HouseholdExpense = {
+      ...expenseData,
+      id: 'exp-' + Date.now() + '-' + Math.random().toString(36).substr(2, 4)
+    };
+    const nextExpenses = [newExpense, ...expenses];
+    setExpenses(nextExpenses);
+    saveExpenses(nextExpenses);
+    pushCurrentStateToCloud({ expenses: nextExpenses });
+
+    const newAct: ActivityItem = {
+      id: 'act-' + Date.now(),
+      timestamp: new Date().toISOString(),
+      actorName: currentUser?.name || profile.husbandName,
+      actorRole: currentUser?.role || 'husband',
+      type: 'EXPENSE_PAID',
+      title: `${newExpense.title} (${newExpense.amount.toFixed(2)} ${profile.currencySymbol})`,
+      amount: newExpense.amount,
+      reactions: { '🛒': 1, '👍': 1 }
+    };
+    logActivityLocallyAndSync(newAct);
   };
 
   // Collect Inflow & Apply Windfall Split Rule
@@ -562,8 +649,22 @@ export const App: React.FC = () => {
             expenses={expenses}
             profile={profile}
             onOpenNewExpense={() => setEditingExpense(null)}
+            onOpenScanner={() => setIsReceiptScannerOpen(true)}
             onEditExpense={(e) => setEditingExpense(e)}
             onDeleteExpense={handleDeleteExpense}
+          />
+        )}
+
+        {currentTab === 'groceries' && (
+          <GroceryOptimizerView
+            profile={profile}
+            shoppingList={groceryList}
+            onUpdateShoppingList={handleUpdateGroceryList}
+            groceryCatalog={groceryCatalog}
+            onUpdateGroceryCatalog={handleUpdateGroceryCatalog}
+            onAddExpense={handleAddDirectExpense}
+            cashBalances={cashBalances}
+            onOpenReceiptScanner={() => setIsReceiptScannerOpen(true)}
           />
         )}
 
@@ -627,6 +728,9 @@ export const App: React.FC = () => {
       <ReceiptScannerModal
         isOpen={isReceiptScannerOpen}
         onClose={() => setIsReceiptScannerOpen(false)}
+        cashBalances={cashBalances}
+        wifeName={profile.wifeName}
+        husbandName={profile.husbandName}
         onAddExpense={(exp) => {
           handleSaveExpense(exp);
           logActivity(`A adăugat cheltuiala scanată: ${exp.title} (${exp.amount} ${profile.currencySymbol})`, 'EXPENSE_PAID', exp.amount);
@@ -748,6 +852,7 @@ export const App: React.FC = () => {
         <ExpenseFormModal
           initialData={editingExpense}
           profile={profile}
+          cashBalances={cashBalances}
           onClose={() => setEditingExpense(undefined)}
           onSave={handleSaveExpense}
         />

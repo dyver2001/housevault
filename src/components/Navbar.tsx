@@ -14,7 +14,8 @@ import {
   ArrowUpDown,
   Check,
   X,
-  Camera
+  Camera,
+  ShoppingCart
 } from 'lucide-react';
 import { HouseholdProfile } from '../types';
 import { translations, Language } from '../data/i18n';
@@ -24,6 +25,7 @@ export type TabType =
   | 'dashboard'
   | 'freelance'
   | 'budget'
+  | 'groceries'
   | 'debt'
   | 'targets'
   | 'calendar'
@@ -107,6 +109,11 @@ export const Navbar: React.FC<NavbarProps> = ({
       id: 'budget' as TabType,
       label: t.tabs.budget,
       icon: Receipt,
+    },
+    {
+      id: 'groceries' as TabType,
+      label: t.tabs.groceries || (lang === 'ro' ? '🛒 Cumpărături & Prețuri' : '🛒 Groceries & Prices'),
+      icon: ShoppingCart,
     },
     {
       id: 'debt' as TabType,
@@ -272,6 +279,29 @@ export const Navbar: React.FC<NavbarProps> = ({
               <X className="w-4 h-4" />
             </button>
           </div>
+
+          {/* 0. Groceries & Supermarket Prices */}
+          <button
+            onClick={() => {
+              onSelectTab('groceries');
+              closeFloatingMenu();
+            }}
+            className={`w-full flex items-center justify-between px-3.5 py-3 rounded-2xl text-sm font-semibold transition-all cursor-pointer ${
+              currentTab === 'groceries'
+                ? 'bg-stone-800 text-white shadow-sm border border-stone-700'
+                : 'text-stone-300 hover:bg-stone-800/60 hover:text-white'
+            }`}
+          >
+            <div className="flex items-center space-x-3.5">
+              <div className={`w-8 h-8 rounded-xl flex items-center justify-center ${currentTab === 'groceries' ? 'bg-indigo-500/20 text-indigo-400' : 'bg-stone-800 text-stone-400'}`}>
+                <ShoppingCart className="w-4.5 h-4.5" />
+              </div>
+              <span className={currentTab === 'groceries' ? 'font-bold text-white' : 'font-medium text-stone-200'}>
+                {lang === 'ro' ? '🛒 Cumpărături & Prețuri' : '🛒 Groceries & Prices'}
+              </span>
+            </div>
+            {currentTab === 'groceries' && <Check className="w-4 h-4 text-emerald-400" />}
+          </button>
 
           {/* 1. Savings Targets / Obiective Economii */}
           <button

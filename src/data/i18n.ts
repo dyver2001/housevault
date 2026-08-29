@@ -1,4 +1,4 @@
-﻿export type Language = 'ro' | 'en';
+export type Language = 'ro' | 'en';
 
 export interface Translations {
   appTitle: string;
@@ -7,6 +7,7 @@ export interface Translations {
     dashboard: string;
     freelance: string;
     budget: string;
+    groceries: string;
     debt: string;
     targets: string;
     ai: string;
@@ -64,6 +65,7 @@ export const translations: Record<Language, Translations> = {
       dashboard: "Tablou de Bord",
       freelance: "Încasări Freelance",
       budget: "Buget Familie",
+      groceries: "🛒 Cumpărături & Prețuri",
       debt: "Achitare Datorii",
       targets: "Seifuri Economii",
       ai: "Consilier AI"
@@ -119,6 +121,7 @@ export const translations: Record<Language, Translations> = {
       dashboard: "Dashboard",
       freelance: "Freelance Cash",
       budget: "House Budget",
+      groceries: "🛒 Groceries & Prices",
       debt: "Bank Debts",
       targets: "Savings Vaults",
       ai: "AI Coach"

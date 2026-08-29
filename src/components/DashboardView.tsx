@@ -13,7 +13,9 @@ import {
   Camera,
   FileText,
   Calendar,
-  Bell
+  Bell,
+  ShoppingCart,
+  Store
 } from 'lucide-react';
 import {
   HouseholdProfile,
@@ -232,17 +234,17 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 
         <button
           type="button"
-          onClick={() => onNavigate('calendar')}
-          className="p-3 rounded-2xl bg-gradient-to-br from-stone-850 to-stone-900 border border-amber-500/30 hover:border-amber-500 text-left transition shadow-md group cursor-pointer"
+          onClick={() => onNavigate('groceries')}
+          className="p-3 rounded-2xl bg-gradient-to-br from-stone-850 to-stone-900 border border-amber-500/30 hover:border-amber-400 text-left transition shadow-md group cursor-pointer"
         >
           <div className="w-8 h-8 rounded-xl bg-amber-500/15 text-amber-400 flex items-center justify-center mb-1.5 group-hover:scale-110 transition-transform">
-            <Calendar className="w-4 h-4" />
+            <ShoppingCart className="w-4 h-4" />
           </div>
           <span className="text-xs font-black text-white block">
-            {profile.language === 'ro' ? 'Calendar Plăți' : 'Bills Calendar'}
+            {profile.language === 'ro' ? 'Magazine & Prețuri' : 'Grocery & Shops'}
           </span>
           <span className="text-[10px] text-stone-400">
-            {profile.language === 'ro' ? 'Scadențe & Salarii' : 'Cash Flow Due Dates'}
+            {profile.language === 'ro' ? 'Lidl, Kaufland, 🇲🇦🇷🇴 Coș' : 'Compare 6 Supermarkets'}
           </span>
         </button>
 
@@ -393,6 +395,40 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         </div>
         <div className="flex-1 max-w-xs sm:max-w-md">
           <EkgHeartbeatGlow runwayMonths={parseFloat(runwayMonths) || 12} />
+        </div>
+      </div>
+
+      {/* 🛒 Supermarket Price Optimizer & Cultural Groceries Hub (Haytham 🇲🇦 & Cati 🇷🇴) */}
+      <div className="bg-gradient-to-r from-stone-900 via-stone-850 to-stone-900 border border-emerald-500/40 rounded-3xl p-5 shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="flex items-center space-x-3.5">
+          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-500/20 to-amber-500/20 border border-emerald-500/30 flex items-center justify-center text-2xl shadow-inner shrink-0">
+            🛒
+          </div>
+          <div>
+            <div className="flex items-center gap-2 flex-wrap">
+              <h2 className="text-sm sm:text-base font-black text-white font-display">
+                Optimizator Magazine & Meniu Mixt Marocan-Român 🇲🇦🇷🇴
+              </h2>
+              <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-[10px] font-black">
+                Lidl • Kaufland • Carrefour • Mega Image
+              </span>
+            </div>
+            <p className="text-xs text-stone-300 mt-0.5">
+              Compară prețurile reale, alege cel mai ieftin magazin și generează coșul de cumpărături pe banii disponibili (Couscous, Tagine, Telemea, Mămăliguță).
+            </p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2 shrink-0">
+          <button
+            type="button"
+            onClick={() => onNavigate('groceries')}
+            className="px-4 py-2.5 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-stone-950 font-black text-xs shadow-lg shadow-emerald-500/20 transition-all cursor-pointer flex items-center gap-1.5 active:scale-98"
+          >
+            <ShoppingCart className="w-4 h-4" />
+            <span>Deschide Magazine & Coș</span>
+            <ArrowRight className="w-3.5 h-3.5" />
+          </button>
         </div>
       </div>
 

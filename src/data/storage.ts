@@ -4,7 +4,9 @@ import {
   BankDebt,
   SavingsTarget,
   HouseholdExpense,
-  WindfallSplitRule
+  WindfallSplitRule,
+  GroceryCatalogItem,
+  ShoppingListItem
 } from '../types';
 import {
   DEFAULT_PROFILE,
@@ -14,6 +16,10 @@ import {
   DEFAULT_EXPENSES,
   DEFAULT_SPLIT_RULE
 } from './defaultData';
+import {
+  DEFAULT_GROCERY_CATALOG,
+  DEFAULT_SHOPPING_LIST
+} from './groceryData';
 
 const KEYS = {
   PROFILE: 'housevault_profile',
@@ -21,7 +27,9 @@ const KEYS = {
   DEBTS: 'housevault_debts',
   TARGETS: 'housevault_targets',
   EXPENSES: 'housevault_expenses',
-  SPLIT_RULE: 'housevault_split_rule'
+  SPLIT_RULE: 'housevault_split_rule',
+  GROCERY_LIST: 'housevault_grocery_list',
+  GROCERY_CATALOG: 'housevault_grocery_catalog'
 };
 
 export function loadProfile(): HouseholdProfile {
@@ -118,6 +126,46 @@ export function saveSplitRule(rule: WindfallSplitRule): void {
   localStorage.setItem(KEYS.SPLIT_RULE, JSON.stringify(rule));
 }
 
+export function loadGroceryList(): ShoppingListItem[] {
+  try {
+    const raw = localStorage.getItem(KEYS.GROCERY_LIST);
+    if (!raw) return DEFAULT_SHOPPING_LIST;
+    const parsed = JSON.parse(raw);
+    const hasCorrupted = JSON.stringify(parsed).includes('Ä') || JSON.stringify(parsed).includes('Ã');
+    if (hasCorrupted) {
+      saveGroceryList(DEFAULT_SHOPPING_LIST);
+      return DEFAULT_SHOPPING_LIST;
+    }
+    return parsed;
+  } catch {
+    return DEFAULT_SHOPPING_LIST;
+  }
+}
+
+export function saveGroceryList(items: ShoppingListItem[]): void {
+  localStorage.setItem(KEYS.GROCERY_LIST, JSON.stringify(items));
+}
+
+export function loadGroceryCatalog(): GroceryCatalogItem[] {
+  try {
+    const raw = localStorage.getItem(KEYS.GROCERY_CATALOG);
+    if (!raw) return DEFAULT_GROCERY_CATALOG;
+    const parsed = JSON.parse(raw);
+    const hasCorrupted = JSON.stringify(parsed).includes('Ä') || JSON.stringify(parsed).includes('Ã') || parsed.length < DEFAULT_GROCERY_CATALOG.length;
+    if (hasCorrupted) {
+      saveGroceryCatalog(DEFAULT_GROCERY_CATALOG);
+      return DEFAULT_GROCERY_CATALOG;
+    }
+    return parsed;
+  } catch {
+    return DEFAULT_GROCERY_CATALOG;
+  }
+}
+
+export function saveGroceryCatalog(catalog: GroceryCatalogItem[]): void {
+  localStorage.setItem(KEYS.GROCERY_CATALOG, JSON.stringify(catalog));
+}
+
 export function resetAllToDefaults(): {
   profile: HouseholdProfile;
   projects: FreelanceProject[];
@@ -125,6 +173,8 @@ export function resetAllToDefaults(): {
   targets: SavingsTarget[];
   expenses: HouseholdExpense[];
   splitRule: WindfallSplitRule;
+  groceryList: ShoppingListItem[];
+  groceryCatalog: GroceryCatalogItem[];
 } {
   saveProfile(DEFAULT_PROFILE);
   saveProjects(DEFAULT_PROJECTS);
@@ -132,6 +182,8 @@ export function resetAllToDefaults(): {
   saveTargets(DEFAULT_TARGETS);
   saveExpenses(DEFAULT_EXPENSES);
   saveSplitRule(DEFAULT_SPLIT_RULE);
+  saveGroceryList(DEFAULT_SHOPPING_LIST);
+  saveGroceryCatalog(DEFAULT_GROCERY_CATALOG);
 
   return {
     profile: DEFAULT_PROFILE,
@@ -139,7 +191,9 @@ export function resetAllToDefaults(): {
     debts: DEFAULT_DEBTS,
     targets: DEFAULT_TARGETS,
     expenses: DEFAULT_EXPENSES,
-    splitRule: DEFAULT_SPLIT_RULE
+    splitRule: DEFAULT_SPLIT_RULE,
+    groceryList: DEFAULT_SHOPPING_LIST,
+    groceryCatalog: DEFAULT_GROCERY_CATALOG
   };
 }
 
@@ -149,17 +203,21 @@ export function exportBackupJson(
   debts: BankDebt[],
   targets: SavingsTarget[],
   expenses: HouseholdExpense[],
-  splitRule: WindfallSplitRule
+  splitRule: WindfallSplitRule,
+  groceryList?: ShoppingListItem[],
+  groceryCatalog?: GroceryCatalogItem[]
 ): string {
   const data = {
-    version: 1,
+    version: 2,
     exportedAt: new Date().toISOString(),
     profile,
     projects,
     debts,
     targets,
     expenses,
-    splitRule
+    splitRule,
+    groceryList: groceryList || loadGroceryList(),
+    groceryCatalog: groceryCatalog || loadGroceryCatalog()
   };
   return JSON.stringify(data, null, 2);
 }
@@ -173,6 +231,8 @@ export function importBackupJson(jsonString: string): {
     targets: SavingsTarget[];
     expenses: HouseholdExpense[];
     splitRule: WindfallSplitRule;
+    groceryList?: ShoppingListItem[];
+    groceryCatalog?: GroceryCatalogItem[];
   };
   error?: string;
 } {
@@ -188,6 +248,8 @@ export function importBackupJson(jsonString: string): {
     const targets = Array.isArray(parsed.targets) ? parsed.targets : DEFAULT_TARGETS;
     const expenses = Array.isArray(parsed.expenses) ? parsed.expenses : DEFAULT_EXPENSES;
     const splitRule = parsed.splitRule || DEFAULT_SPLIT_RULE;
+    const groceryList = Array.isArray(parsed.groceryList) ? parsed.groceryList : DEFAULT_SHOPPING_LIST;
+    const groceryCatalog = Array.isArray(parsed.groceryCatalog) ? parsed.groceryCatalog : DEFAULT_GROCERY_CATALOG;
 
     saveProfile(profile);
     saveProjects(projects);
@@ -195,10 +257,12 @@ export function importBackupJson(jsonString: string): {
     saveTargets(targets);
     saveExpenses(expenses);
     saveSplitRule(splitRule);
+    saveGroceryList(groceryList);
+    saveGroceryCatalog(groceryCatalog);
 
     return {
       success: true,
-      data: { profile, projects, debts, targets, expenses, splitRule }
+      data: { profile, projects, debts, targets, expenses, splitRule, groceryList, groceryCatalog }
     };
   } catch (err: any) {
     return { success: false, error: err.message || 'Failed to parse JSON file' };

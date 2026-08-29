@@ -126,12 +126,86 @@ export interface GearItem {
   notes?: string;
 }
 
+export interface ReceiptItemLine {
+  name: string;
+  price: number;
+}
+
 export interface ReceiptScanResult {
   merchantName: string;
   totalAmount: number;
   currency: string;
   date: string;
   suggestedCategory: ExpenseCategory;
+  itemizedList?: ReceiptItemLine[];
   items?: string[];
   rawSummary?: string;
 }
+
+export interface CashPocketsBalance {
+  wifeSalaryBalance: number;
+  freelanceBufferBalance: number;
+  sharedPoolBalance: number;
+}
+
+export type SupermarketId =
+  | 'LIDL'
+  | 'KAUFLAND'
+  | 'CARREFOUR'
+  | 'MEGA_IMAGE'
+  | 'PENNY'
+  | 'AUCHAN';
+
+export type GroceryCategory =
+  | 'DAIRY'
+  | 'MEAT_FISH'
+  | 'FRUITS_VEGGIES'
+  | 'BAKERY'
+  | 'PANTRY'
+  | 'CLEANING'
+  | 'BEVERAGES'
+  | 'SNACKS';
+
+export type GroceryQualityPreference = 'CHEAPEST' | 'BEST_VALUE' | 'PREMIUM';
+
+export interface StorePriceInfo {
+  price: number;
+  promo?: boolean;
+  qualityScore: number; // 1 to 5 stars
+  brandName?: string;
+}
+
+export type GroceryCuisineType = 'MOROCCAN' | 'ROMANIAN' | 'UNIVERSAL';
+
+export interface GroceryCatalogItem {
+  id: string;
+  name: string;
+  category: GroceryCategory;
+  defaultUnit: string; // 'kg', 'L', 'buc', 'pachet', '500g'
+  stores: Partial<Record<SupermarketId, StorePriceInfo>>;
+  cuisine?: GroceryCuisineType;
+  culturalTag?: string;
+  notes?: string;
+}
+
+export interface ShoppingListItem {
+  id: string;
+  catalogItemId?: string;
+  name: string;
+  category: GroceryCategory;
+  quantity: number;
+  unit: string;
+  isChecked: boolean;
+  preferredStoreOverride?: SupermarketId;
+  notes?: string;
+}
+
+export interface GroceryTripLog {
+  id: string;
+  date: string;
+  storeName: string;
+  totalSpent: number;
+  itemCount: number;
+  payer: ExpensePayer;
+}
+

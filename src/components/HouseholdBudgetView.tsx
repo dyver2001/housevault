@@ -4,7 +4,8 @@ import {
   Plus,
   ShieldCheck,
   Trash2,
-  Edit2
+  Edit2,
+  Camera
 } from 'lucide-react';
 import { HouseholdExpense, HouseholdProfile, ExpenseCategory, ExpensePayer } from '../types';
 
@@ -12,6 +13,7 @@ interface HouseholdBudgetViewProps {
   profile: HouseholdProfile;
   expenses: HouseholdExpense[];
   onOpenNewExpense: () => void;
+  onOpenScanner?: () => void;
   onEditExpense: (expense: HouseholdExpense) => void;
   onDeleteExpense: (expenseId: string) => void;
 }
@@ -20,6 +22,7 @@ export const HouseholdBudgetView: React.FC<HouseholdBudgetViewProps> = ({
   profile,
   expenses,
   onOpenNewExpense,
+  onOpenScanner,
   onEditExpense,
   onDeleteExpense
 }) => {
@@ -114,14 +117,26 @@ export const HouseholdBudgetView: React.FC<HouseholdBudgetViewProps> = ({
           </p>
         </div>
 
-        <button
-          id="btn-add-new-expense"
-          onClick={onOpenNewExpense}
-          className="flex items-center space-x-2 px-4 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-stone-950 font-bold text-sm shadow-lg shadow-emerald-500/20 transition-all cursor-pointer self-start sm:self-auto"
-        >
-          <Plus className="w-4 h-4" />
-          <span>Add Household Bill</span>
-        </button>
+        <div className="flex flex-wrap gap-2 items-center self-start sm:self-auto">
+          {onOpenScanner && (
+            <button
+              type="button"
+              onClick={onOpenScanner}
+              className="flex items-center space-x-2 px-4 py-2.5 rounded-xl bg-stone-800 hover:bg-stone-750 text-cyan-300 border border-cyan-500/30 font-bold text-sm shadow-md transition-all cursor-pointer"
+            >
+              <Camera className="w-4 h-4 text-cyan-400" />
+              <span>Scanează Bon / Galerie</span>
+            </button>
+          )}
+          <button
+            id="btn-add-new-expense"
+            onClick={onOpenNewExpense}
+            className="flex items-center space-x-2 px-4 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-stone-950 font-bold text-sm shadow-lg shadow-emerald-500/20 transition-all cursor-pointer"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Add Household Bill</span>
+          </button>
+        </div>
       </div>
 
       {/* Salary Foundation Banner */}

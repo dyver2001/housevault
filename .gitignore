@@ -19,3 +19,4 @@ debug.keystore
 node_modules
 dist
 .system_generated
+data/

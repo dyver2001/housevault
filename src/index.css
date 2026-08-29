@@ -23,6 +23,14 @@
   h1, h2, h3, .font-display {
     font-family: 'Cabinet Grotesk', 'Plus Jakarta Sans', sans-serif;
   }
+
+  .font-playfair {
+    font-family: 'Playfair Display', Georgia, 'Times New Roman', serif;
+  }
+
+  .font-helvetica {
+    font-family: 'Helvetica Neue', Helvetica, -apple-system, BlinkMacSystemFont, Arial, sans-serif;
+  }
 }
 
 /* Custom subtle scrollbar */
