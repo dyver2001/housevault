@@ -175,7 +175,14 @@ export interface StorePriceInfo {
   brandName?: string;
 }
 
-export type GroceryCuisineType = 'MOROCCAN' | 'ROMANIAN' | 'UNIVERSAL';
+export type GroceryCuisineType =
+  | 'MOROCCAN'
+  | 'ROMANIAN'
+  | 'SPANISH'
+  | 'ITALIAN'
+  | 'AMERICAN'
+  | 'GERMAN'
+  | 'UNIVERSAL';
 
 export interface GroceryCatalogItem {
   id: string;
@@ -200,6 +207,32 @@ export interface ShoppingListItem {
   notes?: string;
 }
 
+export interface RecipeIngredient {
+  name: string;
+  quantity: number;
+  unit: string;
+  category?: GroceryCategory;
+  matchedCatalogId?: string;
+  suggestedStoreId?: SupermarketId;
+  estimatedPrice?: number;
+  brandName?: string;
+}
+
+export interface SavedRecipeReel {
+  id: string;
+  title: string;
+  videoUrl: string; // Instagram Reel, TikTok, YouTube Shorts, Web URL
+  cuisine: GroceryCuisineType;
+  description?: string;
+  servings?: number;
+  prepTimeMinutes?: number;
+  ingredients: RecipeIngredient[];
+  totalEstimatedCost: number;
+  cheapestStoreId?: SupermarketId;
+  instructionsSummary?: string;
+  createdAt: string;
+}
+
 export interface GroceryTripLog {
   id: string;
   date: string;
@@ -208,4 +241,5 @@ export interface GroceryTripLog {
   itemCount: number;
   payer: ExpensePayer;
 }
+
 

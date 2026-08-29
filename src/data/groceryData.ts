@@ -3,7 +3,8 @@ import {
   GroceryCatalogItem,
   ShoppingListItem,
   GroceryCategory,
-  GroceryCuisineType
+  GroceryCuisineType,
+  SavedRecipeReel
 } from '../types';
 
 export interface SupermarketMetadata {
@@ -53,8 +54,8 @@ export const SUPERMARKETS: SupermarketMetadata[] = [
     badgeText: 'text-cyan-400',
     accentBorder: 'border-cyan-500/40',
     icon: '🥖',
-    specialtyRo: 'Gama completa, sector oriental/Bio generos, mezeluri si promotii',
-    specialtyEn: 'Complete range, great oriental & Bio selection & weekend multi-packs'
+    specialtyRo: 'Gama completa, sector international/Bio generos, mezeluri si promotii',
+    specialtyEn: 'Complete range, great international & Bio selection & multi-packs'
   },
   {
     id: 'MEGA_IMAGE',
@@ -65,7 +66,7 @@ export const SUPERMARKETS: SupermarketMetadata[] = [
     badgeText: 'text-amber-400',
     accentBorder: 'border-amber-500/40',
     icon: '🏪',
-    specialtyRo: 'Gusturi Romanesti, produse de proximitate, delicatese si Bio de top',
+    specialtyRo: 'Gusturi Romanesti, produse gourmet, delicatese si Bio de top',
     specialtyEn: 'Local heritage foods, gourmet, bio & extreme proximity'
   },
   {
@@ -98,402 +99,685 @@ export const GROCERY_CATEGORIES_CONFIG: Record<
   GroceryCategory,
   { labelRo: string; labelEn: string; icon: string; color: string }
 > = {
-  DAIRY: { labelRo: 'Lactate & Oua', labelEn: 'Dairy & Eggs', icon: '🥛', color: 'text-sky-400 bg-sky-500/10 border-sky-500/30' },
-  MEAT_FISH: { labelRo: 'Carne & Peste', labelEn: 'Meat & Fish', icon: '🥩', color: 'text-rose-400 bg-rose-500/10 border-rose-500/30' },
-  FRUITS_VEGGIES: { labelRo: 'Fructe & Legume', labelEn: 'Produce & Veggies', icon: '🥗', color: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/30' },
-  BAKERY: { labelRo: 'Paine & Brutărie', labelEn: 'Bakery & Bread', icon: '🍞', color: 'text-amber-400 bg-amber-500/10 border-amber-500/30' },
-  PANTRY: { labelRo: 'Camara & Uleiuri', labelEn: 'Pantry & Oils', icon: '🥫', color: 'text-orange-400 bg-orange-500/10 border-orange-500/30' },
-  CLEANING: { labelRo: 'Curatenie & Menaj', labelEn: 'Cleaning & Home', icon: '🧼', color: 'text-purple-400 bg-purple-500/10 border-purple-500/30' },
-  BEVERAGES: { labelRo: 'Bauturi & Ceai', labelEn: 'Beverages & Tea', icon: '☕', color: 'text-blue-400 bg-blue-500/10 border-blue-500/30' },
-  SNACKS: { labelRo: 'Gustari & Dulciuri', labelEn: 'Snacks & Sweets', icon: '🍫', color: 'text-pink-400 bg-pink-500/10 border-pink-500/30' }
+  DAIRY: { labelRo: 'Lactate & Oua', labelEn: 'Dairy & Eggs', icon: '🥛', color: 'text-blue-400' },
+  MEAT_FISH: { labelRo: 'Carne & Peste', labelEn: 'Meat & Fish', icon: '🥩', color: 'text-red-400' },
+  FRUITS_VEGGIES: { labelRo: 'Fructe & Legume', labelEn: 'Produce & Veggies', icon: '🥦', color: 'text-emerald-400' },
+  BAKERY: { labelRo: 'Paine & Brutarii', labelEn: 'Bakery & Bread', icon: '🍞', color: 'text-amber-400' },
+  PANTRY: { labelRo: 'Camara & Uleiuri', labelEn: 'Pantry & Oils', icon: '🥫', color: 'text-yellow-400' },
+  CLEANING: { labelRo: 'Curatenie & Menaj', labelEn: 'Cleaning & Home', icon: '🧼', color: 'text-cyan-400' },
+  BEVERAGES: { labelRo: 'Bauturi & Ceai', labelEn: 'Beverages & Tea', icon: '🫖', color: 'text-teal-400' },
+  SNACKS: { labelRo: 'Gustari & Dulciuri', labelEn: 'Snacks & Sweets', icon: '🍫', color: 'text-pink-400' }
 };
 
 export const DEFAULT_GROCERY_CATALOG: GroceryCatalogItem[] = [
-  // --- MOROCCAN SPECIALTIES (Maroc) ---
+  // --- MOROCCAN ESSENTIALS ---
   {
     id: 'g-couscous-500g',
-    name: 'Couscous Bob Mediu / Fin (500g)',
+    name: 'Couscous Tradițional Mediu (500g)',
     category: 'PANTRY',
-    cuisine: 'MOROCCAN',
-    culturalTag: '🇲🇦 Couscous Marocan',
     defaultUnit: 'pachet',
-    notes: 'Baza esentiala pentru mancaruri traditionale cu carne si legume',
-    stores: {
-      LIDL: { price: 5.49, qualityScore: 4.2, brandName: 'Combino Couscous', promo: true },
-      KAUFLAND: { price: 6.29, qualityScore: 4.5, brandName: 'K-Classic Couscous' },
-      PENNY: { price: 5.19, qualityScore: 3.8, brandName: 'San Fabio' },
-      CARREFOUR: { price: 7.49, qualityScore: 4.8, brandName: 'Baneasa / Ferrero' },
-      MEGA_IMAGE: { price: 8.99, qualityScore: 4.8, brandName: 'Tipiak Couscous' },
-      AUCHAN: { price: 5.99, qualityScore: 4.2, brandName: 'Auchan Couscous' }
-    }
-  },
-  {
-    id: 'g-naut-conserva',
-    name: 'Naut Boabe Fiert (400g)',
-    category: 'PANTRY',
     cuisine: 'MOROCCAN',
-    culturalTag: '🇲🇦 Naut (Tagine & Hummus)',
-    defaultUnit: 'buc',
-    notes: 'Indispensabil pentru Tagine, Harira si mancaruri traditionale',
+    culturalTag: 'Marocan Tradițional',
+    notes: 'Baza pentru tajine si mancaruri traditionale marocane',
     stores: {
-      LIDL: { price: 3.49, qualityScore: 4.5, brandName: 'Freshona Naut', promo: true },
-      KAUFLAND: { price: 3.79, qualityScore: 4.3, brandName: 'K-Classic Naut' },
-      PENNY: { price: 2.99, qualityScore: 4.0, brandName: 'Penny Naut' },
-      CARREFOUR: { price: 4.49, qualityScore: 4.6, brandName: 'Bonduelle / Cirio' },
-      MEGA_IMAGE: { price: 5.89, qualityScore: 4.8, brandName: 'Mega Bio Naut' },
-      AUCHAN: { price: 3.59, qualityScore: 4.2, brandName: 'Auchan Naut' }
+      CARREFOUR: { price: 5.89, qualityScore: 5, brandName: 'Dari Maroc / Casino' },
+      KAUFLAND: { price: 6.29, qualityScore: 4, brandName: 'K-Classic Couscous' },
+      LIDL: { price: 5.49, qualityScore: 4, brandName: '1001 Delights' },
+      MEGA_IMAGE: { price: 7.19, qualityScore: 5, brandName: 'Tipiak / Dari' },
+      PENNY: { price: 5.79, qualityScore: 3, brandName: 'San Fabio' },
+      AUCHAN: { price: 5.65, qualityScore: 4, brandName: 'Auchan Oriental' }
     }
   },
   {
     id: 'g-carne-vita-tagine',
-    name: 'Pulpa de Vita Frageda / Manzat (1kg)',
+    name: 'Pulpă de Vită Fragedă pentru Tajine (1kg)',
     category: 'MEAT_FISH',
-    cuisine: 'MOROCCAN',
-    culturalTag: '🇲🇦 Vita pentru Tagine',
     defaultUnit: 'kg',
-    notes: 'Carne frageda de manzat pentru gatire lenta cu prune si migdale',
+    cuisine: 'MOROCCAN',
+    culturalTag: 'Marocan Tradițional',
+    notes: 'Bucati fragede de vita pentru gatit lent la tajine',
     stores: {
-      LIDL: { price: 37.90, qualityScore: 4.5, brandName: 'Pikok Vita Manzat', promo: true },
-      KAUFLAND: { price: 38.50, qualityScore: 4.8, brandName: 'K-Purland Vita', promo: true },
-      PENNY: { price: 36.90, qualityScore: 4.0, brandName: 'Hanul Boieresc Vita' },
-      CARREFOUR: { price: 42.90, qualityScore: 4.7, brandName: 'Filiera Calitatii Vita' },
-      MEGA_IMAGE: { price: 49.90, qualityScore: 5.0, brandName: 'Gusturi Romanesti Vita' },
-      AUCHAN: { price: 39.90, qualityScore: 4.4, brandName: 'Auchan Macelarie' }
+      KAUFLAND: { price: 38.99, qualityScore: 5, brandName: 'Vreau din Romania / Kaufland Carne' },
+      LIDL: { price: 39.99, qualityScore: 4, brandName: 'Lidl Proaspat' },
+      CARREFOUR: { price: 41.50, qualityScore: 4, brandName: 'Filiera Calitatii Carrefour' },
+      MEGA_IMAGE: { price: 46.99, qualityScore: 5, brandName: 'Gourmet Vita Frageda' },
+      PENNY: { price: 37.99, qualityScore: 3, brandName: 'Casa Gustului' },
+      AUCHAN: { price: 39.50, qualityScore: 4, brandName: 'Auchan Macelarie' }
     }
   },
   {
-    id: 'g-ceai-gunpowder-menta',
-    name: 'Ceai Verde Gunpowder & Menta Proaspata',
-    category: 'BEVERAGES',
+    id: 'g-naut-conserva',
+    name: 'Năut Boabe Fiert (400g / 240g net)',
+    category: 'PANTRY',
+    defaultUnit: 'buc',
     cuisine: 'MOROCCAN',
-    culturalTag: '🇲🇦 Ritual Ceai Marocan (Atay)',
-    defaultUnit: 'pachet',
-    notes: 'Ceai verde aromat cu frunze proaspete de menta si zahar',
+    culturalTag: 'Marocan Tradițional',
+    notes: 'Naut gata fiert pentru hummus, couscous si supe Harira',
     stores: {
-      LIDL: { price: 6.99, qualityScore: 4.3, brandName: 'Lord Nelson Green Tea + Menta', promo: true },
-      KAUFLAND: { price: 7.89, qualityScore: 4.5, brandName: 'Twinings Gunpowder' },
-      PENNY: { price: 6.29, qualityScore: 3.8, brandName: 'Penny Ceai Verde' },
-      CARREFOUR: { price: 9.49, qualityScore: 4.8, brandName: 'Ahmad Tea Gunpowder' },
-      MEGA_IMAGE: { price: 11.90, qualityScore: 5.0, brandName: 'Kusmi / Bio Green Tea' },
-      AUCHAN: { price: 7.49, qualityScore: 4.2, brandName: 'Auchan Ceai Verde' }
-    }
-  },
-  {
-    id: 'g-curmale-medjool',
-    name: 'Curmale Moi Naturale (500g)',
-    category: 'SNACKS',
-    cuisine: 'MOROCCAN',
-    culturalTag: '🇲🇦 Curmale Dulci',
-    defaultUnit: 'pachet',
-    notes: 'Curmale bogate in energie, perfecte alaturi de ceai',
-    stores: {
-      LIDL: { price: 13.99, qualityScore: 4.7, brandName: 'Alesto Curmale', promo: true },
-      KAUFLAND: { price: 14.90, qualityScore: 4.5, brandName: 'K-Bio Curmale' },
-      PENNY: { price: 11.99, qualityScore: 4.0, brandName: 'San Fabio Curmale' },
-      CARREFOUR: { price: 18.50, qualityScore: 4.9, brandName: 'Carrefour Bio Medjool' },
-      MEGA_IMAGE: { price: 21.90, qualityScore: 5.0, brandName: 'Mega Bio Medjool' },
-      AUCHAN: { price: 14.20, qualityScore: 4.4, brandName: 'Auchan Curmale' }
+      LIDL: { price: 3.49, qualityScore: 5, brandName: 'Freshona Naut' },
+      PENNY: { price: 3.39, qualityScore: 4, brandName: 'Penny Naut' },
+      KAUFLAND: { price: 3.69, qualityScore: 4, brandName: 'K-Classic Naut' },
+      CARREFOUR: { price: 3.99, qualityScore: 4, brandName: 'Carrefour Simpl' },
+      MEGA_IMAGE: { price: 4.49, qualityScore: 4, brandName: 'Mega Image Naut' },
+      AUCHAN: { price: 3.59, qualityScore: 4, brandName: 'Auchan Naut' }
     }
   },
   {
     id: 'g-harissa-mirodenii',
-    name: 'Pasta Harissa & Mirodenii (Chimen / Boia)',
+    name: 'Pastă de Harissa & Mirodenii Tajine (150g)',
     category: 'PANTRY',
-    cuisine: 'MOROCCAN',
-    culturalTag: '🇲🇦 Harissa & Condimente',
     defaultUnit: 'buc',
-    notes: 'Pasta picanta traditionala din ardei rosii, usturoi si coriandru',
+    cuisine: 'MOROCCAN',
+    culturalTag: 'Condimente Marocane',
+    notes: 'Pasta picanta cu ardei copt si chimen arabesc',
     stores: {
-      LIDL: { price: 4.99, qualityScore: 4.2, brandName: 'Baresa Harissa', promo: true },
-      KAUFLAND: { price: 5.49, qualityScore: 4.5, brandName: 'K-Classic Harissa' },
-      PENNY: { price: 4.49, qualityScore: 3.8, brandName: 'Penny Spices' },
-      CARREFOUR: { price: 6.99, qualityScore: 4.8, brandName: 'Le Phare du Cap Bon' },
-      MEGA_IMAGE: { price: 8.49, qualityScore: 4.9, brandName: 'AlWadi Harissa' },
-      AUCHAN: { price: 5.99, qualityScore: 4.4, brandName: 'Auchan Harissa' }
+      CARREFOUR: { price: 7.89, qualityScore: 5, brandName: 'Le Phare du Cap Bon Harissa' },
+      KAUFLAND: { price: 8.49, qualityScore: 4, brandName: 'Oriental Spices' },
+      MEGA_IMAGE: { price: 9.99, qualityScore: 5, brandName: 'Harissa Berbere' },
+      LIDL: { price: 6.99, qualityScore: 4, brandName: '1001 Delights' },
+      AUCHAN: { price: 7.99, qualityScore: 4, brandName: 'Auchan Harissa' }
+    }
+  },
+  {
+    id: 'g-ceai-gunpowder-menta',
+    name: 'Ceai Verde Gunpowder cu Mentă Proaspătă (100g)',
+    category: 'BEVERAGES',
+    defaultUnit: 'pachet',
+    cuisine: 'MOROCCAN',
+    culturalTag: 'Ceai Marocan Maghrebi',
+    notes: 'Ceai verde traditional pentru ritualul marocan cu menta',
+    stores: {
+      CARREFOUR: { price: 8.99, qualityScore: 5, brandName: 'Al-Arouss Gunpowder Tea' },
+      KAUFLAND: { price: 9.49, qualityScore: 4, brandName: 'Lord Nelson / K-Classic' },
+      MEGA_IMAGE: { price: 11.20, qualityScore: 5, brandName: 'Twinings / Fares Mentol' },
+      LIDL: { price: 7.99, qualityScore: 4, brandName: 'Lord Nelson Green' },
+      AUCHAN: { price: 8.50, qualityScore: 4, brandName: 'Auchan The Vert' }
+    }
+  },
+  {
+    id: 'g-curmale-medjool',
+    name: 'Curmale Medjool Mari (250g)',
+    category: 'SNACKS',
+    defaultUnit: 'pachet',
+    cuisine: 'MOROCCAN',
+    culturalTag: 'Desert Marocan',
+    stores: {
+      LIDL: { price: 11.99, qualityScore: 5, brandName: 'Alesto Medjool' },
+      KAUFLAND: { price: 12.99, qualityScore: 4, brandName: 'K-Bio Medjool' },
+      CARREFOUR: { price: 13.50, qualityScore: 5, brandName: 'Carrefour Bio' },
+      MEGA_IMAGE: { price: 15.99, qualityScore: 5, brandName: 'Mega Apetit' },
+      PENNY: { price: 11.49, qualityScore: 3, brandName: 'Penny Select' }
     }
   },
   {
     id: 'g-masline-marinate',
-    name: 'Masline Kalamata / Marinate cu Ierburi (500g)',
+    name: 'Măsline Kalamata & Marocane Marinate (300g)',
     category: 'PANTRY',
-    cuisine: 'MOROCCAN',
-    culturalTag: '🇲🇦 Masline Mediteraneene',
     defaultUnit: 'buc',
-    notes: 'Masline carnoase marinate in ulei de masline si mirodenii',
+    cuisine: 'MOROCCAN',
+    culturalTag: 'Marocan',
     stores: {
-      LIDL: { price: 11.99, qualityScore: 4.8, brandName: 'Baresa Kalamata', promo: true },
-      KAUFLAND: { price: 12.50, qualityScore: 4.5, brandName: 'K-Favorites Masline' },
-      PENNY: { price: 10.49, qualityScore: 4.0, brandName: 'San Fabio Masline' },
-      CARREFOUR: { price: 14.90, qualityScore: 4.7, brandName: 'Carrefour Extra' },
-      MEGA_IMAGE: { price: 17.50, qualityScore: 5.0, brandName: 'Gusturi Romanesti' },
-      AUCHAN: { price: 12.90, qualityScore: 4.3, brandName: 'Auchan Masline' }
+      LIDL: { price: 8.99, qualityScore: 5, brandName: 'Baresa Kalamata' },
+      KAUFLAND: { price: 9.49, qualityScore: 4, brandName: 'K-Classic Masline' },
+      CARREFOUR: { price: 10.20, qualityScore: 4, brandName: 'Carrefour Masline' },
+      MEGA_IMAGE: { price: 12.50, qualityScore: 5, brandName: 'Mega Gourmet' }
     }
   },
 
-  // --- ROMANIAN SPECIALTIES (Romania) ---
+  // --- SPANISH ESSENTIALS (🇪🇸 SPANISH) ---
   {
-    id: 'g-malai-superior',
-    name: 'Malai Grisat Superior (1kg)',
+    id: 'g-orez-bomba-paella',
+    name: 'Orez Bomba Spaniol pentru Paella (1kg)',
     category: 'PANTRY',
-    cuisine: 'ROMANIAN',
-    culturalTag: '🇷🇴 Mamaliguta Traditionala',
     defaultUnit: 'kg',
-    notes: 'Pentru mamaliguta aurie romaneasca cu telemea si smantana',
+    cuisine: 'SPANISH',
+    culturalTag: 'Spaniol Tradițional',
+    notes: 'Orez cu bob rotund ce absoarbe supa fara a se sfarama in Paella',
     stores: {
-      LIDL: { price: 3.29, qualityScore: 4.2, brandName: 'Castello Malai Extra', promo: true },
-      KAUFLAND: { price: 3.49, qualityScore: 4.5, brandName: 'Pambac / Baneasa Malai' },
-      PENNY: { price: 2.99, qualityScore: 4.0, brandName: 'Penny Malai Grisat' },
-      CARREFOUR: { price: 3.99, qualityScore: 4.7, brandName: 'Baneasa Malai Extra' },
-      MEGA_IMAGE: { price: 4.69, qualityScore: 4.8, brandName: 'Gusturi Romanesti Malai' },
-      AUCHAN: { price: 3.49, qualityScore: 4.3, brandName: 'Pambac Malai' }
+      CARREFOUR: { price: 13.99, qualityScore: 5, brandName: 'Carrefour Especial Paella' },
+      KAUFLAND: { price: 14.49, qualityScore: 4, brandName: 'Scotti Paella Rice' },
+      MEGA_IMAGE: { price: 16.50, qualityScore: 5, brandName: 'SOS Arroz Bomba' },
+      AUCHAN: { price: 13.80, qualityScore: 4, brandName: 'Auchan Paella' },
+      LIDL: { price: 12.99, qualityScore: 4, brandName: 'Sol&Mar Bomba' }
     }
   },
   {
-    id: 'g-telemea-vaca-saramura',
-    name: 'Branza Telemea de Vaca in Saramura (400g)',
-    category: 'DAIRY',
-    cuisine: 'ROMANIAN',
-    culturalTag: '🇷🇴 Telemea de Saramura',
+    id: 'g-chorizo-spaniol',
+    name: 'Cârnați Chorizo Spaniol Tradițional Dulce/Picant (200g)',
+    category: 'MEAT_FISH',
     defaultUnit: 'buc',
-    notes: 'Telemea maturata romaneasca pentru salate si mamaliga',
+    cuisine: 'SPANISH',
+    culturalTag: 'Spaniol Tradițional',
+    notes: 'Baza cu boia dulce afumata pentru tapas, oua spaniole si paella',
     stores: {
-      LIDL: { price: 14.99, qualityScore: 4.6, brandName: 'Pilos Telemea Saramura', promo: true },
-      KAUFLAND: { price: 15.90, qualityScore: 4.7, brandName: 'K-Classic Telemea' },
-      PENNY: { price: 13.49, qualityScore: 4.1, brandName: 'Boni Telemea' },
-      CARREFOUR: { price: 18.90, qualityScore: 4.8, brandName: 'Olympus Telemea Vaca' },
-      MEGA_IMAGE: { price: 22.90, qualityScore: 5.0, brandName: 'Gusturi Romanesti / Napolact' },
-      AUCHAN: { price: 16.50, qualityScore: 4.4, brandName: 'Auchan Telemea' }
+      LIDL: { price: 9.49, qualityScore: 5, brandName: 'Sol&Mar Chorizo' },
+      PENNY: { price: 8.99, qualityScore: 4, brandName: 'San Fabio Chorizo' },
+      KAUFLAND: { price: 10.29, qualityScore: 4, brandName: 'K-Classic Chorizo' },
+      CARREFOUR: { price: 11.20, qualityScore: 5, brandName: 'Palacios Chorizo' },
+      MEGA_IMAGE: { price: 12.80, qualityScore: 5, brandName: 'El Pozo Chorizo' }
+    }
+  },
+  {
+    id: 'g-jamon-serrano',
+    name: 'Jamón Serrano Reserva feliat fin (100g)',
+    category: 'MEAT_FISH',
+    defaultUnit: 'pachet',
+    cuisine: 'SPANISH',
+    culturalTag: 'Tapas Spaniol',
+    notes: 'Jambon crud-uscat maturat 12 luni pentru aperitive si tapas',
+    stores: {
+      LIDL: { price: 8.49, qualityScore: 5, brandName: 'Sol&Mar Jamon' },
+      KAUFLAND: { price: 8.99, qualityScore: 4, brandName: 'K-Favourites Serrano' },
+      CARREFOUR: { price: 9.49, qualityScore: 5, brandName: 'Carrefour Selection' },
+      MEGA_IMAGE: { price: 10.99, qualityScore: 5, brandName: 'Campofrio Serrano' },
+      PENNY: { price: 8.29, qualityScore: 3, brandName: 'Penny Select' }
+    }
+  },
+  {
+    id: 'g-sofran-pur',
+    name: 'Șofran Spaniol Firicele Naturale (0.5g)',
+    category: 'PANTRY',
+    defaultUnit: 'buc',
+    cuisine: 'SPANISH',
+    culturalTag: 'Condiment Paella',
+    stores: {
+      CARREFOUR: { price: 17.99, qualityScore: 5, brandName: 'Carmencita Azafran' },
+      KAUFLAND: { price: 18.49, qualityScore: 4, brandName: 'Kotanyi Sofran' },
+      MEGA_IMAGE: { price: 20.50, qualityScore: 5, brandName: 'Fuchs Sofran Pur' },
+      AUCHAN: { price: 17.50, qualityScore: 4, brandName: 'Auchan Sofran' }
+    }
+  },
+  {
+    id: 'g-boia-afumata-pimenton',
+    name: 'Boia Dulce Afumată Pimentón de la Vera (75g)',
+    category: 'PANTRY',
+    defaultUnit: 'buc',
+    cuisine: 'SPANISH',
+    culturalTag: 'Spaniol Tradițional',
+    stores: {
+      KAUFLAND: { price: 6.49, qualityScore: 4, brandName: 'Kotanyi Boia Afumata' },
+      CARREFOUR: { price: 7.20, qualityScore: 5, brandName: 'La Chinata Pimenton' },
+      MEGA_IMAGE: { price: 8.20, qualityScore: 5, brandName: 'Gourmet Boia Afumata' },
+      AUCHAN: { price: 6.80, qualityScore: 4, brandName: 'Auchan Boia' }
+    }
+  },
+  {
+    id: 'g-creveti-decorticati',
+    name: 'Creveți Decorticați Black Tiger congelați (400g)',
+    category: 'MEAT_FISH',
+    defaultUnit: 'pachet',
+    cuisine: 'SPANISH',
+    culturalTag: 'Tapas & Paella',
+    stores: {
+      PENNY: { price: 23.49, qualityScore: 4, brandName: 'Penny Creveti' },
+      LIDL: { price: 24.99, qualityScore: 5, brandName: 'Ocean Sea Creveti' },
+      KAUFLAND: { price: 25.99, qualityScore: 4, brandName: 'K-Classic Creveti' },
+      CARREFOUR: { price: 26.50, qualityScore: 4, brandName: 'Carrefour Pescarie' },
+      AUCHAN: { price: 24.50, qualityScore: 4, brandName: 'Auchan Fructe Mare' }
+    }
+  },
+
+  // --- ITALIAN ESSENTIALS (🇮🇹 ITALIAN) ---
+  {
+    id: 'g-spaghetti-bronzo',
+    name: 'Paste Spaghetti Barilla / De Cecco (500g)',
+    category: 'PANTRY',
+    defaultUnit: 'pachet',
+    cuisine: 'ITALIAN',
+    culturalTag: 'Italian Autentic',
+    notes: 'Paste din grau dur matritate in bronz pentru sosuri dense',
+    stores: {
+      PENNY: { price: 4.69, qualityScore: 4, brandName: 'San Fabio Spaghetti' },
+      LIDL: { price: 4.89, qualityScore: 4, brandName: 'Combino / Barilla' },
+      KAUFLAND: { price: 5.19, qualityScore: 5, brandName: 'Barilla n.5' },
+      CARREFOUR: { price: 5.49, qualityScore: 5, brandName: 'Barilla / De Cecco' },
+      MEGA_IMAGE: { price: 6.20, qualityScore: 5, brandName: 'De Cecco Spaghetti' },
+      AUCHAN: { price: 4.95, qualityScore: 4, brandName: 'Barilla n.5' }
+    }
+  },
+  {
+    id: 'g-guanciale-pancetta',
+    name: 'Guanciale / Pancetta Italiană cuburi (150g)',
+    category: 'MEAT_FISH',
+    defaultUnit: 'pachet',
+    cuisine: 'ITALIAN',
+    culturalTag: 'Carbonara & Amatriciana',
+    notes: 'Gusa de porc maturata cu piper pentru adevarata Carbonara',
+    stores: {
+      KAUFLAND: { price: 11.49, qualityScore: 5, brandName: 'K-Favourites Guanciale' },
+      CARREFOUR: { price: 12.20, qualityScore: 5, brandName: 'Carrefour Italian' },
+      MEGA_IMAGE: { price: 13.99, qualityScore: 5, brandName: 'Negroni Pancetta' },
+      AUCHAN: { price: 11.90, qualityScore: 4, brandName: 'Auchan Salumi' },
+      LIDL: { price: 10.99, qualityScore: 4, brandName: 'Italiamo Guanciale' }
+    }
+  },
+  {
+    id: 'g-parmigiano-reggiano',
+    name: 'Parmigiano Reggiano DOP maturat 24 luni (200g)',
+    category: 'DAIRY',
+    defaultUnit: 'buc',
+    cuisine: 'ITALIAN',
+    culturalTag: 'Italian Autentic',
+    notes: 'Branza dura italiana cu gust intens si cristale fine',
+    stores: {
+      LIDL: { price: 16.49, qualityScore: 5, brandName: 'Italiamo Parmigiano 24m' },
+      KAUFLAND: { price: 17.29, qualityScore: 5, brandName: 'K-Favourites Parmigiano' },
+      CARREFOUR: { price: 17.99, qualityScore: 5, brandName: 'Zanetti Parmigiano' },
+      AUCHAN: { price: 16.90, qualityScore: 4, brandName: 'Parmareggio' },
+      MEGA_IMAGE: { price: 21.50, qualityScore: 5, brandName: 'Parmareggio 24m' }
+    }
+  },
+  {
+    id: 'g-mozzarella-bufala',
+    name: 'Mozzarella di Bufala Campana DOP (125g)',
+    category: 'DAIRY',
+    defaultUnit: 'buc',
+    cuisine: 'ITALIAN',
+    culturalTag: 'Caprese & Pizza',
+    stores: {
+      LIDL: { price: 8.49, qualityScore: 5, brandName: 'Italiamo Bufala' },
+      KAUFLAND: { price: 8.99, qualityScore: 4, brandName: 'K-Favourites Bufala' },
+      CARREFOUR: { price: 9.60, qualityScore: 5, brandName: 'Galbani Bufala' },
+      MEGA_IMAGE: { price: 11.20, qualityScore: 5, brandName: 'Mandara Bufala' }
+    }
+  },
+  {
+    id: 'g-rosii-san-marzano',
+    name: 'Roșii decojite San Marzano DOP la conservă (400g)',
+    category: 'PANTRY',
+    defaultUnit: 'buc',
+    cuisine: 'ITALIAN',
+    culturalTag: 'Sos Pizza & Pasta',
+    stores: {
+      KAUFLAND: { price: 6.49, qualityScore: 5, brandName: 'Mutti San Marzano' },
+      CARREFOUR: { price: 6.99, qualityScore: 5, brandName: 'Cirio San Marzano' },
+      MEGA_IMAGE: { price: 8.20, qualityScore: 5, brandName: 'Mutti Pelati' },
+      LIDL: { price: 5.99, qualityScore: 4, brandName: 'Freshona Pelati' },
+      AUCHAN: { price: 6.60, qualityScore: 4, brandName: 'Mutti Rosii' }
+    }
+  },
+  {
+    id: 'g-pesto-genovese',
+    name: 'Sos Pesto alla Genovese cu Busuioc Proaspăt (190g)',
+    category: 'PANTRY',
+    defaultUnit: 'buc',
+    cuisine: 'ITALIAN',
+    culturalTag: 'Italian Autentic',
+    stores: {
+      PENNY: { price: 5.49, qualityScore: 4, brandName: 'San Fabio Pesto' },
+      LIDL: { price: 5.99, qualityScore: 4, brandName: 'Baresa Pesto' },
+      KAUFLAND: { price: 6.49, qualityScore: 4, brandName: 'K-Classic Pesto' },
+      CARREFOUR: { price: 7.20, qualityScore: 5, brandName: 'Barilla Pesto Genovese' },
+      MEGA_IMAGE: { price: 8.99, qualityScore: 5, brandName: 'Barilla Pesto' }
+    }
+  },
+
+  // --- AMERICAN ESSENTIALS (🇺🇸 AMERICAN) ---
+  {
+    id: 'g-carne-angus-burger',
+    name: 'Carne Tocată Vită Black Angus 15% grăsime (500g)',
+    category: 'MEAT_FISH',
+    defaultUnit: 'pachet',
+    cuisine: 'AMERICAN',
+    culturalTag: 'Smash Burger American',
+    notes: 'Proportia perfecta 80/20 pentru burgeri suculenti la tigaie/gratar',
+    stores: {
+      LIDL: { price: 18.49, qualityScore: 5, brandName: 'Grill&Chill Black Angus' },
+      KAUFLAND: { price: 18.99, qualityScore: 4, brandName: 'Purland Angus Burger' },
+      CARREFOUR: { price: 20.50, qualityScore: 4, brandName: 'Carrefour Black Angus' },
+      MEGA_IMAGE: { price: 23.50, qualityScore: 5, brandName: 'Mega Gourmet Angus' },
+      PENNY: { price: 17.99, qualityScore: 4, brandName: 'Casa Gustului Vita' }
+    }
+  },
+  {
+    id: 'g-cheddar-burger',
+    name: 'Brânză Cheddar Maturată Felii Speciale Burger (150g)',
+    category: 'DAIRY',
+    defaultUnit: 'pachet',
+    cuisine: 'AMERICAN',
+    culturalTag: 'Burger & Mac Cheese',
+    stores: {
+      PENNY: { price: 6.99, qualityScore: 4, brandName: 'Penny Cheddar' },
+      LIDL: { price: 7.49, qualityScore: 5, brandName: 'Valley Spire Cheddar' },
+      KAUFLAND: { price: 7.99, qualityScore: 4, brandName: 'K-Classic Cheddar' },
+      CARREFOUR: { price: 8.49, qualityScore: 4, brandName: 'Carrefour Cheddar' },
+      MEGA_IMAGE: { price: 9.80, qualityScore: 5, brandName: 'Cathedral City Cheddar' }
+    }
+  },
+  {
+    id: 'g-chifle-burger-brioche',
+    name: 'Chifle Burger Brioche cu Unt & Susan (4 buc / 300g)',
+    category: 'BAKERY',
+    defaultUnit: 'pachet',
+    cuisine: 'AMERICAN',
+    culturalTag: 'Smash Burger',
+    stores: {
+      LIDL: { price: 5.49, qualityScore: 5, brandName: 'McEnnedy Brioche Buns' },
+      KAUFLAND: { price: 5.99, qualityScore: 4, brandName: 'K-Classic Brioche Burger' },
+      CARREFOUR: { price: 6.49, qualityScore: 4, brandName: 'Carrefour Burger Buns' },
+      MEGA_IMAGE: { price: 7.20, qualityScore: 5, brandName: 'Harrys Brioche Buns' }
+    }
+  },
+  {
+    id: 'g-sos-bbq-smoked',
+    name: 'Sos BBQ American Smoked Hickory (350ml)',
+    category: 'PANTRY',
+    defaultUnit: 'buc',
+    cuisine: 'AMERICAN',
+    culturalTag: 'BBQ American',
+    stores: {
+      PENNY: { price: 6.49, qualityScore: 4, brandName: 'Penny BBQ Smoked' },
+      LIDL: { price: 6.99, qualityScore: 5, brandName: 'McEnnedy BBQ Sauce' },
+      KAUFLAND: { price: 7.49, qualityScore: 4, brandName: 'Heinz Classic BBQ' },
+      CARREFOUR: { price: 8.20, qualityScore: 4, brandName: "Bulls-Eye BBQ" },
+      MEGA_IMAGE: { price: 9.50, qualityScore: 5, brandName: "Sweet Baby Ray's BBQ" }
+    }
+  },
+  {
+    id: 'g-bacon-american',
+    name: 'Bacon Afumat Crocant felii subțiri (200g)',
+    category: 'MEAT_FISH',
+    defaultUnit: 'pachet',
+    cuisine: 'AMERICAN',
+    culturalTag: 'Mic Dejun & Burger',
+    stores: {
+      PENNY: { price: 7.49, qualityScore: 4, brandName: 'Penny Bacon Feliat' },
+      LIDL: { price: 7.99, qualityScore: 5, brandName: 'Dulano Bacon Feliat' },
+      KAUFLAND: { price: 8.49, qualityScore: 4, brandName: 'K-Classic Bacon' },
+      CARREFOUR: { price: 8.99, qualityScore: 4, brandName: 'Carrefour Bacon' },
+      MEGA_IMAGE: { price: 10.50, qualityScore: 5, brandName: 'Cris-Tim Bacon' }
+    }
+  },
+  {
+    id: 'g-sirop-artar-maple',
+    name: 'Sirop de Arțar Canadian 100% Pur Grad A (250ml)',
+    category: 'PANTRY',
+    defaultUnit: 'buc',
+    cuisine: 'AMERICAN',
+    culturalTag: 'Clătite Americane Pancakes',
+    stores: {
+      LIDL: { price: 16.49, qualityScore: 5, brandName: 'McEnnedy Maple Syrup' },
+      KAUFLAND: { price: 17.20, qualityScore: 4, brandName: 'K-Bio Sirop Artar' },
+      CARREFOUR: { price: 18.50, qualityScore: 5, brandName: 'Carrefour Bio Artar' },
+      MEGA_IMAGE: { price: 21.90, qualityScore: 5, brandName: 'Vertmont Maple' }
+    }
+  },
+
+  // --- GERMAN ESSENTIALS (🇩🇪 GERMAN) ---
+  {
+    id: 'g-carnati-bratwurst',
+    name: 'Cârnați Bratwurst Bavarezi de Porc (400g / 4 buc)',
+    category: 'MEAT_FISH',
+    defaultUnit: 'pachet',
+    cuisine: 'GERMAN',
+    culturalTag: 'Bavarez Tradițional',
+    notes: 'Carnati clasici germani pentru prajit la tigaie sau gratar',
+    stores: {
+      PENNY: { price: 11.49, qualityScore: 4, brandName: 'Penny Bratwurst' },
+      LIDL: { price: 11.99, qualityScore: 5, brandName: 'Dulano Rostbratwurst' },
+      KAUFLAND: { price: 12.89, qualityScore: 4, brandName: 'K-Classic Bratwurst' },
+      CARREFOUR: { price: 13.99, qualityScore: 4, brandName: 'Meica Bratwurst' },
+      MEGA_IMAGE: { price: 15.50, qualityScore: 5, brandName: 'Gourmet Bratwurst' }
+    }
+  },
+  {
+    id: 'g-varza-acra-sauerkraut',
+    name: 'Varză Acră Călită Tradițională Sauerkraut (500g)',
+    category: 'PANTRY',
+    defaultUnit: 'buc',
+    cuisine: 'GERMAN',
+    culturalTag: 'German Tradițional',
+    stores: {
+      PENNY: { price: 3.79, qualityScore: 4, brandName: 'Penny Sauerkraut' },
+      LIDL: { price: 3.99, qualityScore: 5, brandName: 'Freshona Sauerkraut' },
+      KAUFLAND: { price: 4.29, qualityScore: 4, brandName: 'K-Classic Varza Acra' },
+      CARREFOUR: { price: 4.69, qualityScore: 4, brandName: 'Hengstenberg Sauerkraut' },
+      AUCHAN: { price: 3.95, qualityScore: 4, brandName: 'Auchan Varza' }
+    }
+  },
+  {
+    id: 'g-mustar-bavarez',
+    name: 'Muștar Dulce Bavarez cu Boabe (250g)',
+    category: 'PANTRY',
+    defaultUnit: 'buc',
+    cuisine: 'GERMAN',
+    culturalTag: 'Bavarez Tradițional',
+    stores: {
+      LIDL: { price: 4.49, qualityScore: 5, brandName: 'Alpenfest Bayerischer Senf' },
+      KAUFLAND: { price: 4.99, qualityScore: 4, brandName: 'K-Classic Mustar Dulce' },
+      CARREFOUR: { price: 5.60, qualityScore: 4, brandName: 'Develey Mustar' },
+      MEGA_IMAGE: { price: 6.50, qualityScore: 5, brandName: 'Handlmaier Mustar' }
+    }
+  },
+  {
+    id: 'g-snitel-porc-calitate',
+    name: 'Cotlet Porc Fraged Feliat Subțire pentru Șnițel (500g)',
+    category: 'MEAT_FISH',
+    defaultUnit: 'pachet',
+    cuisine: 'GERMAN',
+    culturalTag: 'Schnitzel Fest',
+    stores: {
+      PENNY: { price: 13.49, qualityScore: 4, brandName: 'Casa Gustului Porc' },
+      LIDL: { price: 14.29, qualityScore: 5, brandName: 'Lidl Macelarie Porc' },
+      KAUFLAND: { price: 14.89, qualityScore: 4, brandName: 'Purland Cotlet Porc' },
+      CARREFOUR: { price: 15.50, qualityScore: 4, brandName: 'Carrefour Porc' },
+      MEGA_IMAGE: { price: 17.50, qualityScore: 5, brandName: 'Mega Carne Proaspata' }
+    }
+  },
+  {
+    id: 'g-covrigi-brezel',
+    name: 'Covrigi Bavarezi Congelați Brezel cu Sare Mare (4 buc)',
+    category: 'BAKERY',
+    defaultUnit: 'pachet',
+    cuisine: 'GERMAN',
+    culturalTag: 'Brezel Bavarez',
+    stores: {
+      LIDL: { price: 6.49, qualityScore: 5, brandName: 'Alpenfest Brezel' },
+      KAUFLAND: { price: 6.99, qualityScore: 4, brandName: 'K-Classic Brezel' },
+      MEGA_IMAGE: { price: 8.50, qualityScore: 5, brandName: 'Ditsch Brezel' }
+    }
+  },
+
+  // --- ROMANIAN ESSENTIALS (🇷🇴 ROMANIAN) ---
+  {
+    id: 'g-telemea-vaca-saramura',
+    name: 'Telemea de Vacă în Saramură (400g)',
+    category: 'DAIRY',
+    defaultUnit: 'buc',
+    cuisine: 'ROMANIAN',
+    culturalTag: 'Tradițional Românesc',
+    notes: 'Telemea aromata cu sare perfecta pentru mamaliguta si salate',
+    stores: {
+      LIDL: { price: 12.99, qualityScore: 5, brandName: 'Pilos Telemea Vaca' },
+      KAUFLAND: { price: 13.49, qualityScore: 4, brandName: 'Vreau din Romania Telemea' },
+      PENNY: { price: 11.99, qualityScore: 4, brandName: 'Boni Telemea' },
+      CARREFOUR: { price: 14.20, qualityScore: 4, brandName: 'Hochland / Carrefour' },
+      MEGA_IMAGE: { price: 15.99, qualityScore: 5, brandName: 'Gusturi Romanesti Telemea' },
+      AUCHAN: { price: 13.10, qualityScore: 4, brandName: 'Auchan Telemea' }
     }
   },
   {
     id: 'g-smantana-20',
-    name: 'Smantana Gospodareasca 20% Grasime (850g)',
+    name: 'Smântână Românească 20% grăsime (400g / 850g)',
     category: 'DAIRY',
-    cuisine: 'ROMANIAN',
-    culturalTag: '🇷🇴 Smantana Crema',
     defaultUnit: 'buc',
-    notes: 'Smantana bogata pentru ciorbe, sarmale si mamaliga',
+    cuisine: 'ROMANIAN',
+    culturalTag: 'Tradițional Românesc',
     stores: {
-      LIDL: { price: 11.49, qualityScore: 4.6, brandName: 'Pilos Smantana 20%', promo: true },
-      KAUFLAND: { price: 12.20, qualityScore: 4.5, brandName: 'K-Classic Smantana' },
-      PENNY: { price: 10.99, qualityScore: 4.0, brandName: 'Boni Smantana 20%' },
-      CARREFOUR: { price: 13.90, qualityScore: 4.8, brandName: 'Covalact Preabun' },
-      MEGA_IMAGE: { price: 16.20, qualityScore: 5.0, brandName: 'Napolact 20%' },
-      AUCHAN: { price: 12.50, qualityScore: 4.3, brandName: 'Auchan Smantana' }
+      LIDL: { price: 5.99, qualityScore: 5, brandName: 'Pilos Smantana 20%' },
+      PENNY: { price: 5.69, qualityScore: 4, brandName: 'Boni Smantana 20%' },
+      KAUFLAND: { price: 6.29, qualityScore: 4, brandName: 'K-Classic Smantana' },
+      CARREFOUR: { price: 6.79, qualityScore: 4, brandName: 'Carrefour Simpl' },
+      MEGA_IMAGE: { price: 7.99, qualityScore: 5, brandName: 'Gusturi Romanesti Smantana' },
+      AUCHAN: { price: 6.10, qualityScore: 4, brandName: 'Auchan Smantana' }
+    }
+  },
+  {
+    id: 'g-malai-superior',
+    name: 'Mălai Extra Superior Degerminat (1kg)',
+    category: 'PANTRY',
+    defaultUnit: 'kg',
+    cuisine: 'ROMANIAN',
+    culturalTag: 'Mămăliguță Tradițională',
+    stores: {
+      PENNY: { price: 3.19, qualityScore: 4, brandName: 'Penny Malai' },
+      LIDL: { price: 3.29, qualityScore: 4, brandName: 'Castello Malai Extra' },
+      KAUFLAND: { price: 3.49, qualityScore: 4, brandName: 'K-Classic Malai' },
+      CARREFOUR: { price: 3.89, qualityScore: 4, brandName: 'Baneasa Malai Extra' },
+      MEGA_IMAGE: { price: 4.49, qualityScore: 5, brandName: 'Baneasa / Gusturi Romanesti' },
+      AUCHAN: { price: 3.39, qualityScore: 4, brandName: 'Auchan Malai' }
     }
   },
   {
     id: 'g-bors-proaspat',
-    name: 'Bors Acru Traditional din Tarate (1L)',
+    name: 'Borș Tradițional de Putină cu Leuștean (1L)',
     category: 'PANTRY',
-    cuisine: 'ROMANIAN',
-    culturalTag: '🇷🇴 Bors Acrit Ciorbe',
     defaultUnit: 'L',
-    notes: 'Bors fermentat natural pentru acrit ciorbele traditionale',
+    cuisine: 'ROMANIAN',
+    culturalTag: 'Ciorbe Tradiționale',
     stores: {
-      LIDL: { price: 2.69, qualityScore: 4.2, brandName: 'Camara Noastra Bors', promo: true },
-      KAUFLAND: { price: 2.89, qualityScore: 4.5, brandName: 'Olympia Bors de Casa' },
-      PENNY: { price: 2.49, qualityScore: 4.0, brandName: 'Penny Bors' },
-      CARREFOUR: { price: 3.49, qualityScore: 4.7, brandName: 'Olympia Bors Clasic' },
-      MEGA_IMAGE: { price: 4.19, qualityScore: 4.9, brandName: 'Gusturi Romanesti Bors' },
-      AUCHAN: { price: 2.99, qualityScore: 4.3, brandName: 'Bunicuta Bors' }
+      PENNY: { price: 2.79, qualityScore: 4, brandName: 'Bors Magic Putin' },
+      LIDL: { price: 2.89, qualityScore: 4, brandName: 'Camara Noastra Bors' },
+      KAUFLAND: { price: 2.99, qualityScore: 4, brandName: 'Vreau din Romania Bors' },
+      CARREFOUR: { price: 3.29, qualityScore: 4, brandName: 'Bors Olimpia' },
+      MEGA_IMAGE: { price: 3.89, qualityScore: 5, brandName: 'Gusturi Romanesti Bors' },
+      AUCHAN: { price: 2.95, qualityScore: 4, brandName: 'Auchan Bors' }
     }
   },
   {
     id: 'g-muraturi-asortate',
-    name: 'Muraturi Asortate in Saramura (800g)',
+    name: 'Gogonele & Murături Asortate Tradiționale (800g)',
     category: 'PANTRY',
-    cuisine: 'ROMANIAN',
-    culturalTag: '🇷🇴 Muraturi de Butoi',
     defaultUnit: 'buc',
-    notes: 'Gogonele, castraveti si conopida crocante in saramura',
+    cuisine: 'ROMANIAN',
+    culturalTag: 'Tradițional Românesc',
     stores: {
-      LIDL: { price: 7.99, qualityScore: 4.5, brandName: 'Freshona Muraturi', promo: true },
-      KAUFLAND: { price: 8.50, qualityScore: 4.6, brandName: 'Vreau din Romania Muraturi' },
-      PENNY: { price: 6.99, qualityScore: 4.0, brandName: 'Hanul Boieresc' },
-      CARREFOUR: { price: 9.90, qualityScore: 4.7, brandName: 'Raureni Muraturi' },
-      MEGA_IMAGE: { price: 12.50, qualityScore: 5.0, brandName: 'Gusturi Romanesti Muraturi' },
-      AUCHAN: { price: 8.90, qualityScore: 4.3, brandName: 'Auchan Muraturi' }
+      LIDL: { price: 7.49, qualityScore: 5, brandName: 'Camara Noastra Muraturi' },
+      KAUFLAND: { price: 7.99, qualityScore: 4, brandName: 'Vreau din Romania Gogonele' },
+      PENNY: { price: 6.99, qualityScore: 4, brandName: 'Casa Gustului Muraturi' },
+      CARREFOUR: { price: 8.50, qualityScore: 4, brandName: 'Carrefour Muraturi' },
+      MEGA_IMAGE: { price: 9.99, qualityScore: 5, brandName: 'Gusturi Romanesti' }
     }
   },
 
   // --- UNIVERSAL STAPLES ---
   {
-    id: 'g-lapte-35',
-    name: 'Lapte 3.5% grasime (1L)',
-    category: 'DAIRY',
+    id: 'g-piept-pui',
+    name: 'Piept de Pui Dezosat fără Piele (1kg)',
+    category: 'MEAT_FISH',
+    defaultUnit: 'kg',
     cuisine: 'UNIVERSAL',
-    defaultUnit: 'L',
     stores: {
-      LIDL: { price: 4.69, qualityScore: 4.2, brandName: 'Pilos 3.5%', promo: true },
-      KAUFLAND: { price: 4.89, qualityScore: 4.2, brandName: 'K-Classic 3.5%' },
-      PENNY: { price: 4.49, qualityScore: 3.8, brandName: 'Boni 3.5%' },
-      CARREFOUR: { price: 6.79, qualityScore: 4.5, brandName: 'Zuzu 3.5%' },
-      MEGA_IMAGE: { price: 8.49, qualityScore: 5.0, brandName: 'Napolact Bio 3.5%' },
-      AUCHAN: { price: 5.29, qualityScore: 4.0, brandName: 'Auchan 3.5%' }
+      PENNY: { price: 23.49, qualityScore: 4, brandName: 'Casa Gustului Pui' },
+      LIDL: { price: 23.99, qualityScore: 5, brandName: 'Lidl Carne Proaspata' },
+      KAUFLAND: { price: 24.49, qualityScore: 4, brandName: 'Purland Pui' },
+      CARREFOUR: { price: 25.50, qualityScore: 4, brandName: 'Carrefour Macelarie' },
+      AUCHAN: { price: 24.20, qualityScore: 4, brandName: 'Auchan Pui' },
+      MEGA_IMAGE: { price: 27.99, qualityScore: 5, brandName: 'Avicola Pui' }
+    }
+  },
+  {
+    id: 'g-lapte-35',
+    name: 'Lapte Proaspăt 3.5% grăsime (1L)',
+    category: 'DAIRY',
+    defaultUnit: 'L',
+    cuisine: 'UNIVERSAL',
+    stores: {
+      LIDL: { price: 4.69, qualityScore: 5, brandName: 'Pilos Lapte 3.5%' },
+      PENNY: { price: 4.59, qualityScore: 4, brandName: 'Boni Lapte 3.5%' },
+      KAUFLAND: { price: 4.79, qualityScore: 4, brandName: 'K-Classic Lapte' },
+      CARREFOUR: { price: 5.19, qualityScore: 4, brandName: 'Carrefour Lapte' },
+      AUCHAN: { price: 4.75, qualityScore: 4, brandName: 'Auchan Lapte' },
+      MEGA_IMAGE: { price: 5.89, qualityScore: 5, brandName: 'Mega Image Lapte' }
     }
   },
   {
     id: 'g-oua-30',
-    name: 'Oua proaspete M/L (Cofraj 30 buc)',
+    name: 'Ouă Proaspete Mărimea M/L (Cofraj 30 bucăți)',
     category: 'DAIRY',
+    defaultUnit: 'pachet',
     cuisine: 'UNIVERSAL',
-    defaultUnit: 'buc',
     stores: {
-      LIDL: { price: 21.99, qualityScore: 4.5, brandName: 'Camara Noastra M30', promo: true },
-      KAUFLAND: { price: 23.49, qualityScore: 4.3, brandName: 'K-Classic M30' },
-      PENNY: { price: 20.99, qualityScore: 4.0, brandName: 'Penny Oua M30' },
-      CARREFOUR: { price: 26.99, qualityScore: 4.5, brandName: 'Aviputna Oua Sol' },
-      MEGA_IMAGE: { price: 31.99, qualityScore: 5.0, brandName: 'Mega Oua Ecologice' },
-      AUCHAN: { price: 23.99, qualityScore: 4.2, brandName: 'Poulet Oua M30' }
-    }
-  },
-  {
-    id: 'g-piept-pui',
-    name: 'Piept de pui dezosat proaspat (1kg)',
-    category: 'MEAT_FISH',
-    cuisine: 'UNIVERSAL',
-    defaultUnit: 'kg',
-    stores: {
-      LIDL: { price: 24.50, qualityScore: 4.5, brandName: 'Pikok Piept Pui', promo: true },
-      KAUFLAND: { price: 23.90, qualityScore: 4.8, brandName: 'Vreau din Romania Pui', promo: true },
-      PENNY: { price: 23.50, qualityScore: 4.0, brandName: 'Hanul Boieresc Pui' },
-      CARREFOUR: { price: 27.90, qualityScore: 4.6, brandName: 'Agricola Pui Fericit' },
-      MEGA_IMAGE: { price: 34.50, qualityScore: 5.0, brandName: 'Fragedo / Gusturi Romanesti' },
-      AUCHAN: { price: 25.50, qualityScore: 4.3, brandName: 'Auchan Macelarie Pui' }
-    }
-  },
-  {
-    id: 'g-rosii-cherry',
-    name: 'Rosii cherry dulci / ciorchine (500g)',
-    category: 'FRUITS_VEGGIES',
-    cuisine: 'UNIVERSAL',
-    defaultUnit: 'buc',
-    stores: {
-      LIDL: { price: 6.99, qualityScore: 4.5, brandName: 'Piata Lidl Cherry', promo: true },
-      KAUFLAND: { price: 7.49, qualityScore: 4.4, brandName: 'K-Bio Cherry' },
-      PENNY: { price: 5.99, qualityScore: 3.8, brandName: 'Penny Cherry' },
-      CARREFOUR: { price: 8.99, qualityScore: 4.7, brandName: 'Carrefour Bio Cherry' },
-      MEGA_IMAGE: { price: 11.49, qualityScore: 5.0, brandName: 'Gusturi Romanesti Cherry' },
-      AUCHAN: { price: 7.99, qualityScore: 4.2, brandName: 'Auchan Cherry' }
+      PENNY: { price: 20.99, qualityScore: 4, brandName: 'Boni Oua M30' },
+      LIDL: { price: 21.49, qualityScore: 5, brandName: 'Lidl Oua Proaspete 30buc' },
+      KAUFLAND: { price: 21.99, qualityScore: 4, brandName: 'K-Classic Oua 30buc' },
+      CARREFOUR: { price: 23.50, qualityScore: 4, brandName: 'Carrefour Oua 30buc' },
+      AUCHAN: { price: 21.80, qualityScore: 4, brandName: 'Auchan Oua 30buc' },
+      MEGA_IMAGE: { price: 26.99, qualityScore: 5, brandName: 'Mega Image Oua M30' }
     }
   },
   {
     id: 'g-ulei-masline-extra',
-    name: 'Ulei de masline Extra Virgin (1L)',
+    name: 'Ulei de Măsline Extra Virgin Presat la Rece (1L)',
     category: 'PANTRY',
-    cuisine: 'UNIVERSAL',
     defaultUnit: 'L',
+    cuisine: 'UNIVERSAL',
     stores: {
-      LIDL: { price: 39.99, qualityScore: 4.5, brandName: 'Primadonna Extra Virgin', promo: true },
-      KAUFLAND: { price: 42.50, qualityScore: 4.6, brandName: 'K-Bio Extra Virgin' },
-      PENNY: { price: 36.99, qualityScore: 4.0, brandName: 'San Fabio Extra Virgin' },
-      CARREFOUR: { price: 46.90, qualityScore: 4.8, brandName: 'Monini Classico' },
-      MEGA_IMAGE: { price: 54.90, qualityScore: 5.0, brandName: 'Monini Bio / Costa d Oro' },
-      AUCHAN: { price: 41.50, qualityScore: 4.3, brandName: 'Auchan Extra Virgin' }
+      LIDL: { price: 34.99, qualityScore: 5, brandName: 'Primadonna Extra Virgin' },
+      PENNY: { price: 33.99, qualityScore: 4, brandName: 'San Fabio Ulei Masline' },
+      KAUFLAND: { price: 36.99, qualityScore: 4, brandName: 'K-Bio Ulei Masline' },
+      CARREFOUR: { price: 38.50, qualityScore: 4, brandName: 'Carrefour Extra Virgin' },
+      AUCHAN: { price: 35.90, qualityScore: 4, brandName: 'Auchan Extra Virgin' },
+      MEGA_IMAGE: { price: 42.99, qualityScore: 5, brandName: 'Monini Extra Virgin' }
     }
   },
   {
-    id: 'g-paine-toast-secara',
-    name: 'Paine toast secara / integrala feliata (500g)',
-    category: 'BAKERY',
-    cuisine: 'UNIVERSAL',
+    id: 'g-rosii-cherry',
+    name: 'Roșii Cherry Ciorchine Dulci (500g)',
+    category: 'FRUITS_VEGGIES',
     defaultUnit: 'buc',
-    stores: {
-      LIDL: { price: 4.89, qualityScore: 4.3, brandName: 'Tastino Toast Secara', promo: true },
-      KAUFLAND: { price: 5.29, qualityScore: 4.4, brandName: 'K-Classic Toast' },
-      PENNY: { price: 4.39, qualityScore: 3.8, brandName: 'Penny Toast' },
-      CARREFOUR: { price: 6.79, qualityScore: 4.6, brandName: 'Dobrogea Toast Secara' },
-      MEGA_IMAGE: { price: 8.29, qualityScore: 4.9, brandName: 'Vel Pitar Toast Secara' },
-      AUCHAN: { price: 5.49, qualityScore: 4.1, brandName: 'Auchan Toast' }
-    }
-  },
-  {
-    id: 'g-iaurt-grecesc',
-    name: 'Iaurt Grecesc 10% grasime (1kg)',
-    category: 'DAIRY',
     cuisine: 'UNIVERSAL',
-    defaultUnit: 'kg',
     stores: {
-      LIDL: { price: 11.99, qualityScore: 4.8, brandName: 'Pilos Iaurt Grecesc 10%', promo: true },
-      KAUFLAND: { price: 12.89, qualityScore: 4.5, brandName: 'K-Classic Grecesc 10%' },
-      PENNY: { price: 10.99, qualityScore: 4.0, brandName: 'Boni Grecesc 10%' },
-      CARREFOUR: { price: 15.99, qualityScore: 4.8, brandName: 'Olympus Grecesc 10%' },
-      MEGA_IMAGE: { price: 19.50, qualityScore: 5.0, brandName: 'Kolios / Olympus Bio 10%' },
-      AUCHAN: { price: 13.49, qualityScore: 4.3, brandName: 'Auchan Grecesc 10%' }
+      LIDL: { price: 6.49, qualityScore: 5, brandName: 'Piata Lidl Rosii Cherry' },
+      PENNY: { price: 6.29, qualityScore: 4, brandName: 'Penny Rosii Cherry' },
+      KAUFLAND: { price: 6.99, qualityScore: 4, brandName: 'Kaufland Rosii Ciorchine' },
+      CARREFOUR: { price: 7.49, qualityScore: 4, brandName: 'Carrefour Legume' },
+      AUCHAN: { price: 6.80, qualityScore: 4, brandName: 'Auchan Rosii' },
+      MEGA_IMAGE: { price: 8.99, qualityScore: 5, brandName: 'Mega Gusturi Romanesti' }
     }
   },
   {
     id: 'g-banane',
-    name: 'Banane proaspete Premium (1kg)',
+    name: 'Banane Premium Proaspete (1kg)',
     category: 'FRUITS_VEGGIES',
-    cuisine: 'UNIVERSAL',
     defaultUnit: 'kg',
+    cuisine: 'UNIVERSAL',
     stores: {
-      LIDL: { price: 5.99, qualityScore: 4.5, brandName: 'Piata Lidl Banane', promo: true },
-      KAUFLAND: { price: 6.29, qualityScore: 4.4, brandName: 'Kaufland Banane' },
-      PENNY: { price: 5.49, qualityScore: 4.0, brandName: 'Penny Banane' },
-      CARREFOUR: { price: 7.49, qualityScore: 4.7, brandName: 'Chiquita Banane' },
-      MEGA_IMAGE: { price: 8.99, qualityScore: 4.9, brandName: 'Chiquita / Mega Bio' },
-      AUCHAN: { price: 6.19, qualityScore: 4.2, brandName: 'Auchan Banane' }
+      LIDL: { price: 6.49, qualityScore: 5, brandName: 'Lidl Banane' },
+      PENNY: { price: 6.29, qualityScore: 4, brandName: 'Penny Banane' },
+      KAUFLAND: { price: 6.59, qualityScore: 4, brandName: 'Kaufland Banane' },
+      CARREFOUR: { price: 6.99, qualityScore: 4, brandName: 'Carrefour Banane' },
+      AUCHAN: { price: 6.45, qualityScore: 4, brandName: 'Auchan Banane' },
+      MEGA_IMAGE: { price: 7.49, qualityScore: 5, brandName: 'Mega Banane' }
     }
-  }
-];
-
-export const DEFAULT_SHOPPING_LIST: ShoppingListItem[] = [
-  {
-    id: 'item-1',
-    catalogItemId: 'g-couscous-500g',
-    name: 'Couscous Bob Mediu / Fin (500g)',
-    category: 'PANTRY',
-    quantity: 1,
-    unit: 'pachet',
-    isChecked: false
   },
   {
-    id: 'item-2',
-    catalogItemId: 'g-naut-conserva',
-    name: 'Naut Boabe Fiert (400g)',
-    category: 'PANTRY',
-    quantity: 2,
-    unit: 'buc',
-    isChecked: false
-  },
-  {
-    id: 'item-3',
-    catalogItemId: 'g-carne-vita-tagine',
-    name: 'Pulpa de Vita Frageda / Manzat (1kg)',
-    category: 'MEAT_FISH',
-    quantity: 1,
-    unit: 'kg',
-    isChecked: false
-  },
-  {
-    id: 'item-4',
-    catalogItemId: 'g-telemea-vaca-saramura',
-    name: 'Branza Telemea de Vaca in Saramura (400g)',
+    id: 'g-iaurt-grecesc',
+    name: 'Iaurt Grecesc Autentic 10% grăsime (400g / 1kg)',
     category: 'DAIRY',
-    quantity: 1,
-    unit: 'buc',
-    isChecked: false
+    defaultUnit: 'buc',
+    cuisine: 'UNIVERSAL',
+    stores: {
+      LIDL: { price: 4.49, qualityScore: 5, brandName: 'Pilos Iaurt Grecesc 10%' },
+      PENNY: { price: 4.29, qualityScore: 4, brandName: 'San Fabio Iaurt Grecesc' },
+      KAUFLAND: { price: 4.69, qualityScore: 4, brandName: 'K-Classic Iaurt Grecesc' },
+      CARREFOUR: { price: 5.19, qualityScore: 4, brandName: 'Olympus Iaurt Grecesc' },
+      MEGA_IMAGE: { price: 5.99, qualityScore: 5, brandName: 'Kolios / Olympus' }
+    }
   },
   {
-    id: 'item-5',
-    catalogItemId: 'g-malai-superior',
-    name: 'Malai Grisat Superior (1kg)',
-    category: 'PANTRY',
-    quantity: 1,
-    unit: 'kg',
-    isChecked: false
-  },
-  {
-    id: 'item-6',
-    catalogItemId: 'g-oua-30',
-    name: 'Oua proaspete M/L (Cofraj 30 buc)',
-    category: 'DAIRY',
-    quantity: 1,
-    unit: 'buc',
-    isChecked: false
+    id: 'g-paine-toast-secara',
+    name: 'Pâine Toast Integrală de Secară (500g)',
+    category: 'BAKERY',
+    defaultUnit: 'buc',
+    cuisine: 'UNIVERSAL',
+    stores: {
+      LIDL: { price: 4.29, qualityScore: 5, brandName: 'Tastino Toast Secara' },
+      PENNY: { price: 3.99, qualityScore: 4, brandName: 'Penny Toast Integral' },
+      KAUFLAND: { price: 4.49, qualityScore: 4, brandName: 'K-Classic Toast' },
+      CARREFOUR: { price: 4.89, qualityScore: 4, brandName: 'Carrefour Toast' },
+      MEGA_IMAGE: { price: 5.49, qualityScore: 5, brandName: 'Toast Toast Secar' }
+    }
   }
 ];
 
@@ -502,7 +786,7 @@ export interface GroceryQuickBundle {
   titleRo: string;
   titleEn: string;
   icon: string;
-  culture: 'MOROCCAN' | 'ROMANIAN' | 'MIXED' | 'BUDGET';
+  cuisine: GroceryCuisineType;
   badgeRo: string;
   descriptionRo: string;
   descriptionEn: string;
@@ -510,35 +794,96 @@ export interface GroceryQuickBundle {
 }
 
 export const QUICK_BUNDLES: GroceryQuickBundle[] = [
+  // 1. Spanish Paella & Tapas
   {
-    id: 'bundle-mixed-couple',
-    titleRo: 'Saptamana Cuplului Mixt Marocan-Roman',
-    titleEn: 'Moroccan-Romanian Couple Weekly Pack',
-    icon: '🇲🇦🇷🇴',
-    culture: 'MIXED',
-    badgeRo: 'Top Alegere Haytham & Cati',
-    descriptionRo: 'Armonie perfecta: Couscous, vita tagine, telemea proaspata, mamaliguta, naut, oua si ulei de masline',
-    descriptionEn: 'Perfect balance of Moroccan staples and Romanian comfort foods',
+    id: 'bundle-spanish-paella',
+    titleRo: 'Ospăț Spaniol: Paella cu Fructe de Mare & Tapas',
+    titleEn: 'Spanish Feast: Paella Seafood & Tapas Night',
+    icon: '🥘',
+    cuisine: 'SPANISH',
+    badgeRo: 'Bucătărie Spaniolă',
+    descriptionRo: 'Orez bomba, chorizo spaniol, jamón serrano, creveți, șofran pur și măsline',
+    descriptionEn: 'Bomba paella rice, Spanish chorizo, jamón serrano, tiger prawns & saffron',
     items: [
-      { catalogId: 'g-couscous-500g', quantity: 1 },
-      { catalogId: 'g-carne-vita-tagine', quantity: 1 },
-      { catalogId: 'g-naut-conserva', quantity: 2 },
-      { catalogId: 'g-telemea-vaca-saramura', quantity: 1 },
-      { catalogId: 'g-malai-superior', quantity: 1 },
-      { catalogId: 'g-smantana-20', quantity: 1 },
-      { catalogId: 'g-oua-30', quantity: 1 },
+      { catalogId: 'g-orez-bomba-paella', quantity: 1 },
+      { catalogId: 'g-chorizo-spaniol', quantity: 1 },
+      { catalogId: 'g-jamon-serrano', quantity: 1 },
+      { catalogId: 'g-creveti-decorticati', quantity: 1 },
+      { catalogId: 'g-sofran-pur', quantity: 1 },
+      { catalogId: 'g-boia-afumata-pimenton', quantity: 1 },
       { catalogId: 'g-ulei-masline-extra', quantity: 1 }
     ]
   },
+
+  // 2. Italian Carbonara & Caprese Feast
+  {
+    id: 'bundle-italian-carbonara',
+    titleRo: 'Cina Italiană: Autentică Carbonara & Caprese',
+    titleEn: 'Italian Night: Authentic Carbonara & Caprese',
+    icon: '🍝',
+    cuisine: 'ITALIAN',
+    badgeRo: 'Bucătărie Italiană',
+    descriptionRo: 'Spaghetti Barilla, Guanciale crocant, Parmigiano Reggiano 24 luni, Mozzarella di Bufala și ouă proaspete',
+    descriptionEn: 'Spaghetti, crispy Guanciale, aged Parmigiano Reggiano, Mozzarella di Bufala & fresh eggs',
+    items: [
+      { catalogId: 'g-spaghetti-bronzo', quantity: 1 },
+      { catalogId: 'g-guanciale-pancetta', quantity: 1 },
+      { catalogId: 'g-parmigiano-reggiano', quantity: 1 },
+      { catalogId: 'g-mozzarella-bufala', quantity: 1 },
+      { catalogId: 'g-rosii-cherry', quantity: 1 },
+      { catalogId: 'g-oua-30', quantity: 1 }
+    ]
+  },
+
+  // 3. American Smash Burger & BBQ Feast
+  {
+    id: 'bundle-american-bbq',
+    titleRo: 'American Feast: Smash Burger Angus & BBQ Smoked',
+    titleEn: 'American Feast: Angus Smash Burger & Smoked BBQ',
+    icon: '🍔',
+    cuisine: 'AMERICAN',
+    badgeRo: 'Bucătărie Americană',
+    descriptionRo: 'Carne tocată vită Angus, chifle brioche cu susan, cheddar maturat, bacon crocant și sos BBQ smoked',
+    descriptionEn: 'Black Angus ground beef, brioche burger buns, aged cheddar, crispy bacon & hickory BBQ',
+    items: [
+      { catalogId: 'g-carne-angus-burger', quantity: 1 },
+      { catalogId: 'g-chifle-burger-brioche', quantity: 1 },
+      { catalogId: 'g-cheddar-burger', quantity: 1 },
+      { catalogId: 'g-bacon-american', quantity: 1 },
+      { catalogId: 'g-sos-bbq-smoked', quantity: 1 },
+      { catalogId: 'g-rosii-cherry', quantity: 1 }
+    ]
+  },
+
+  // 4. German Bavarian Bratwurst & Schnitzel Dinner
+  {
+    id: 'bundle-german-bratwurst',
+    titleRo: 'Bavarian Dinner: Bratwurst, Sauerkraut & Schnitzel',
+    titleEn: 'German Dinner: Bratwurst, Sauerkraut & Schnitzel',
+    icon: '🥨',
+    cuisine: 'GERMAN',
+    badgeRo: 'Bucătărie Germană',
+    descriptionRo: 'Cârnați bratwurst bavarezi, varză acră călită sauerkraut, muștar dulce cu boabe, cotlet șnițel și brezel',
+    descriptionEn: 'Bavarian pork bratwurst, authentic sauerkraut, sweet whole-grain mustard, schnitzel cutlets & pretzels',
+    items: [
+      { catalogId: 'g-carnati-bratwurst', quantity: 1 },
+      { catalogId: 'g-varza-acra-sauerkraut', quantity: 1 },
+      { catalogId: 'g-mustar-bavarez', quantity: 1 },
+      { catalogId: 'g-snitel-porc-calitate', quantity: 1 },
+      { catalogId: 'g-covrigi-brezel', quantity: 1 }
+    ]
+  },
+
+  // 5. Moroccan Tagine & Couscous
   {
     id: 'bundle-moroccan-tagine',
-    titleRo: 'Cina Traditionala Marocana (Tagine & Couscous)',
+    titleRo: 'Cina Tradițională Marocană (Tagine & Couscous)',
     titleEn: 'Moroccan Tagine & Couscous Night',
-    icon: '🇲🇦🍲',
-    culture: 'MOROCCAN',
-    badgeRo: 'Gust Autentic Marocan',
-    descriptionRo: 'Pulpa de vita, couscous fin, naut, harissa, masline marinate si ceai verde cu menta',
-    descriptionEn: 'Tender beef, fine couscous, chickpeas, harissa, olives, and fresh mint tea',
+    icon: '🇲🇦',
+    cuisine: 'MOROCCAN',
+    badgeRo: 'Bucătărie Marocană',
+    descriptionRo: 'Pulpă de vită fragedă, couscous fin, năut fiert, pastă harissa, măsline marinate și ceai verde cu mentă',
+    descriptionEn: 'Tender beef cutlets, fine couscous, chickpeas, harissa spice paste, marinated olives & mint tea',
     items: [
       { catalogId: 'g-carne-vita-tagine', quantity: 1 },
       { catalogId: 'g-couscous-500g', quantity: 1 },
@@ -549,15 +894,17 @@ export const QUICK_BUNDLES: GroceryQuickBundle[] = [
       { catalogId: 'g-curmale-medjool', quantity: 1 }
     ]
   },
+
+  // 6. Romanian Traditional Feast
   {
     id: 'bundle-romanian-feast',
-    titleRo: 'Meniu Traditional Romanesc (Mamaliguta & Ciorba)',
+    titleRo: 'Ospăț Tradițional Românesc (Mămăliguță & Ciorbă)',
     titleEn: 'Traditional Romanian Family Feast',
-    icon: '🇷🇴🍲',
-    culture: 'ROMANIAN',
-    badgeRo: 'Traditie Romaneasca',
-    descriptionRo: 'Malai auriu, telemea de saramura, smantana grasa, bors acru, piept de pui si muraturi',
-    descriptionEn: 'Polenta cornmeal, salted telemea cheese, sour cream, bors soup base, chicken and pickles',
+    icon: '🇷🇴',
+    cuisine: 'ROMANIAN',
+    badgeRo: 'Bucătărie Românească',
+    descriptionRo: 'Mălai auriu, telemea de vacă în saramură, smântână 20%, borș proaspăt de putină, piept de pui și murături',
+    descriptionEn: 'Polenta cornmeal, salted telemea cheese, sour cream, bors soup base, chicken and pickled vegetables',
     items: [
       { catalogId: 'g-malai-superior', quantity: 1 },
       { catalogId: 'g-telemea-vaca-saramura', quantity: 1 },
@@ -568,14 +915,16 @@ export const QUICK_BUNDLES: GroceryQuickBundle[] = [
       { catalogId: 'g-oua-30', quantity: 1 }
     ]
   },
+
+  // 7. Weekly Essentials
   {
     id: 'bundle-weekly-basics',
-    titleRo: 'Cosul Esential Economic de Baza',
+    titleRo: 'Coșul Esențial Economic de Bază',
     titleEn: 'Weekly Essentials Basket',
     icon: '🧺',
-    culture: 'BUDGET',
-    badgeRo: 'Pret Minim',
-    descriptionRo: 'Lapte 3.5%, oua 30 buc, piept de pui, rosii cherry, banane, iaurt grecesc si paine',
+    cuisine: 'UNIVERSAL',
+    badgeRo: 'Preț Minim',
+    descriptionRo: 'Lapte 3.5%, ouă 30 buc, piept de pui, roșii cherry, banane, iaurt grecesc și pâine integrală',
     descriptionEn: 'Milk, eggs, chicken, tomatoes, bread, bananas, greek yogurt',
     items: [
       { catalogId: 'g-lapte-35', quantity: 2 },
@@ -586,5 +935,165 @@ export const QUICK_BUNDLES: GroceryQuickBundle[] = [
       { catalogId: 'g-iaurt-grecesc', quantity: 1 },
       { catalogId: 'g-paine-toast-secara', quantity: 1 }
     ]
+  }
+];
+
+export const DEFAULT_SAVED_RECIPES: SavedRecipeReel[] = [
+  {
+    id: 'recipe-reel-spanish-paella',
+    title: 'Paella Spaniolă Tradițională cu Fructe de Mare & Chorizo',
+    videoUrl: 'https://www.instagram.com/reels/spanish_authentic_paella',
+    cuisine: 'SPANISH',
+    description: 'Cea mai gustoasă rețetă de Paella din Valencia cu orez bomba, creveți fragezi, chorizo afumat și șofran natural.',
+    servings: 4,
+    prepTimeMinutes: 40,
+    totalEstimatedCost: 69.45,
+    cheapestStoreId: 'LIDL',
+    instructionsSummary: '1. Se călește chorizo și creveții în ulei de măsline. 2. Se adaugă orezul bomba și șofranul infuzat. 3. Se toarnă supa și se lasă 20 min la foc mic până se formează socarrat.',
+    createdAt: new Date().toISOString(),
+    ingredients: [
+      { name: 'Orez Bomba Spaniol', quantity: 1, unit: 'kg', matchedCatalogId: 'g-orez-bomba-paella', suggestedStoreId: 'LIDL', estimatedPrice: 12.99 },
+      { name: 'Chorizo Spaniol Tradițional', quantity: 1, unit: 'buc', matchedCatalogId: 'g-chorizo-spaniol', suggestedStoreId: 'PENNY', estimatedPrice: 8.99 },
+      { name: 'Creveți Decorticați Black Tiger', quantity: 1, unit: 'pachet', matchedCatalogId: 'g-creveti-decorticati', suggestedStoreId: 'PENNY', estimatedPrice: 23.49 },
+      { name: 'Șofran Spaniol Firicele', quantity: 1, unit: 'buc', matchedCatalogId: 'g-sofran-pur', suggestedStoreId: 'AUCHAN', estimatedPrice: 17.50 },
+      { name: 'Boia Dulce Afumată Pimentón', quantity: 1, unit: 'buc', matchedCatalogId: 'g-boia-afumata-pimenton', suggestedStoreId: 'KAUFLAND', estimatedPrice: 6.48 }
+    ]
+  },
+  {
+    id: 'recipe-reel-italian-carbonara',
+    title: 'Pasta Carbonara Tradițională Romană (Fără Smântână)',
+    videoUrl: 'https://www.instagram.com/reels/authentic_roman_carbonara',
+    cuisine: 'ITALIAN',
+    description: 'Rețeta originală din Roma: Guanciale crocant, gălbenușuri cremoase, piper negru proaspăt măcinat și mult Parmigiano Reggiano.',
+    servings: 2,
+    prepTimeMinutes: 20,
+    totalEstimatedCost: 53.96,
+    cheapestStoreId: 'LIDL',
+    instructionsSummary: '1. Rumenește guanciale fără ulei până devine crocant. 2. Bate gălbenușurile cu parmigiano ras și mult piper. 3. Amestecă pastele fierbinți cu guanciale și crema de ou pe foc stins.',
+    createdAt: new Date().toISOString(),
+    ingredients: [
+      { name: 'Spaghetti Barilla n.5', quantity: 1, unit: 'pachet', matchedCatalogId: 'g-spaghetti-bronzo', suggestedStoreId: 'PENNY', estimatedPrice: 4.69 },
+      { name: 'Guanciale Italian feliat', quantity: 1, unit: 'pachet', matchedCatalogId: 'g-guanciale-pancetta', suggestedStoreId: 'LIDL', estimatedPrice: 10.99 },
+      { name: 'Parmigiano Reggiano 24 luni', quantity: 1, unit: 'buc', matchedCatalogId: 'g-parmigiano-reggiano', suggestedStoreId: 'LIDL', estimatedPrice: 16.49 },
+      { name: 'Ouă proaspete (Cofraj 30)', quantity: 1, unit: 'pachet', matchedCatalogId: 'g-oua-30', suggestedStoreId: 'PENNY', estimatedPrice: 20.99 },
+      { name: 'Piper negru măcinat', quantity: 1, unit: 'buc', estimatedPrice: 0.80 }
+    ]
+  },
+  {
+    id: 'recipe-reel-american-smash-burger',
+    title: 'Double Smash Burger American cu Bacon & Cheddar Topit',
+    videoUrl: 'https://www.tiktok.com/@chef/video/double_smash_burger_recipe',
+    cuisine: 'AMERICAN',
+    description: 'Chiftele subțiri de vită Angus strivite pe tigaia încinsă cu crustă crocantă, cheddar topit, bacon și chifle brioche.',
+    servings: 4,
+    prepTimeMinutes: 25,
+    totalEstimatedCost: 44.89,
+    cheapestStoreId: 'LIDL',
+    instructionsSummary: '1. Formează bile de carne de 80g și strivește-le pe plita foarte încinsă. 2. Pune feliile de cheddar să se topească 1 minut. 3. Toast-uiește chiflele brioche și asamblează cu sos BBQ și bacon.',
+    createdAt: new Date().toISOString(),
+    ingredients: [
+      { name: 'Carne tocată vită Black Angus', quantity: 1, unit: 'pachet', matchedCatalogId: 'g-carne-angus-burger', suggestedStoreId: 'PENNY', estimatedPrice: 17.99 },
+      { name: 'Chifle Burger Brioche cu unt', quantity: 1, unit: 'pachet', matchedCatalogId: 'g-chifle-burger-brioche', suggestedStoreId: 'LIDL', estimatedPrice: 5.49 },
+      { name: 'Brânză Cheddar maturată felii', quantity: 1, unit: 'pachet', matchedCatalogId: 'g-cheddar-burger', suggestedStoreId: 'PENNY', estimatedPrice: 6.99 },
+      { name: 'Bacon afumat crocant', quantity: 1, unit: 'pachet', matchedCatalogId: 'g-bacon-american', suggestedStoreId: 'PENNY', estimatedPrice: 7.49 },
+      { name: 'Sos BBQ Smoked Hickory', quantity: 1, unit: 'buc', matchedCatalogId: 'g-sos-bbq-smoked', suggestedStoreId: 'PENNY', estimatedPrice: 6.49 }
+    ]
+  },
+  {
+    id: 'recipe-reel-german-bratwurst',
+    title: 'Cârnați Bratwurst Bavarezi cu Varză Călită Sauerkraut & Brezel',
+    videoUrl: 'https://www.youtube.com/shorts/german_bavarian_bratwurst',
+    cuisine: 'GERMAN',
+    description: 'Prânz tradițional münchenez cu cârnați bratwurst suculenți, varză acră aromatizată, muștar dulce și covrigi bavarezi.',
+    servings: 2,
+    prepTimeMinutes: 25,
+    totalEstimatedCost: 30.75,
+    cheapestStoreId: 'LIDL',
+    instructionsSummary: '1. Călește cârnații bratwurst la foc mediu până capătă culoare aurie. 2. Încălzește varza sauerkraut cu semințe de chimen. 3. Servește fierbinte alături de muștar dulce bavarez și covrig brezel cald.',
+    createdAt: new Date().toISOString(),
+    ingredients: [
+      { name: 'Cârnați Bratwurst Bavarezi', quantity: 1, unit: 'pachet', matchedCatalogId: 'g-carnati-bratwurst', suggestedStoreId: 'PENNY', estimatedPrice: 11.49 },
+      { name: 'Varză acră Sauerkraut', quantity: 1, unit: 'buc', matchedCatalogId: 'g-varza-acra-sauerkraut', suggestedStoreId: 'PENNY', estimatedPrice: 3.79 },
+      { name: 'Muștar dulce bavarez', quantity: 1, unit: 'buc', matchedCatalogId: 'g-mustar-bavarez', suggestedStoreId: 'LIDL', estimatedPrice: 4.49 },
+      { name: 'Covrigi bavarezi Brezel', quantity: 1, unit: 'pachet', matchedCatalogId: 'g-covrigi-brezel', suggestedStoreId: 'LIDL', estimatedPrice: 6.49 },
+      { name: 'Unt pentru rumenit', quantity: 1, unit: 'buc', estimatedPrice: 4.49 }
+    ]
+  },
+  {
+    id: 'recipe-reel-moroccan-tagine',
+    title: 'Tajine Marocan de Vită cu Prune Caramelizate & Couscous',
+    videoUrl: 'https://www.instagram.com/reels/moroccan_beef_tajine_authentic',
+    cuisine: 'MOROCCAN',
+    description: 'Capodopera bucătăriei marocane: Vită fragedă gătită lent cu ceapă, scorțișoară, ghimbir, prune dulci și migdale crocante.',
+    servings: 4,
+    prepTimeMinutes: 60,
+    totalEstimatedCost: 63.85,
+    cheapestStoreId: 'PENNY',
+    instructionsSummary: '1. Marinează carnea cu ghimbir, șofran, scorțișoară și ulei de măsline. 2. Gătește la foc mic în vasul de tajine 45 min. 3. Adaugă prunele caramelizate cu miere și servește pe pat de couscous cald.',
+    createdAt: new Date().toISOString(),
+    ingredients: [
+      { name: 'Pulpă de vită fragedă', quantity: 1, unit: 'kg', matchedCatalogId: 'g-carne-vita-tagine', suggestedStoreId: 'PENNY', estimatedPrice: 37.99 },
+      { name: 'Couscous Tradițional Mediu', quantity: 1, unit: 'pachet', matchedCatalogId: 'g-couscous-500g', suggestedStoreId: 'LIDL', estimatedPrice: 5.49 },
+      { name: 'Năut boabe fiert', quantity: 1, unit: 'buc', matchedCatalogId: 'g-naut-conserva', suggestedStoreId: 'PENNY', estimatedPrice: 3.39 },
+      { name: 'Harissa & mirodenii tajine', quantity: 1, unit: 'buc', matchedCatalogId: 'g-harissa-mirodenii', suggestedStoreId: 'LIDL', estimatedPrice: 6.99 },
+      { name: 'Ulei de măsline Extra Virgin', quantity: 1, unit: 'L', matchedCatalogId: 'g-ulei-masline-extra', suggestedStoreId: 'PENNY', estimatedPrice: 9.99 }
+    ]
+  }
+];
+
+export const DEFAULT_SHOPPING_LIST: ShoppingListItem[] = [
+  {
+    id: 'item-1',
+    catalogItemId: 'g-lapte-35',
+    name: 'Lapte Proaspăt 3.5%',
+    category: 'DAIRY',
+    quantity: 2,
+    unit: 'L',
+    isChecked: false
+  },
+  {
+    id: 'item-2',
+    catalogItemId: 'g-couscous-500g',
+    name: 'Couscous Tradițional Mediu (500g)',
+    category: 'PANTRY',
+    quantity: 1,
+    unit: 'pachet',
+    isChecked: false
+  },
+  {
+    id: 'item-3',
+    catalogItemId: 'g-piept-pui',
+    name: 'Piept de Pui Dezosat',
+    category: 'MEAT_FISH',
+    quantity: 1.5,
+    unit: 'kg',
+    isChecked: false
+  },
+  {
+    id: 'item-4',
+    catalogItemId: 'g-telemea-vaca-saramura',
+    name: 'Telemea de Vacă în Saramură',
+    category: 'DAIRY',
+    quantity: 1,
+    unit: 'buc',
+    isChecked: false
+  },
+  {
+    id: 'item-5',
+    catalogItemId: 'g-malai-superior',
+    name: 'Mălai Extra Superior',
+    category: 'PANTRY',
+    quantity: 1,
+    unit: 'kg',
+    isChecked: false
+  },
+  {
+    id: 'item-6',
+    catalogItemId: 'g-oua-30',
+    name: 'Ouă Proaspete M30',
+    category: 'DAIRY',
+    quantity: 1,
+    unit: 'pachet',
+    isChecked: false
   }
 ];

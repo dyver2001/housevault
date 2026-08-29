@@ -6,7 +6,8 @@ import {
   HouseholdExpense,
   WindfallSplitRule,
   GroceryCatalogItem,
-  ShoppingListItem
+  ShoppingListItem,
+  SavedRecipeReel
 } from '../types';
 import {
   DEFAULT_PROFILE,
@@ -18,7 +19,8 @@ import {
 } from './defaultData';
 import {
   DEFAULT_GROCERY_CATALOG,
-  DEFAULT_SHOPPING_LIST
+  DEFAULT_SHOPPING_LIST,
+  DEFAULT_SAVED_RECIPES
 } from './groceryData';
 
 const KEYS = {
@@ -29,7 +31,8 @@ const KEYS = {
   EXPENSES: 'housevault_expenses',
   SPLIT_RULE: 'housevault_split_rule',
   GROCERY_LIST: 'housevault_grocery_list',
-  GROCERY_CATALOG: 'housevault_grocery_catalog'
+  GROCERY_CATALOG: 'housevault_grocery_catalog',
+  SAVED_RECIPES: 'housevault_saved_recipes'
 };
 
 export function loadProfile(): HouseholdProfile {
@@ -165,6 +168,23 @@ export function loadGroceryCatalog(): GroceryCatalogItem[] {
 export function saveGroceryCatalog(catalog: GroceryCatalogItem[]): void {
   localStorage.setItem(KEYS.GROCERY_CATALOG, JSON.stringify(catalog));
 }
+
+export function loadSavedRecipes(): SavedRecipeReel[] {
+  try {
+    const raw = localStorage.getItem(KEYS.SAVED_RECIPES);
+    if (!raw) return DEFAULT_SAVED_RECIPES;
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed) || parsed.length === 0) return DEFAULT_SAVED_RECIPES;
+    return parsed;
+  } catch {
+    return DEFAULT_SAVED_RECIPES;
+  }
+}
+
+export function saveSavedRecipes(recipes: SavedRecipeReel[]): void {
+  localStorage.setItem(KEYS.SAVED_RECIPES, JSON.stringify(recipes));
+}
+
 
 export function resetAllToDefaults(): {
   profile: HouseholdProfile;
