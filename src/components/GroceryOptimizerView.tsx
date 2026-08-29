@@ -34,7 +34,9 @@ import {
   BookOpen,
   Bookmark,
   RefreshCw,
-  AlertCircle
+  AlertCircle,
+  Key,
+  HelpCircle
 } from 'lucide-react';
 import {
   SupermarketId,
@@ -101,6 +103,8 @@ export const GroceryOptimizerView: React.FC<GroceryOptimizerViewProps> = ({
   const [savedRecipes, setSavedRecipes] = useState<SavedRecipeReel[]>(loadSavedRecipes);
   const [reelUrlInput, setReelUrlInput] = useState<string>('');
   const [recipeNotesInput, setRecipeNotesInput] = useState<string>('');
+  const [geminiApiKeyInput, setGeminiApiKeyInput] = useState<string>(() => localStorage.getItem('housevault_gemini_key') || '');
+  const [showApiKeyModal, setShowApiKeyModal] = useState<boolean>(false);
   const [isExtractingReel, setIsExtractingReel] = useState<boolean>(false);
   const [extractedRecipe, setExtractedRecipe] = useState<SavedRecipeReel | null>(null);
   const [reelExtractError, setReelExtractError] = useState<string | null>(null);
@@ -386,10 +390,7 @@ export const GroceryOptimizerView: React.FC<GroceryOptimizerViewProps> = ({
   };
 
   // Reel & Recipe AI Extractor
-  const handleExtractRecipeFromReel = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!reelUrlInput.trim() && !recipeNotesInput.trim()) return;
-
+  const executeExtract = async (urlStr: string, notesStr: string) => {
     setIsExtractingReel(true);
     setReelExtractError(null);
     setExtractedRecipe(null);
@@ -399,8 +400,9 @@ export const GroceryOptimizerView: React.FC<GroceryOptimizerViewProps> = ({
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          url: reelUrlInput.trim(),
-          rawText: recipeNotesInput.trim()
+          url: urlStr.trim(),
+          rawText: notesStr.trim(),
+          apiKey: geminiApiKeyInput.trim()
         })
       });
 
@@ -410,7 +412,7 @@ export const GroceryOptimizerView: React.FC<GroceryOptimizerViewProps> = ({
         const newRec: SavedRecipeReel = {
           id: 'recipe-' + Date.now(),
           title: r.title || 'Rețetă Video Personalizată',
-          videoUrl: r.videoUrl || reelUrlInput.trim() || 'https://instagram.com',
+          videoUrl: r.videoUrl || urlStr.trim() || 'https://facebook.com',
           cuisine: r.cuisine || 'UNIVERSAL',
           description: r.description || 'Rețetă extrasă cu succes.',
           servings: r.servings || 4,
@@ -438,6 +440,17 @@ export const GroceryOptimizerView: React.FC<GroceryOptimizerViewProps> = ({
     } finally {
       setIsExtractingReel(false);
     }
+  };
+
+  const handleExtractRecipeFromReel = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!reelUrlInput.trim() && !recipeNotesInput.trim()) return;
+    executeExtract(reelUrlInput, recipeNotesInput);
+  };
+
+  const handleQuickMoroccanDishClick = (dishNameDarija: string) => {
+    setRecipeNotesInput(dishNameDarija);
+    executeExtract(reelUrlInput || 'https://facebook.com/reel', dishNameDarija);
   };
 
   const handleSaveExtractedRecipe = () => {
@@ -571,13 +584,23 @@ export const GroceryOptimizerView: React.FC<GroceryOptimizerViewProps> = ({
           </h1>
           <p className="text-xs sm:text-sm text-stone-300 mt-1 max-w-2xl leading-relaxed">
             {isRo
-              ? 'Lipește link-ul oricărui Reel / TikTok cu rețete sau alege din meniurile noastre spaniole, italiene, americane, germane, marocane și românești. Află exact de unde cumperi fiecare ingredient la cel mai mic preț!'
-              : 'Paste any Instagram Reel / TikTok recipe link or choose from our Spanish, Italian, American, German, Moroccan & Romanian menus. Find where to buy every ingredient cheapest!'}
+              ? 'Lipește link-ul oricărui Reel / TikTok / Facebook video în Darija marocană sau alege o rețetă rapidă. Află exact din ce magazin românesc cumperi fiecare ingredient la cel mai mic preț!'
+              : 'Paste any Instagram, Facebook Reel or TikTok video in Moroccan Darija or pick a quick dish. Match every ingredient with cheapest Romanian stores!'}
           </p>
         </div>
 
         {/* Action Buttons & Language Toggle */}
         <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setShowApiKeyModal(true)}
+            className="px-3 py-2 rounded-xl bg-stone-900 hover:bg-stone-800 text-amber-400 border border-amber-500/30 text-xs font-bold flex items-center gap-1.5 cursor-pointer transition shadow-md"
+            title="Set Gemini AI Key"
+          >
+            <Key className="w-3.5 h-3.5" />
+            <span>{geminiApiKeyInput ? 'Gemini AI ✓' : (isRo ? 'Setează Cheie AI' : 'Set AI Key')}</span>
+          </button>
+
           <div className="flex items-center bg-stone-900 border border-stone-800 rounded-xl p-0.5">
             <button
               type="button"
@@ -685,16 +708,44 @@ export const GroceryOptimizerView: React.FC<GroceryOptimizerViewProps> = ({
           <div className="bg-gradient-to-br from-stone-900 via-pink-950/20 to-stone-900 p-6 sm:p-7 rounded-3xl border border-pink-500/30 shadow-2xl space-y-4">
             <div className="flex items-center space-x-2 text-xs font-bold uppercase tracking-widest text-pink-400">
               <Sparkles className="w-4 h-4 text-pink-400" />
-              <span>{isRo ? 'AI Reel & Video Recipe Extractor' : 'AI Reel & Video Recipe Extractor'}</span>
+              <span>{isRo ? 'AI Reel & Video Recipe Extractor (Darija 🇲🇦 / RO / EN)' : 'AI Reel & Video Recipe Extractor (Darija 🇲🇦 / RO / EN)'}</span>
             </div>
             <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-white">
-              {isRo ? 'Ai văzut o rețetă pe Instagram Reels, TikTok sau YouTube?' : 'Found a recipe on Instagram Reels, TikTok or YouTube?'}
+              {isRo ? 'Ai văzut un Reel pe Facebook, Instagram sau TikTok?' : 'Found a cooking Reel on Facebook, Instagram or TikTok?'}
             </h2>
             <p className="text-xs sm:text-sm text-stone-300 max-w-2xl leading-relaxed">
               {isRo
-                ? 'Lipește link-ul video-ului sau descrierea rețetei. Inteligența Artificială extrage automat fiecare ingredient, calculează gramajele și îți arată în ce magazin românesc (Lidl, Kaufland, Carrefour, Mega, Penny, Auchan) îl găsești cel mai ieftin!'
-                : 'Paste the video URL or recipe notes. AI extracts each ingredient, quantities, and recommends the cheapest Romanian supermarket to buy it!'}
+                ? 'Lipește link-ul video-ului sau apasă pe un preparat tradițional marocan în Darija. Sistemul extrage ingredientele și îți arată în ce magazin românesc (Lidl, Kaufland, Carrefour, Mega, Penny, Auchan) le găsești cel mai ieftin!'
+                : 'Paste the video URL or click a Moroccan Darija dish below. The engine extracts ingredients and matches the cheapest Romanian supermarket!'}
             </p>
+
+            {/* Moroccan Darija Quick Dish Selection Pills */}
+            <div className="pt-2">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-red-400 block mb-2">
+                🇲🇦 {isRo ? 'Alegere Rapidă Bucătărie Tradițională Marocană (Darija):' : 'Quick Moroccan Traditional Dishes (Darija):'}
+              </span>
+              <div className="flex flex-wrap gap-2">
+                {[
+                  { label: '🍖 Tajine Lhm b lbarqoq (طاجين اللحم بالبرقوق)', query: 'tajine lhm b lbarqoq w louz' },
+                  { label: '🍗 Djaj M\'hammer (دجاج محمر بالزيتون)', query: 'djaj mhammer b zitoun w daghmira' },
+                  { label: '🍲 Harira Fassia (الحريرة المغربية)', query: 'harira fassia maghribia b hommos w 3des' },
+                  { label: '🥘 Kefta b Maticha (طاجين الكفتة بمطيشة)', query: 'tajine kefta b maticha w lbid' },
+                  { label: '🥟 Pastilla Djaj (بسطيلة الدجاج)', query: 'pastilla poulet djaj w louz' },
+                  { label: '🐟 Hout Charmoula (طاجين الحوت)', query: 'tajine hout b chermoula w khodra' },
+                  { label: '🌾 Couscous 7 Khodari (كسكس بالسبع خضار)', query: 'couscous 7 khodari b lhm' },
+                  { label: '🫓 Msemen M\'3amar (المسمن معمر)', query: 'msemen m3amar b kefta w bsla' }
+                ].map((item, i) => (
+                  <button
+                    key={i}
+                    type="button"
+                    onClick={() => handleQuickMoroccanDishClick(item.query)}
+                    className="px-3 py-1.5 rounded-xl bg-stone-950 hover:bg-red-500/20 border border-stone-800 hover:border-red-500/40 text-stone-300 hover:text-red-300 text-xs font-semibold cursor-pointer transition active:scale-98"
+                  >
+                    {item.label}
+                  </button>
+                ))}
+              </div>
+            </div>
 
             <form onSubmit={handleExtractRecipeFromReel} className="space-y-3.5 pt-2">
               <div className="flex flex-col sm:flex-row gap-3">
@@ -704,7 +755,7 @@ export const GroceryOptimizerView: React.FC<GroceryOptimizerViewProps> = ({
                   </div>
                   <input
                     type="url"
-                    placeholder={isRo ? 'Lipește link-ul Reel / TikTok / YouTube Shorts (ex: https://instagram.com/reels/...)' : 'Paste Reel / TikTok / YouTube link...'}
+                    placeholder={isRo ? 'Lipește link Facebook Reel / Instagram / TikTok / YouTube...' : 'Paste Facebook Reel / Instagram / TikTok / YouTube link...'}
                     value={reelUrlInput}
                     onChange={(e) => setReelUrlInput(e.target.value)}
                     className="w-full bg-stone-950 border border-pink-500/40 rounded-2xl pl-10 pr-4 py-3 text-xs sm:text-sm text-white placeholder-stone-500 focus:outline-none focus:border-pink-400 shadow-inner"
@@ -721,12 +772,12 @@ export const GroceryOptimizerView: React.FC<GroceryOptimizerViewProps> = ({
                   {isExtractingReel ? (
                     <>
                       <RefreshCw className="w-4 h-4 animate-spin" />
-                      <span>{isRo ? 'AI Analizează Rețeta...' : 'AI Analyzing...'}</span>
+                      <span>{isRo ? 'Analiză AI în Curs...' : 'AI Analyzing...'}</span>
                     </>
                   ) : (
                     <>
                       <Sparkles className="w-4 h-4" />
-                      <span>{isRo ? 'Extrage & Găsește Magazine' : 'Extract & Match Stores'}</span>
+                      <span>{isRo ? 'Extrage & Potrivește Magazine' : 'Extract & Match Stores'}</span>
                     </>
                   )}
                 </button>
@@ -735,10 +786,10 @@ export const GroceryOptimizerView: React.FC<GroceryOptimizerViewProps> = ({
               <div>
                 <input
                   type="text"
-                  placeholder={isRo ? 'Opțional: adaugă detalii sau nume rețetă (ex: Paella cu creveți, Carbonara romană, Smash burger)' : 'Optional: add recipe notes or dish name...'}
+                  placeholder={isRo ? 'Descriere sau ingrediente din video (Darija / Arabă / Română / Engleză / Franceză)...' : 'Recipe description or ingredients (Darija / Arabic / Romanian / English / French)...'}
                   value={recipeNotesInput}
                   onChange={(e) => setRecipeNotesInput(e.target.value)}
-                  className="w-full bg-stone-950/80 border border-stone-800 rounded-xl px-3.5 py-2 text-xs text-stone-300 placeholder-stone-600 focus:outline-none focus:border-pink-500/50"
+                  className="w-full bg-stone-950/80 border border-stone-800 rounded-xl px-3.5 py-2.5 text-xs text-stone-300 placeholder-stone-600 focus:outline-none focus:border-pink-500/50"
                 />
               </div>
             </form>
@@ -771,7 +822,7 @@ export const GroceryOptimizerView: React.FC<GroceryOptimizerViewProps> = ({
                     })()}
                   </div>
                   <h3 className="text-xl sm:text-2xl font-bold text-white mt-1.5">{extractedRecipe.title}</h3>
-                  <p className="text-xs text-stone-300 mt-1">{extractedRecipe.description}</p>
+                  <p className="text-xs text-stone-300 mt-1 leading-relaxed">{extractedRecipe.description}</p>
                 </div>
 
                 <div className="flex items-center gap-3 bg-stone-950 p-3 rounded-2xl border border-stone-800 shrink-0">
@@ -797,10 +848,18 @@ export const GroceryOptimizerView: React.FC<GroceryOptimizerViewProps> = ({
                 </div>
               </div>
 
+              {/* Instructions summary */}
+              {extractedRecipe.instructionsSummary && (
+                <div className="p-3.5 rounded-2xl bg-stone-950/70 border border-stone-800 text-xs text-stone-300 space-y-1">
+                  <span className="font-bold text-pink-300 block">👨‍🍳 {isRo ? 'Pași de Gătire Rapizi:' : 'Quick Cooking Steps:'}</span>
+                  <p className="leading-relaxed">{extractedRecipe.instructionsSummary}</p>
+                </div>
+              )}
+
               {/* Ingredient Store Breakdown */}
               <div className="space-y-2">
                 <span className="text-xs font-bold uppercase tracking-wider text-emerald-400 block mb-1">
-                  🛒 {isRo ? 'Ingrediente & Recomandare Magazine:' : 'Ingredients & Store Recommendations:'} ({extractedRecipe.ingredients.length})
+                  🛒 {isRo ? 'Ingrediente & Recomandare Magazine Românești:' : 'Ingredients & Store Recommendations:'} ({extractedRecipe.ingredients.length})
                 </span>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                   {extractedRecipe.ingredients.map((ing, idx) => {
@@ -1242,7 +1301,7 @@ export const GroceryOptimizerView: React.FC<GroceryOptimizerViewProps> = ({
                         </div>
                       </div>
 
-                      {/* Right: Store Badge, Quantity, Price & Trash - 100% Inside Container */}
+                      {/* Right: Store Badge, Quantity, Price & Trash */}
                       <div className="flex items-center justify-between md:justify-end gap-2.5 sm:gap-3 shrink-0 pt-2 md:pt-0 border-t md:border-t-0 border-stone-800">
                         {/* Store Badge */}
                         {storeMeta && rec && (
@@ -1709,6 +1768,55 @@ export const GroceryOptimizerView: React.FC<GroceryOptimizerViewProps> = ({
           >
             {isRo ? 'Încheie & Salvează Bon' : 'Finish & Log Receipt'}
           </button>
+        </div>
+      )}
+
+      {/* MODAL: GEMINI API KEY CONFIG */}
+      {showApiKeyModal && (
+        <div className="fixed inset-0 z-50 bg-stone-950/85 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in">
+          <div className="bg-stone-900 border border-stone-750 rounded-3xl max-w-md w-full p-6 space-y-4 shadow-2xl">
+            <div className="flex items-center justify-between border-b border-stone-800 pb-3">
+              <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                <Key className="w-5 h-5 text-amber-400" />
+                <span>{isRo ? 'Configurare Cheie Gemini AI' : 'Gemini AI Key Setup'}</span>
+              </h3>
+              <button onClick={() => setShowApiKeyModal(false)} className="text-stone-400 hover:text-white cursor-pointer">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <p className="text-xs text-stone-300 leading-relaxed">
+              {isRo
+                ? 'Opțional: Dacă deții o cheie gratuită Google Gemini API, introdu-o aici pentru ca AI-ul să poată analiza transcrieri video și rețete complexe în orice limbă (Darija, Franceză, Arabă, Engleză).'
+                : 'Optional: Enter your free Google Gemini API key to enable multilingual AI extraction of video reels.'}
+            </p>
+
+            <div>
+              <label className="text-xs font-bold text-stone-400 block mb-1">
+                Gemini API Key (Google AI Studio)
+              </label>
+              <input
+                type="password"
+                placeholder="AIzaSy..."
+                value={geminiApiKeyInput}
+                onChange={(e) => setGeminiApiKeyInput(e.target.value)}
+                className="w-full bg-stone-950 border border-stone-800 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-amber-400 font-mono"
+              />
+            </div>
+
+            <div className="flex gap-2 pt-2">
+              <button
+                type="button"
+                onClick={() => {
+                  localStorage.setItem('housevault_gemini_key', geminiApiKeyInput.trim());
+                  setShowApiKeyModal(false);
+                }}
+                className="flex-1 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-stone-950 font-bold text-xs shadow-md cursor-pointer transition"
+              >
+                {isRo ? 'Salvează Cheia' : 'Save Key'}
+              </button>
+            </div>
+          </div>
         </div>
       )}
 
