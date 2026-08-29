@@ -233,6 +233,39 @@ export interface SavedRecipeReel {
   createdAt: string;
 }
 
+export type StockUpPlanDuration = 'DAYS_7' | 'DAYS_15' | 'DAYS_30';
+
+export interface BillAnalysisSuggestion {
+  id: string;
+  originalItemName: string;
+  originalPrice: number;
+  originalStore: SupermarketId;
+  cheaperAlternativeName: string;
+  cheaperPrice: number;
+  cheaperStore: SupermarketId;
+  savingsRon: number;
+  savingsPercent: number;
+  category: GroceryCategory;
+  rationale: string;
+}
+
+export interface ReceiptPurchaseRecord {
+  id: string;
+  date: string;
+  storeId: SupermarketId;
+  storeName: string;
+  totalSpent: number;
+  items: {
+    name: string;
+    price: number;
+    quantity: number;
+    unit: string;
+    category: GroceryCategory;
+    brandName?: string;
+  }[];
+  payer?: ExpensePayer;
+}
+
 export interface GroceryTripLog {
   id: string;
   date: string;
@@ -241,5 +274,6 @@ export interface GroceryTripLog {
   itemCount: number;
   payer: ExpensePayer;
 }
+
 
 

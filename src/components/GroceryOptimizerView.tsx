@@ -36,7 +36,13 @@ import {
   RefreshCw,
   AlertCircle,
   Key,
-  HelpCircle
+  Calendar,
+  Package,
+  Coffee,
+  Sparkle,
+  ArrowDownRight,
+  TrendingUp,
+  Sliders
 } from 'lucide-react';
 import {
   SupermarketId,
@@ -50,16 +56,25 @@ import {
   ExpensePayer,
   CashPocketsBalance,
   SavedRecipeReel,
-  RecipeIngredient
+  RecipeIngredient,
+  ReceiptPurchaseRecord,
+  BillAnalysisSuggestion,
+  StockUpPlanDuration
 } from '../types';
 import {
   SUPERMARKETS,
   GROCERY_CATEGORIES_CONFIG,
   QUICK_BUNDLES,
   DEFAULT_SAVED_RECIPES,
+  DEFAULT_PURCHASE_HISTORY,
   SupermarketMetadata
 } from '../data/groceryData';
-import { loadSavedRecipes, saveSavedRecipes } from '../data/storage';
+import {
+  loadSavedRecipes,
+  saveSavedRecipes,
+  loadPurchaseHistory,
+  savePurchaseHistory
+} from '../data/storage';
 
 interface GroceryOptimizerViewProps {
   profile: HouseholdProfile;
@@ -88,12 +103,23 @@ export const GroceryOptimizerView: React.FC<GroceryOptimizerViewProps> = ({
   const [currentLang, setCurrentLang] = useState<'ro' | 'en'>((profile.language as 'ro' | 'en') || 'ro');
   const isRo = currentLang === 'ro';
 
-  // Subtabs: list | budgetFitter | reels | bundles | matrix
-  const [activeSubTab, setActiveSubTab] = useState<'list' | 'budgetFitter' | 'reels' | 'bundles' | 'matrix'>('list');
+  // Subtabs: list | stockup | billAnalyzer | reels | budgetFitter | bundles | matrix
+  const [activeSubTab, setActiveSubTab] = useState<
+    'list' | 'stockup' | 'billAnalyzer' | 'reels' | 'budgetFitter' | 'bundles' | 'matrix'
+  >('list');
   const [qualityPref, setQualityPref] = useState<GroceryQualityPreference>('BEST_VALUE');
   const [cuisineFilter, setCuisineFilter] = useState<GroceryCuisineType | 'ALL'>('ALL');
+  const [categoryFilter, setCategoryFilter] = useState<GroceryCategory | 'ALL'>('ALL');
   const [inStoreMode, setInStoreMode] = useState<boolean>(false);
   const [searchQuery, setSearchQuery] = useState<string>('');
+
+  // 15 & 30 Days Stock-Up State
+  const [stockUpDuration, setStockUpDuration] = useState<StockUpPlanDuration>('DAYS_15');
+  const [stockUpCategoryScope, setStockUpCategoryScope] = useState<'ALL' | 'FOOD' | 'SNACKS_DRINKS' | 'CLEANING'>('ALL');
+
+  // Purchase History & AI Bill Analyzer State
+  const [purchaseHistory, setPurchaseHistory] = useState<ReceiptPurchaseRecord[]>(loadPurchaseHistory);
+  const [selectedReceiptForAnalysis, setSelectedReceiptForAnalysis] = useState<string | null>(null);
 
   // Smart Budget Fitter State
   const [targetBudgetInput, setTargetBudgetInput] = useState<number>(150);
@@ -138,6 +164,10 @@ export const GroceryOptimizerView: React.FC<GroceryOptimizerViewProps> = ({
     saveSavedRecipes(savedRecipes);
   }, [savedRecipes]);
 
+  useEffect(() => {
+    savePurchaseHistory(purchaseHistory);
+  }, [purchaseHistory]);
+
   const catalogMap = useMemo(() => {
     const map = new Map<string, GroceryCatalogItem>();
     groceryCatalog.forEach((item) => map.set(item.id, item));
@@ -157,7 +187,10 @@ export const GroceryOptimizerView: React.FC<GroceryOptimizerViewProps> = ({
 
     if (!catItem || !catItem.stores) return null;
 
-    const availableStores = Object.entries(catItem.stores) as [SupermarketId, { price: number; qualityScore: number; brandName?: string; promo?: boolean }][];
+    const availableStores = Object.entries(catItem.stores) as [
+      SupermarketId,
+      { price: number; qualityScore: number; brandName?: string; promo?: boolean }
+    ][];
     if (availableStores.length === 0) return null;
 
     if (item.preferredStoreOverride && catItem.stores[item.preferredStoreOverride]) {
@@ -192,7 +225,9 @@ export const GroceryOptimizerView: React.FC<GroceryOptimizerViewProps> = ({
       let itemsAvailable = 0;
 
       shoppingList.forEach((item) => {
-        let catItem = item.catalogItemId ? catalogMap.get(item.catalogItemId) : groceryCatalog.find((c) => c.name.toLowerCase().includes(item.name.toLowerCase()));
+        let catItem = item.catalogItemId
+          ? catalogMap.get(item.catalogItemId)
+          : groceryCatalog.find((c) => c.name.toLowerCase().includes(item.name.toLowerCase()));
         if (catItem && catItem.stores[store.id]) {
           total += catItem.stores[store.id]!.price * item.quantity;
           itemsAvailable++;
@@ -224,7 +259,9 @@ export const GroceryOptimizerView: React.FC<GroceryOptimizerViewProps> = ({
     let splitTotal = 0;
 
     shoppingList.forEach((item) => {
-      let catItem = item.catalogItemId ? catalogMap.get(item.catalogItemId) : groceryCatalog.find((c) => c.name.toLowerCase().includes(item.name.toLowerCase()));
+      let catItem = item.catalogItemId
+        ? catalogMap.get(item.catalogItemId)
+        : groceryCatalog.find((c) => c.name.toLowerCase().includes(item.name.toLowerCase()));
       const p1 = catItem?.stores[store1.id];
       const p2 = catItem?.stores[store2.id];
 
@@ -265,12 +302,172 @@ export const GroceryOptimizerView: React.FC<GroceryOptimizerViewProps> = ({
     };
   }, [shoppingList, groceryCatalog, catalogMap, qualityPref, singleStoreLeaderboard]);
 
+  // 15 & 30 DAYS STOCK-UP PLANNER ENGINE
+  const stockUpPlan = useMemo(() => {
+    const is30Days = stockUpDuration === 'DAYS_30';
+    const multiplier = is30Days ? 2 : 1;
+
+    // Base stock items definitions
+    const baseItems: {
+      catalogId: string;
+      name: string;
+      category: GroceryCategory;
+      baseQty: number;
+      unit: string;
+      scope: 'FOOD' | 'SNACKS_DRINKS' | 'CLEANING';
+    }[] = [
+      // MEAT & PROTEIN
+      { catalogId: 'g-piept-pui', name: 'Piept de Pui Dezosat (1kg)', category: 'MEAT_FISH', baseQty: 2, unit: 'kg', scope: 'FOOD' },
+      { catalogId: 'g-carne-vita-tagine', name: 'Pulpă de Vită Fragedă (1kg)', category: 'MEAT_FISH', baseQty: 1.5, unit: 'kg', scope: 'FOOD' },
+      // DAIRY
+      { catalogId: 'g-lapte-35', name: 'Lapte Proaspăt 3.5% (1L)', category: 'DAIRY', baseQty: 4, unit: 'L', scope: 'FOOD' },
+      { catalogId: 'g-oua-30', name: 'Ouă Proaspete (Cofraj 30 bucăți)', category: 'DAIRY', baseQty: 1, unit: 'pachet', scope: 'FOOD' },
+      { catalogId: 'g-telemea-vaca-saramura', name: 'Telemea de Vacă în Saramură (400g)', category: 'DAIRY', baseQty: 2, unit: 'buc', scope: 'FOOD' },
+      // PANTRY
+      { catalogId: 'g-ulei-masline-extra', name: 'Ulei de Măsline Extra Virgin (1L)', category: 'PANTRY', baseQty: 1, unit: 'L', scope: 'FOOD' },
+      { catalogId: 'g-spaghetti-bronzo', name: 'Spaghetti Barilla (500g)', category: 'PANTRY', baseQty: 2, unit: 'pachet', scope: 'FOOD' },
+      { catalogId: 'g-couscous-500g', name: 'Couscous Dari Tradițional (1kg)', category: 'PANTRY', baseQty: 1, unit: 'kg', scope: 'FOOD' },
+      { catalogId: 'g-naut-conserva', name: 'Năut Boabe Conservă (400g)', category: 'PANTRY', baseQty: 3, unit: 'buc', scope: 'FOOD' },
+      // SNACKS & SWEETS
+      { catalogId: 'g-chips-lays', name: 'Chipsuri Rumene Lays / Chio Paprika (140g)', category: 'SNACKS', baseQty: 2, unit: 'pachet', scope: 'SNACKS_DRINKS' },
+      { catalogId: 'g-alune-alesto', name: 'Arahide / Caju Prăjite Alesto (200g)', category: 'SNACKS', baseQty: 2, unit: 'pachet', scope: 'SNACKS_DRINKS' },
+      { catalogId: 'g-ciocolata-milka', name: 'Ciocolată Fină Milka cu Lapte (100g)', category: 'SNACKS', baseQty: 3, unit: 'buc', scope: 'SNACKS_DRINKS' },
+      { catalogId: 'g-croissant-7days', name: 'Croissant 7Days Max Multipack (5 buc)', category: 'SNACKS', baseQty: 1, unit: 'pachet', scope: 'SNACKS_DRINKS' },
+      // BEVERAGES
+      { catalogId: 'g-apa-minerala-borsec', name: 'Apă Minerală Borsec (Bax 6x2L)', category: 'BEVERAGES', baseQty: 2, unit: 'pachet', scope: 'SNACKS_DRINKS' },
+      { catalogId: 'g-apa-plata-bucovina', name: 'Apă Plată Bucovina (Bax 6x2L)', category: 'BEVERAGES', baseQty: 2, unit: 'pachet', scope: 'SNACKS_DRINKS' },
+      { catalogId: 'g-suc-portocale-100', name: 'Suc Natural Portocale 100% (1L)', category: 'BEVERAGES', baseQty: 2, unit: 'L', scope: 'SNACKS_DRINKS' },
+      { catalogId: 'g-cafea-lavazza-500g', name: 'Cafea Măcinată Lavazza / Tchibo (500g)', category: 'BEVERAGES', baseQty: 1, unit: 'pachet', scope: 'SNACKS_DRINKS' },
+      // CLEANING & HOUSEHOLD
+      { catalogId: 'g-detergent-ariel-capsule', name: 'Detergent Rufe Capsule Ariel (35-40 spălări)', category: 'CLEANING', baseQty: 1, unit: 'pachet', scope: 'CLEANING' },
+      { catalogId: 'g-balsam-lenor', name: 'Balsam Rufe Parfumat Lenor (1.7L)', category: 'CLEANING', baseQty: 1, unit: 'buc', scope: 'CLEANING' },
+      { catalogId: 'g-detergent-vase-fairy', name: 'Detergent Lichid Vase Fairy Max (900ml)', category: 'CLEANING', baseQty: 1, unit: 'buc', scope: 'CLEANING' },
+      { catalogId: 'g-hartie-igienica-zewa', name: 'Hârtie Igienică Zewa Deluxe (10 role)', category: 'CLEANING', baseQty: 1, unit: 'pachet', scope: 'CLEANING' },
+      { catalogId: 'g-prosoape-bucatarie', name: 'Prosoape Bucătărie Absorbante (2 role mari)', category: 'CLEANING', baseQty: 1, unit: 'pachet', scope: 'CLEANING' },
+      { catalogId: 'g-saci-menajeri-60l', name: 'Saci Menajeri Rezistenți cu Șnur 60L (20 buc)', category: 'CLEANING', baseQty: 1, unit: 'buc', scope: 'CLEANING' }
+    ];
+
+    const filteredItems = baseItems.filter((it) => {
+      if (stockUpCategoryScope === 'ALL') return true;
+      return it.scope === stockUpCategoryScope;
+    });
+
+    let totalBestCost = 0;
+    let totalSupermarketStandardCost = 0;
+
+    const computedItems = filteredItems.map((item) => {
+      const catItem = catalogMap.get(item.catalogId);
+      const totalQty = item.baseQty * multiplier;
+
+      let bestStoreId: SupermarketId = 'PENNY';
+      let bestUnitPrice = 10;
+      let highestUnitPrice = 12;
+      let brandName = '';
+
+      if (catItem?.stores) {
+        const storeEntries = Object.entries(catItem.stores) as [SupermarketId, { price: number; brandName?: string }][];
+        if (storeEntries.length > 0) {
+          const sorted = [...storeEntries].sort((a, b) => a[1].price - b[1].price);
+          bestStoreId = sorted[0][0];
+          bestUnitPrice = sorted[0][1].price;
+          brandName = sorted[0][1].brandName || '';
+          highestUnitPrice = sorted[sorted.length - 1][1].price;
+        }
+      }
+
+      const totalItemCost = bestUnitPrice * totalQty;
+      const standardCost = highestUnitPrice * totalQty;
+
+      totalBestCost += totalItemCost;
+      totalSupermarketStandardCost += standardCost;
+
+      return {
+        ...item,
+        quantity: totalQty,
+        bestStoreId,
+        unitPrice: bestUnitPrice,
+        totalCost: Math.round(totalItemCost * 100) / 100,
+        brandName
+      };
+    });
+
+    const totalSaved = Math.max(0, totalSupermarketStandardCost - totalBestCost);
+
+    return {
+      items: computedItems,
+      totalCost: Math.round(totalBestCost * 100) / 100,
+      standardCost: Math.round(totalSupermarketStandardCost * 100) / 100,
+      totalSaved: Math.round(totalSaved * 100) / 100,
+      savingsPercent: totalSupermarketStandardCost > 0 ? Math.round((totalSaved / totalSupermarketStandardCost) * 100) : 0,
+      durationDays: is30Days ? 30 : 15
+    };
+  }, [stockUpDuration, stockUpCategoryScope, catalogMap]);
+
+  // AI BILL ANALYZER & CHEAPER ALTERNATIVES ENGINE
+  const billAnalysisResults = useMemo(() => {
+    const suggestions: BillAnalysisSuggestion[] = [];
+    let totalPotentialSavings = 0;
+
+    // Analyze past purchase receipts
+    purchaseHistory.forEach((receipt) => {
+      receipt.items.forEach((item, idx) => {
+        // Find matching item in catalog
+        const match = groceryCatalog.find(
+          (c) =>
+            c.name.toLowerCase().includes(item.name.toLowerCase()) ||
+            item.name.toLowerCase().includes(c.name.toLowerCase())
+        );
+
+        if (match && match.stores) {
+          const storeEntries = Object.entries(match.stores) as [SupermarketId, { price: number; brandName?: string }][];
+          const sortedStores = storeEntries.sort((a, b) => a[1].price - b[1].price);
+          const cheapestStore = sortedStores[0];
+
+          if (cheapestStore && cheapestStore[1].price < item.price) {
+            const diff = item.price - cheapestStore[1].price;
+            const savingPercent = Math.round((diff / item.price) * 100);
+
+            if (diff >= 0.5) {
+              totalPotentialSavings += diff * (item.quantity || 1);
+              suggestions.push({
+                id: 'sugg-' + receipt.id + '-' + idx,
+                originalItemName: item.name,
+                originalPrice: item.price,
+                originalStore: receipt.storeId,
+                cheaperAlternativeName: match.name + (cheapestStore[1].brandName ? ` (${cheapestStore[1].brandName})` : ''),
+                cheaperPrice: cheapestStore[1].price,
+                cheaperStore: cheapestStore[0],
+                savingsRon: Math.round(diff * 100) / 100,
+                savingsPercent: savingPercent,
+                category: item.category || match.category,
+                rationale: isRo
+                  ? `Înlocuind cu ${cheapestStore[1].brandName || 'marca proprie'} de la ${cheapestStore[0]}, economisești ${diff.toFixed(2)} ${currency} per bucată!`
+                  : `Switching to ${cheapestStore[0]} private label saves ${diff.toFixed(2)} ${currency} per item!`
+              });
+            }
+          }
+        }
+      });
+    });
+
+    return {
+      suggestions,
+      totalPotentialSavings: Math.round(totalPotentialSavings * 100) / 100
+    };
+  }, [purchaseHistory, groceryCatalog, isRo, currency]);
+
   // SMART BUDGET FITTER ENGINE
   const budgetFitterPlan = useMemo(() => {
     const budget = Number(targetBudgetInput) || 150;
 
     let candidates = groceryCatalog.filter((item) => {
-      if (budgetDiversityFocus === 'BUDGET') return item.category === 'DAIRY' || item.category === 'BAKERY' || item.category === 'PANTRY' || item.category === 'MEAT_FISH';
+      if (budgetDiversityFocus === 'BUDGET')
+        return (
+          item.category === 'DAIRY' ||
+          item.category === 'BAKERY' ||
+          item.category === 'PANTRY' ||
+          item.category === 'MEAT_FISH'
+        );
       if (budgetDiversityFocus === 'MIXED') return true;
       return item.cuisine === budgetDiversityFocus || item.cuisine === 'UNIVERSAL';
     });
@@ -297,7 +494,13 @@ export const GroceryOptimizerView: React.FC<GroceryOptimizerViewProps> = ({
 
     candidates.sort((a, b) => (priorityWeights[b.id] || 10) - (priorityWeights[a.id] || 10));
 
-    const selectedItems: { catalogItem: GroceryCatalogItem; bestStore: SupermarketId; unitPrice: number; qty: number; totalItemCost: number }[] = [];
+    const selectedItems: {
+      catalogItem: GroceryCatalogItem;
+      bestStore: SupermarketId;
+      unitPrice: number;
+      qty: number;
+      totalItemCost: number;
+    }[] = [];
     let currentTotal = 0;
 
     for (const item of candidates) {
@@ -350,6 +553,43 @@ export const GroceryOptimizerView: React.FC<GroceryOptimizerViewProps> = ({
 
   const handleClearCheckedItems = () => {
     onUpdateShoppingList(shoppingList.filter((it) => !it.isChecked));
+  };
+
+  const handleApplyStockUpPlanToList = (replace: boolean) => {
+    const newItems: ShoppingListItem[] = stockUpPlan.items.map((sItem, idx) => ({
+      id: 'item-stockup-' + Date.now() + '-' + idx,
+      catalogItemId: sItem.catalogId,
+      name: sItem.name,
+      category: sItem.category,
+      quantity: sItem.quantity,
+      unit: sItem.unit,
+      isChecked: false,
+      preferredStoreOverride: sItem.bestStoreId,
+      notes: isRo ? `Aprovizionare ${stockUpPlan.durationDays} Zile` : `${stockUpPlan.durationDays}-Day Stock-Up`
+    }));
+
+    if (replace) {
+      onUpdateShoppingList(newItems);
+    } else {
+      onUpdateShoppingList([...shoppingList, ...newItems]);
+    }
+    setActiveSubTab('list');
+  };
+
+  const handleApplyCheaperAlternativesToList = () => {
+    const newItems: ShoppingListItem[] = billAnalysisResults.suggestions.map((sug, idx) => ({
+      id: 'item-sugg-' + Date.now() + '-' + idx,
+      name: sug.cheaperAlternativeName,
+      category: sug.category,
+      quantity: 1,
+      unit: 'buc',
+      isChecked: false,
+      preferredStoreOverride: sug.cheaperStore,
+      notes: isRo ? `Economie: -${sug.savingsRon} lei vs ${sug.originalStore}` : `Save: -${sug.savingsRon} vs ${sug.originalStore}`
+    }));
+
+    onUpdateShoppingList([...shoppingList, ...newItems]);
+    setActiveSubTab('list');
   };
 
   const handleApplyBundle = (bundle: typeof QUICK_BUNDLES[0]) => {
@@ -518,16 +758,34 @@ export const GroceryOptimizerView: React.FC<GroceryOptimizerViewProps> = ({
     if (logAmount <= 0) return;
 
     onAddExpense({
-      title: (isRo ? 'Cumparaturi ' : 'Groceries ') + logStoreName,
+      title: (isRo ? 'Cumpărături ' : 'Groceries ') + logStoreName,
       amount: logAmount,
       category: 'GROCERIES',
       isFixed: false,
       assignedPayer: logPayer
     });
 
+    // Also add to purchaseHistory
+    const newRecord: ReceiptPurchaseRecord = {
+      id: 'rec-' + Date.now(),
+      date: new Date().toISOString().split('T')[0],
+      storeId: 'LIDL',
+      storeName: logStoreName,
+      totalSpent: logAmount,
+      payer: logPayer,
+      items: shoppingList.map((it) => ({
+        name: it.name,
+        price: getItemStoreRecommendation(it, qualityPref)?.price || 10,
+        quantity: it.quantity,
+        unit: it.unit,
+        category: it.category
+      }))
+    };
+    setPurchaseHistory([newRecord, ...purchaseHistory]);
+
     setLogSuccessMessage(
       isRo
-        ? 'Bonul de ' + logAmount.toFixed(2) + ' ' + currency + ' a fost salvat si scazut din buget!'
+        ? 'Bonul de ' + logAmount.toFixed(2) + ' ' + currency + ' a fost salvat și scăzut din buget!'
         : 'Receipt for ' + logAmount.toFixed(2) + ' ' + currency + ' saved and deducted from budget!'
     );
     setTimeout(() => {
@@ -574,18 +832,18 @@ export const GroceryOptimizerView: React.FC<GroceryOptimizerViewProps> = ({
             <Sparkles className="w-4 h-4 text-emerald-400" />
             <span>
               {isRo
-                ? 'Supermarket Optimizer • 6 Bucătării Culturale (ES, IT, US, DE, MA, RO)'
-                : 'Smart Supermarket Optimizer • 6 Cultural Cuisines (ES, IT, US, DE, MA, RO)'}
+                ? 'Supermarket AI • Mâncare, Gustări, Băuturi, Dulciuri & Menaj'
+                : 'Smart Supermarket AI • Food, Snacks, Drinks, Sweets & Home'}
             </span>
           </div>
           <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight text-white mt-1.5 flex items-center gap-2.5">
             <ShoppingCart className="w-7 h-7 text-emerald-400 shrink-0" />
-            <span>{isRo ? 'Cumpărături Inteligente & Rețete din Reels' : 'Smart Groceries & Reel Recipes'}</span>
+            <span>{isRo ? 'Cumpărături Inteligente & AI Plan 15/30 Zile' : 'Smart Groceries & 15/30 Day Stock-Up'}</span>
           </h1>
           <p className="text-xs sm:text-sm text-stone-300 mt-1 max-w-2xl leading-relaxed">
             {isRo
-              ? 'Lipește link-ul oricărui Reel / TikTok / Facebook video în Darija marocană sau alege o rețetă rapidă. Află exact din ce magazin românesc cumperi fiecare ingredient la cel mai mic preț!'
-              : 'Paste any Instagram, Facebook Reel or TikTok video in Moroccan Darija or pick a quick dish. Match every ingredient with cheapest Romanian stores!'}
+              ? 'Planifică cumpărăturile pentru 15 sau 30 de zile, analizează bonurile anterioare pentru alternative ieftine și extrage rețete din Reels video în Darija marocană sau orice limbă!'
+              : 'Stock up for 15 or 30 days, analyze past receipts for cheap alternatives, and extract recipe reels in Moroccan Darija!'}
           </p>
         </div>
 
@@ -598,23 +856,27 @@ export const GroceryOptimizerView: React.FC<GroceryOptimizerViewProps> = ({
             title="Set Gemini AI Key"
           >
             <Key className="w-3.5 h-3.5" />
-            <span>{geminiApiKeyInput ? 'Gemini AI ✓' : (isRo ? 'Setează Cheie AI' : 'Set AI Key')}</span>
+            <span>{geminiApiKeyInput ? 'Gemini AI ✓' : isRo ? 'Setează Cheie AI' : 'Set AI Key'}</span>
           </button>
 
           <div className="flex items-center bg-stone-900 border border-stone-800 rounded-xl p-0.5">
             <button
               type="button"
               onClick={() => setCurrentLang('ro')}
-              className={'px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ' +
-                (isRo ? 'bg-emerald-500 text-stone-950 shadow-sm' : 'text-stone-400 hover:text-white')}
+              className={
+                'px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ' +
+                (isRo ? 'bg-emerald-500 text-stone-950 shadow-sm' : 'text-stone-400 hover:text-white')
+              }
             >
               RO
             </button>
             <button
               type="button"
               onClick={() => setCurrentLang('en')}
-              className={'px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ' +
-                (!isRo ? 'bg-emerald-500 text-stone-950 shadow-sm' : 'text-stone-400 hover:text-white')}
+              className={
+                'px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ' +
+                (!isRo ? 'bg-emerald-500 text-stone-950 shadow-sm' : 'text-stone-400 hover:text-white')
+              }
             >
               EN
             </button>
@@ -632,13 +894,15 @@ export const GroceryOptimizerView: React.FC<GroceryOptimizerViewProps> = ({
 
           <button
             onClick={() => setInStoreMode(!inStoreMode)}
-            className={'px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition cursor-pointer shadow-md ' +
+            className={
+              'px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition cursor-pointer shadow-md ' +
               (inStoreMode
                 ? 'bg-emerald-500 text-stone-950 shadow-emerald-500/20'
-                : 'bg-stone-800 text-stone-300 border border-stone-700 hover:bg-stone-750')}
+                : 'bg-stone-800 text-stone-300 border border-stone-700 hover:bg-stone-750')
+            }
           >
             <ShoppingBag className="w-4 h-4" />
-            <span>{inStoreMode ? (isRo ? 'Mod Magazin Activ' : 'In-Store Mode On') : (isRo ? 'Mod Magazin' : 'In-Store Mode')}</span>
+            <span>{inStoreMode ? (isRo ? 'Mod Magazin Activ' : 'In-Store Mode On') : isRo ? 'Mod Magazin' : 'In-Store Mode'}</span>
           </button>
         </div>
       </div>
@@ -647,61 +911,445 @@ export const GroceryOptimizerView: React.FC<GroceryOptimizerViewProps> = ({
       <div className="flex flex-wrap gap-2 border-b border-stone-800 pb-3">
         <button
           onClick={() => setActiveSubTab('list')}
-          className={'px-4 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2 transition cursor-pointer ' +
+          className={
+            'px-4 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2 transition cursor-pointer ' +
             (activeSubTab === 'list'
               ? 'bg-emerald-500 text-stone-950 shadow-md shadow-emerald-500/20'
-              : 'bg-stone-900 text-stone-400 hover:text-white border border-stone-800')}
+              : 'bg-stone-900 text-stone-400 hover:text-white border border-stone-800')
+          }
         >
           <ShoppingCart className="w-4 h-4" />
           <span>{isRo ? 'Lista Mea (' + shoppingList.length + ')' : 'My List (' + shoppingList.length + ')'}</span>
         </button>
 
+        {/* SUBTAB: 15 / 30 DAYS STOCK-UP */}
         <button
-          onClick={() => setActiveSubTab('reels')}
-          className={'px-4 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2 transition cursor-pointer ' +
-            (activeSubTab === 'reels'
-              ? 'bg-gradient-to-r from-pink-500 to-rose-500 text-white shadow-md font-black ring-1 ring-pink-400'
-              : 'bg-stone-900 text-pink-400 hover:text-pink-300 border border-pink-500/30')}
+          onClick={() => setActiveSubTab('stockup')}
+          className={
+            'px-4 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2 transition cursor-pointer ' +
+            (activeSubTab === 'stockup'
+              ? 'bg-gradient-to-r from-teal-500 to-emerald-500 text-stone-950 shadow-md font-black ring-1 ring-emerald-400'
+              : 'bg-stone-900 text-teal-300 hover:text-teal-200 border border-teal-500/30')
+          }
         >
-          <Video className="w-4 h-4 text-pink-400" />
-          <span>{isRo ? '🎬 Rețete din Reels & Video (' + savedRecipes.length + ')' : '🎬 Reel Recipes & Videos (' + savedRecipes.length + ')'}</span>
+          <Package className="w-4 h-4 text-teal-400" />
+          <span>{isRo ? '🗓️ Aprovizionare 15 / 30 Zile' : '🗓️ 15 / 30 Day Stock-Up'}</span>
         </button>
 
+        {/* SUBTAB: AI BILL ANALYZER */}
+        <button
+          onClick={() => setActiveSubTab('billAnalyzer')}
+          className={
+            'px-4 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2 transition cursor-pointer ' +
+            (activeSubTab === 'billAnalyzer'
+              ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-stone-950 shadow-md font-black ring-1 ring-amber-400'
+              : 'bg-stone-900 text-amber-300 hover:text-amber-200 border border-amber-500/30')
+          }
+        >
+          <Sparkles className="w-4 h-4 text-amber-400" />
+          <span>{isRo ? '🧠 AI Analiză Bonuri & Sugestii Ieftine' : '🧠 AI Bill Analyzer & Cheaper Swaps'}</span>
+        </button>
+
+        {/* SUBTAB: REELS */}
+        <button
+          onClick={() => setActiveSubTab('reels')}
+          className={
+            'px-4 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2 transition cursor-pointer ' +
+            (activeSubTab === 'reels'
+              ? 'bg-gradient-to-r from-pink-500 to-rose-500 text-white shadow-md font-black ring-1 ring-pink-400'
+              : 'bg-stone-900 text-pink-400 hover:text-pink-300 border border-pink-500/30')
+          }
+        >
+          <Video className="w-4 h-4 text-pink-400" />
+          <span>{isRo ? '🎬 Rețete din Reels & Darija (' + savedRecipes.length + ')' : '🎬 Reel Recipes & Darija (' + savedRecipes.length + ')'}</span>
+        </button>
+
+        {/* SUBTAB: BUDGET FITTER */}
         <button
           onClick={() => setActiveSubTab('budgetFitter')}
-          className={'px-4 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2 transition cursor-pointer ' +
+          className={
+            'px-4 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2 transition cursor-pointer ' +
             (activeSubTab === 'budgetFitter'
-              ? 'bg-gradient-to-r from-amber-500 to-emerald-500 text-stone-950 shadow-md font-bold'
-              : 'bg-stone-900 text-amber-400 hover:text-amber-300 border border-amber-500/30')}
+              ? 'bg-emerald-500 text-stone-950 shadow-md font-bold'
+              : 'bg-stone-900 text-stone-400 hover:text-white border border-stone-800')
+          }
         >
           <Coins className="w-4 h-4" />
           <span>{isRo ? '💰 Coș pe Bugetul Meu' : '💰 Smart Budget Fitter'}</span>
         </button>
 
+        {/* SUBTAB: BUNDLES */}
         <button
           onClick={() => setActiveSubTab('bundles')}
-          className={'px-4 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2 transition cursor-pointer ' +
+          className={
+            'px-4 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2 transition cursor-pointer ' +
             (activeSubTab === 'bundles'
               ? 'bg-emerald-500 text-stone-950 shadow-md'
-              : 'bg-stone-900 text-stone-400 hover:text-white border border-stone-800')}
+              : 'bg-stone-900 text-stone-400 hover:text-white border border-stone-800')
+          }
         >
           <Flame className="w-4 h-4 text-amber-400" />
-          <span>{isRo ? 'Meniuri Culturale (6 Bucătării)' : 'Cultural Menus (6 Cuisines)'}</span>
+          <span>{isRo ? 'Meniuri Culturale (6 Bucătării)' : 'Cultural Menus'}</span>
         </button>
 
+        {/* SUBTAB: MATRIX */}
         <button
           onClick={() => setActiveSubTab('matrix')}
-          className={'px-4 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2 transition cursor-pointer ' +
+          className={
+            'px-4 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2 transition cursor-pointer ' +
             (activeSubTab === 'matrix'
               ? 'bg-emerald-500 text-stone-950 shadow-md'
-              : 'bg-stone-900 text-stone-400 hover:text-white border border-stone-800')}
+              : 'bg-stone-900 text-stone-400 hover:text-white border border-stone-800')
+          }
         >
           <Layers className="w-4 h-4" />
-          <span>{isRo ? 'Matrice Prețuri 6 Magazine' : '6-Store Price Matrix'}</span>
+          <span>{isRo ? 'Matrice Prețuri 6 Magazine' : '6-Store Matrix'}</span>
         </button>
       </div>
 
-      {/* SUBTAB: REELS & VIDEO RECIPE EXTRACTOR (NEW FEATURE) */}
+      {/* ========================================================================= */}
+      {/* SUBTAB: 15 / 30 DAYS STOCK-UP PLANNER (NEW) */}
+      {/* ========================================================================= */}
+      {activeSubTab === 'stockup' && (
+        <div className="space-y-6 animate-in fade-in duration-200">
+          <div className="bg-gradient-to-br from-stone-900 via-teal-950/30 to-stone-900 p-6 sm:p-7 rounded-3xl border border-teal-500/30 shadow-2xl space-y-4">
+            <div className="flex items-center space-x-2 text-xs font-bold uppercase tracking-widest text-teal-400">
+              <Package className="w-4 h-4" />
+              <span>{isRo ? 'Planificator Aprovizionare pe Termen Lung (15 sau 30 de Zile)' : 'Long-Term Stock-Up Planner (15 or 30 Days)'}</span>
+            </div>
+            <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-white">
+              {isRo ? 'Aprovizionare Completă pentru 15 sau 30 de Zile' : 'Complete 15 or 30-Day Household Stock-Up'}
+            </h2>
+            <p className="text-xs sm:text-sm text-stone-300 max-w-2xl leading-relaxed">
+              {isRo
+                ? 'Nu mai pierde timpul cu drumuri zilnice la magazin! Calculează cantitățile exacte de alimente de bază, carne, lactate, baxuri de băuturi, gustări, dulciuri și produse de curățenie/menaj, optimizate la cele mai mici prețuri din supermarketurile românești.'
+                : 'Save time and money! Calculate exact quantities of food staples, meat, dairy, bulk drinks, snacks, sweets, and cleaning essentials with cheapest store recommendations.'}
+            </p>
+
+            {/* Duration Selector & Scope Filters */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+              {/* Duration Buttons */}
+              <div>
+                <label className="text-xs font-bold text-teal-300 block mb-2">
+                  🗓️ {isRo ? 'Perioadă de Aprovizionare:' : 'Stock-Up Duration:'}
+                </label>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setStockUpDuration('DAYS_15')}
+                    className={
+                      'p-3 rounded-2xl border text-center transition cursor-pointer ' +
+                      (stockUpDuration === 'DAYS_15'
+                        ? 'bg-teal-500 text-stone-950 font-black border-teal-400 shadow-lg shadow-teal-500/20 ring-2 ring-teal-400/50'
+                        : 'bg-stone-950 border-stone-800 text-stone-300 hover:border-teal-500/40')
+                    }
+                  >
+                    <div className="text-base font-black">📅 15 Zile</div>
+                    <div className="text-[11px] opacity-80 mt-0.5">{isRo ? 'Bi-Săptămânal (2 Săptămâni)' : 'Bi-Weekly (2 Weeks)'}</div>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setStockUpDuration('DAYS_30')}
+                    className={
+                      'p-3 rounded-2xl border text-center transition cursor-pointer ' +
+                      (stockUpDuration === 'DAYS_30'
+                        ? 'bg-teal-500 text-stone-950 font-black border-teal-400 shadow-lg shadow-teal-500/20 ring-2 ring-teal-400/50'
+                        : 'bg-stone-950 border-stone-800 text-stone-300 hover:border-teal-500/40')
+                    }
+                  >
+                    <div className="text-base font-black">🗓️ 30 Zile</div>
+                    <div className="text-[11px] opacity-80 mt-0.5">{isRo ? 'Coș Lunar Complet' : 'Full Monthly Basket'}</div>
+                  </button>
+                </div>
+              </div>
+
+              {/* Scope Filters */}
+              <div>
+                <label className="text-xs font-bold text-teal-300 block mb-2">
+                  🛒 {isRo ? 'Categorii Incluse în Coș:' : 'Categories Included:'}
+                </label>
+                <div className="grid grid-cols-2 gap-1.5">
+                  {[
+                    { id: 'ALL', label: isRo ? 'Totul Inclus (Complet)' : 'All Inclusive' },
+                    { id: 'FOOD', label: isRo ? 'Doar Mâncare & Cămară' : 'Food & Pantry Only' },
+                    { id: 'SNACKS_DRINKS', label: isRo ? '🍿 Snacks, Sucuri & Dulciuri' : 'Snacks, Drinks & Sweets' },
+                    { id: 'CLEANING', label: isRo ? '🧼 Curățenie & Menaj' : 'Cleaning & Household' }
+                  ].map((sc) => (
+                    <button
+                      key={sc.id}
+                      type="button"
+                      onClick={() => setStockUpCategoryScope(sc.id as any)}
+                      className={
+                        'px-2.5 py-2 rounded-xl text-xs font-semibold border transition cursor-pointer truncate ' +
+                        (stockUpCategoryScope === sc.id
+                          ? 'bg-stone-100 text-stone-950 border-white font-bold'
+                          : 'bg-stone-950 border-stone-800 text-stone-400 hover:text-white')
+                      }
+                    >
+                      {sc.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Computed Stock-Up Summary & Action Banner */}
+          <div className="p-6 rounded-3xl bg-stone-900 border border-stone-800 shadow-xl space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-stone-800 pb-4">
+              <div>
+                <span className="text-xs font-bold text-teal-400 uppercase tracking-wider block">
+                  {isRo
+                    ? `Coș de Aprovizionare Calculat (${stockUpPlan.durationDays} Zile • ${stockUpPlan.items.length} Articole)`
+                    : `Calculated Stock-Up Plan (${stockUpPlan.durationDays} Days • ${stockUpPlan.items.length} Items)`}
+                </span>
+                <h3 className="text-xl font-bold text-white mt-1">
+                  {isRo ? 'Cost Total Estimat & Economii Supermarket' : 'Total Est. Cost & Supermarket Savings'}
+                </h3>
+              </div>
+
+              <div className="flex items-center gap-4 bg-stone-950 p-3.5 rounded-2xl border border-stone-800 shrink-0">
+                <div>
+                  <span className="text-[10px] text-stone-400 uppercase font-bold tracking-wider block">
+                    {isRo ? 'Total Coș Optimizat' : 'Total Optimized'}
+                  </span>
+                  <span className="text-2xl font-black text-emerald-400 font-mono">
+                    {stockUpPlan.totalCost.toFixed(2)} {currency}
+                  </span>
+                </div>
+                <div className="w-px h-8 bg-stone-800" />
+                <div>
+                  <span className="text-[10px] text-teal-400 uppercase font-bold tracking-wider block">
+                    {isRo ? 'Economisești vs Magazine Scumpe' : 'You Save'}
+                  </span>
+                  <span className="text-lg font-black text-teal-300 font-mono">
+                    -{stockUpPlan.totalSaved.toFixed(2)} {currency} ({stockUpPlan.savingsPercent}%)
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Item List with Store Badges */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              {stockUpPlan.items.map((sItem, idx) => {
+                const storeMeta = SUPERMARKETS.find((s) => s.id === sItem.bestStoreId);
+                return (
+                  <div
+                    key={idx}
+                    className="p-3.5 rounded-2xl bg-stone-850 border border-stone-750 flex items-center justify-between gap-3 text-xs"
+                  >
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2">
+                        <span className="font-bold text-white truncate text-sm">{sItem.name}</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-stone-400 text-[11px] mt-0.5">
+                        <span className="font-mono font-bold text-emerald-400">
+                          {sItem.quantity} {sItem.unit}
+                        </span>
+                        {sItem.brandName && <span className="truncate">({sItem.brandName})</span>}
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2.5 shrink-0">
+                      {storeMeta && (
+                        <span className={'px-2.5 py-1 rounded-xl text-xs font-bold border ' + storeMeta.badgeBg}>
+                          {storeMeta.name}
+                        </span>
+                      )}
+                      <span className="font-mono font-black text-emerald-400 text-sm min-w-[65px] text-right">
+                        {sItem.totalCost.toFixed(2)} {currency}
+                      </span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Apply Button */}
+            <div className="pt-3 border-t border-stone-800 flex flex-col sm:flex-row gap-3">
+              <button
+                type="button"
+                onClick={() => handleApplyStockUpPlanToList(true)}
+                className="flex-1 py-3.5 rounded-2xl bg-gradient-to-r from-teal-500 to-emerald-500 hover:from-teal-400 hover:to-emerald-400 text-stone-950 font-bold text-xs shadow-lg shadow-teal-500/20 transition cursor-pointer flex items-center justify-center gap-2 active:scale-98"
+              >
+                <ShoppingCart className="w-4 h-4" />
+                <span>
+                  {isRo
+                    ? `Înlocuiește Lista Mea cu Coșul de ${stockUpPlan.durationDays} Zile (${stockUpPlan.totalCost.toFixed(2)} ${currency})`
+                    : `Replace My List with ${stockUpPlan.durationDays}-Day Basket (${stockUpPlan.totalCost.toFixed(2)} ${currency})`}
+                </span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => handleApplyStockUpPlanToList(false)}
+                className="py-3.5 px-6 rounded-2xl bg-stone-800 hover:bg-stone-750 text-white font-bold text-xs transition cursor-pointer"
+              >
+                {isRo ? 'Adaugă la Lista Curentă' : 'Append to Current List'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* SUBTAB: AI BILL ANALYZER & CHEAPER ALTERNATIVES (NEW) */}
+      {/* ========================================================================= */}
+      {activeSubTab === 'billAnalyzer' && (
+        <div className="space-y-6 animate-in fade-in duration-200">
+          <div className="bg-gradient-to-br from-stone-900 via-amber-950/20 to-stone-900 p-6 sm:p-7 rounded-3xl border border-amber-500/30 shadow-2xl space-y-4">
+            <div className="flex items-center space-x-2 text-xs font-bold uppercase tracking-widest text-amber-400">
+              <Sparkles className="w-4 h-4" />
+              <span>{isRo ? 'AI Analiză Bonuri & Memorie Cumpărături' : 'AI Bill Analyzer & Purchase Memory'}</span>
+            </div>
+            <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-white">
+              {isRo ? 'Ce am cumpărat și cum economisim data viitoare?' : 'What we bought & cheaper alternatives for next trip'}
+            </h2>
+            <p className="text-xs sm:text-sm text-stone-300 max-w-2xl leading-relaxed">
+              {isRo
+                ? 'AI-ul ține minte toate bonurile și cumpărăturile voastre anterioare, identifică produsele cumpărate scump și vă sugerează alternative identice calitativ la prețuri mult mai mici pentru următoarea tură de cumpărături!'
+                : 'The AI remembers your past receipts, detects overpriced purchases, and suggests cheaper 1:1 alternatives for your next grocery trip!'}
+            </p>
+
+            {/* Savings highlight bar */}
+            <div className="p-4 rounded-2xl bg-stone-950 border border-amber-500/40 flex flex-col sm:flex-row items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-amber-500/20 border border-amber-500/30 flex items-center justify-center text-amber-400">
+                  <TrendingDown className="w-6 h-6" />
+                </div>
+                <div>
+                  <span className="text-xs font-bold text-amber-400 block uppercase tracking-wider">
+                    {isRo ? 'Economii Identificate pe Istoricul Bonurilor' : 'Total Potential Savings on Past Bills'}
+                  </span>
+                  <span className="text-xl sm:text-2xl font-black text-emerald-400 font-mono">
+                    +{billAnalysisResults.totalPotentialSavings.toFixed(2)} {currency} economie posibilă
+                  </span>
+                </div>
+              </div>
+
+              {billAnalysisResults.suggestions.length > 0 && (
+                <button
+                  type="button"
+                  onClick={handleApplyCheaperAlternativesToList}
+                  className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-stone-950 font-bold text-xs shadow-md cursor-pointer transition flex items-center justify-center gap-2 active:scale-98"
+                >
+                  <ShoppingCart className="w-4 h-4" />
+                  <span>{isRo ? 'Adaugă Toate Alternativele Ieftine în Listă' : 'Add Cheap Swaps to List'}</span>
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Suggestions List Table */}
+          <div className="p-6 rounded-3xl bg-stone-900 border border-stone-800 shadow-xl space-y-4">
+            <h3 className="text-lg font-bold text-white flex items-center gap-2">
+              <Sparkle className="w-5 h-5 text-amber-400" />
+              <span>{isRo ? 'Sugestii de Înlocuire Inteligentă (Produs cu Produs)' : 'Smart Item Swaps (Item-by-Item)'}</span>
+            </h3>
+
+            {billAnalysisResults.suggestions.length === 0 ? (
+              <div className="py-8 text-center text-stone-500">
+                <CheckCircle2 className="w-10 h-10 mx-auto text-emerald-400 mb-2" />
+                <p className="text-sm font-bold text-stone-300">
+                  {isRo ? 'Toate cumpărăturile tale recente sunt deja la cel mai mic preț!' : 'All your recent purchases were at the lowest price!'}
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {billAnalysisResults.suggestions.map((sug) => {
+                  const origStore = SUPERMARKETS.find((s) => s.id === sug.originalStore);
+                  const cheapStore = SUPERMARKETS.find((s) => s.id === sug.cheaperStore);
+
+                  return (
+                    <div
+                      key={sug.id}
+                      className="p-4 rounded-2xl bg-stone-850 border border-stone-750 hover:border-amber-500/40 transition flex flex-col md:flex-row md:items-center justify-between gap-3 text-xs"
+                    >
+                      {/* Left: Original vs Cheaper */}
+                      <div className="space-y-1.5 flex-1">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="line-through text-stone-400 font-semibold">{sug.originalItemName}</span>
+                          <span className="text-stone-500">→</span>
+                          <span className="font-bold text-emerald-300">{sug.cheaperAlternativeName}</span>
+                        </div>
+
+                        <p className="text-[11px] text-stone-300 leading-relaxed">{sug.rationale}</p>
+                      </div>
+
+                      {/* Right: Store Comparison & Difference */}
+                      <div className="flex items-center justify-between md:justify-end gap-3 shrink-0 pt-2 md:pt-0 border-t md:border-t-0 border-stone-800">
+                        {/* Old Price */}
+                        <div className="text-right">
+                          <span className="text-[10px] text-stone-400 block">{origStore?.name || sug.originalStore}</span>
+                          <span className="line-through text-stone-400 font-mono">{sug.originalPrice.toFixed(2)} {currency}</span>
+                        </div>
+
+                        {/* New Price */}
+                        <div className="text-right">
+                          <span className="text-[10px] text-emerald-400 block font-bold">{cheapStore?.name || sug.cheaperStore}</span>
+                          <span className="text-base font-black text-emerald-400 font-mono">{sug.cheaperPrice.toFixed(2)} {currency}</span>
+                        </div>
+
+                        {/* Savings Badge */}
+                        <span className="px-2.5 py-1 rounded-xl bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 text-xs font-black">
+                          -{sug.savingsRon.toFixed(2)} {currency}
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          {/* Past Receipts History List */}
+          <div className="p-6 rounded-3xl bg-stone-900 border border-stone-800 shadow-xl space-y-4">
+            <h3 className="text-lg font-bold text-white flex items-center gap-2">
+              <Receipt className="w-5 h-5 text-cyan-400" />
+              <span>{isRo ? 'Istoric Bonuri & Cumpărături Memorate' : 'Logged Purchase Bills History'}</span>
+            </h3>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {purchaseHistory.map((rec) => (
+                <div
+                  key={rec.id}
+                  className="p-4 rounded-2xl bg-stone-850 border border-stone-750 space-y-2.5 text-xs"
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Store className="w-4 h-4 text-amber-400" />
+                      <span className="font-bold text-white">{rec.storeName}</span>
+                    </div>
+                    <span className="text-stone-400 font-mono text-[11px]">{rec.date}</span>
+                  </div>
+
+                  <div className="flex items-baseline justify-between pt-1 border-t border-stone-800">
+                    <span className="text-stone-400">{rec.items.length} {isRo ? 'articole cumpărate' : 'items'}</span>
+                    <span className="text-base font-black text-emerald-400 font-mono">
+                      {rec.totalSpent.toFixed(2)} {currency}
+                    </span>
+                  </div>
+
+                  {/* Items preview */}
+                  <div className="space-y-1 max-h-24 overflow-y-auto pr-1 text-[11px] text-stone-300">
+                    {rec.items.map((it, i) => (
+                      <div key={i} className="flex justify-between">
+                        <span className="truncate flex-1">• {it.name}</span>
+                        <span className="font-mono text-stone-400 ml-2">{(it.price || 0).toFixed(2)} {currency}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* SUBTAB: REELS & VIDEO RECIPE EXTRACTOR */}
+      {/* ========================================================================= */}
       {activeSubTab === 'reels' && (
         <div className="space-y-6 animate-in fade-in duration-200">
           {/* Reel Link Extractor Form */}
@@ -764,10 +1412,12 @@ export const GroceryOptimizerView: React.FC<GroceryOptimizerViewProps> = ({
                 <button
                   type="submit"
                   disabled={isExtractingReel || (!reelUrlInput.trim() && !recipeNotesInput.trim())}
-                  className={'px-6 py-3 rounded-2xl font-bold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-lg transition cursor-pointer active:scale-98 shrink-0 ' +
+                  className={
+                    'px-6 py-3 rounded-2xl font-bold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-lg transition cursor-pointer active:scale-98 shrink-0 ' +
                     (isExtractingReel || (!reelUrlInput.trim() && !recipeNotesInput.trim())
                       ? 'bg-stone-800 text-stone-500 border border-stone-700 cursor-not-allowed opacity-60'
-                      : 'bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-400 hover:to-rose-400 text-white shadow-pink-500/25')}
+                      : 'bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-400 hover:to-rose-400 text-white shadow-pink-500/25')
+                  }
                 >
                   {isExtractingReel ? (
                     <>
@@ -938,10 +1588,12 @@ export const GroceryOptimizerView: React.FC<GroceryOptimizerViewProps> = ({
                       key={c}
                       type="button"
                       onClick={() => setRecipeCuisineFilter(c)}
-                      className={'px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer ' +
+                      className={
+                        'px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer ' +
                         (recipeCuisineFilter === c
                           ? 'bg-pink-500 text-white shadow-sm font-black'
-                          : 'bg-stone-900 text-stone-400 hover:text-white border border-stone-800')}
+                          : 'bg-stone-900 text-stone-400 hover:text-white border border-stone-800')
+                      }
                     >
                       {b.flag} {b.label}
                     </button>
@@ -1053,7 +1705,9 @@ export const GroceryOptimizerView: React.FC<GroceryOptimizerViewProps> = ({
         </div>
       )}
 
+      {/* ========================================================================= */}
       {/* SUBTAB 1: SHOPPING LIST & DUAL STRATEGY ENGINE */}
+      {/* ========================================================================= */}
       {activeSubTab === 'list' && (
         <div className="space-y-6">
           {/* Strategy Mode Switcher */}
@@ -1062,10 +1716,10 @@ export const GroceryOptimizerView: React.FC<GroceryOptimizerViewProps> = ({
               <Compass className="w-5 h-5 text-emerald-400 shrink-0" />
               <div>
                 <h3 className="text-sm font-bold text-white">
-                  {isRo ? 'Strategie Optimizare Pret vs. Calitate' : 'Optimization Strategy: Price vs. Quality'}
+                  {isRo ? 'Strategie Optimizare Preț vs. Calitate' : 'Optimization Strategy: Price vs. Quality'}
                 </h3>
                 <p className="text-xs text-stone-400">
-                  {isRo ? 'Alege daca doresti costul minim absolut sau cel mai bun raport calitate/pret' : 'Choose between lowest cost or best quality-to-price ratio'}
+                  {isRo ? 'Alege dacă dorești costul minim absolut sau cel mai bun raport calitate/preț' : 'Choose between lowest cost or best quality-to-price ratio'}
                 </p>
               </div>
             </div>
@@ -1073,24 +1727,30 @@ export const GroceryOptimizerView: React.FC<GroceryOptimizerViewProps> = ({
             <div className="flex flex-wrap gap-1.5">
               <button
                 onClick={() => setQualityPref('CHEAPEST')}
-                className={'px-3.5 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer flex items-center gap-1.5 ' +
-                  (qualityPref === 'CHEAPEST' ? 'bg-amber-500 text-stone-950 shadow-sm font-black' : 'bg-stone-800 text-stone-400 hover:text-white')}
+                className={
+                  'px-3.5 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer flex items-center gap-1.5 ' +
+                  (qualityPref === 'CHEAPEST' ? 'bg-amber-500 text-stone-950 shadow-sm font-black' : 'bg-stone-800 text-stone-400 hover:text-white')
+                }
               >
                 <Coins className="w-3.5 h-3.5" />
-                <span>{isRo ? 'Pret Minim' : 'Cheapest'}</span>
+                <span>{isRo ? 'Preț Minim' : 'Cheapest'}</span>
               </button>
               <button
                 onClick={() => setQualityPref('BEST_VALUE')}
-                className={'px-3.5 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer flex items-center gap-1.5 ' +
-                  (qualityPref === 'BEST_VALUE' ? 'bg-emerald-500 text-stone-950 shadow-sm font-black' : 'bg-stone-800 text-stone-400 hover:text-white')}
+                className={
+                  'px-3.5 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer flex items-center gap-1.5 ' +
+                  (qualityPref === 'BEST_VALUE' ? 'bg-emerald-500 text-stone-950 shadow-sm font-black' : 'bg-stone-800 text-stone-400 hover:text-white')
+                }
               >
                 <Sparkles className="w-3.5 h-3.5" />
-                <span>{isRo ? 'Calitate/Pret Optim' : 'Best Value'}</span>
+                <span>{isRo ? 'Calitate/Preț Optim' : 'Best Value'}</span>
               </button>
               <button
                 onClick={() => setQualityPref('PREMIUM')}
-                className={'px-3.5 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer flex items-center gap-1.5 ' +
-                  (qualityPref === 'PREMIUM' ? 'bg-cyan-500 text-stone-950 shadow-sm font-black' : 'bg-stone-800 text-stone-400 hover:text-white')}
+                className={
+                  'px-3.5 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer flex items-center gap-1.5 ' +
+                  (qualityPref === 'PREMIUM' ? 'bg-cyan-500 text-stone-950 shadow-sm font-black' : 'bg-stone-800 text-stone-400 hover:text-white')
+                }
               >
                 <Star className="w-3.5 h-3.5" />
                 <span>{isRo ? 'Bio & Premium' : 'Bio & Premium'}</span>
@@ -1107,7 +1767,7 @@ export const GroceryOptimizerView: React.FC<GroceryOptimizerViewProps> = ({
                   <Store className="w-4 h-4" />
                   {isRo ? 'Campion 1 Singur Magazin' : '1-Stop Store Champion'}
                 </span>
-                <span className="text-xs text-stone-400">{isRo ? 'O singura oprire rapida' : 'Quick single stop'}</span>
+                <span className="text-xs text-stone-400">{isRo ? 'O singură oprire rapidă' : 'Quick single stop'}</span>
               </div>
 
               {singleStoreLeaderboard.length > 0 && (
@@ -1151,7 +1811,7 @@ export const GroceryOptimizerView: React.FC<GroceryOptimizerViewProps> = ({
                 {splitTripOptimization.savingsVsCheapestSingle > 0 && (
                   <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-[10px] font-bold">
                     {isRo
-                      ? 'Economisesti ' + splitTripOptimization.savingsVsCheapestSingle.toFixed(2) + ' ' + currency + ' (' + splitTripOptimization.savingsPercent + '%)'
+                      ? 'Economisești ' + splitTripOptimization.savingsVsCheapestSingle.toFixed(2) + ' ' + currency + ' (' + splitTripOptimization.savingsPercent + '%)'
                       : 'Save ' + splitTripOptimization.savingsVsCheapestSingle.toFixed(2) + ' ' + currency + ' (' + splitTripOptimization.savingsPercent + '%)'}
                   </span>
                 )}
@@ -1169,11 +1829,11 @@ export const GroceryOptimizerView: React.FC<GroceryOptimizerViewProps> = ({
               <div className="grid grid-cols-2 gap-2 text-xs pt-1">
                 <div className="p-2.5 rounded-2xl bg-stone-950/80 border border-stone-800">
                   <div className="font-bold text-blue-400">{splitTripOptimization.store1.name} ({splitTripOptimization.store1Items.length} {isRo ? 'articole' : 'items'})</div>
-                  <div className="text-[10px] text-stone-400 mt-0.5">{isRo ? 'Lactate, Camara si Paine' : 'Dairy, Pantry & Bread'}</div>
+                  <div className="text-[10px] text-stone-400 mt-0.5">{isRo ? 'Lactate, Cămară și Pâine' : 'Dairy, Pantry & Bread'}</div>
                 </div>
                 <div className="p-2.5 rounded-2xl bg-stone-950/80 border border-stone-800">
                   <div className="font-bold text-red-400">{splitTripOptimization.store2.name} ({splitTripOptimization.store2Items.length} {isRo ? 'articole' : 'items'})</div>
-                  <div className="text-[10px] text-stone-400 mt-0.5">{isRo ? 'Carne Proaspata, Vita si Legume' : 'Fresh Meat, Beef & Veggies'}</div>
+                  <div className="text-[10px] text-stone-400 mt-0.5">{isRo ? 'Carne Proaspătă, Vită și Legume' : 'Fresh Meat, Beef & Veggies'}</div>
                 </div>
               </div>
 
@@ -1186,7 +1846,7 @@ export const GroceryOptimizerView: React.FC<GroceryOptimizerViewProps> = ({
                 className="w-full mt-2 py-2.5 rounded-2xl bg-emerald-500 hover:bg-emerald-400 text-stone-950 font-bold text-xs shadow-md cursor-pointer transition flex items-center justify-center gap-1.5 active:scale-98"
               >
                 <Wallet className="w-3.5 h-3.5" />
-                <span>{isRo ? 'Inregistreaza Cumparaturile in Buget' : 'Log Groceries to Household Budget'}</span>
+                <span>{isRo ? 'Înregistrează Cumpărăturile în Buget' : 'Log Groceries to Household Budget'}</span>
               </button>
             </div>
           </div>
@@ -1196,11 +1856,11 @@ export const GroceryOptimizerView: React.FC<GroceryOptimizerViewProps> = ({
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-stone-800 pb-3">
               <div className="flex items-center gap-2.5">
                 <span className="text-lg font-bold text-white">
-                  {isRo ? 'Articole in Lista (' + shoppingList.length + ')' : 'Shopping List Items (' + shoppingList.length + ')'}
+                  {isRo ? 'Articole în Listă (' + shoppingList.length + ')' : 'Shopping List Items (' + shoppingList.length + ')'}
                 </span>
                 {checkedCount > 0 && (
                   <span className="text-xs px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 font-bold">
-                    {isRo ? checkedCount + ' bifate in magazin' : checkedCount + ' checked in store'}
+                    {isRo ? checkedCount + ' bifate în magazin' : checkedCount + ' checked in store'}
                   </span>
                 )}
               </div>
@@ -1211,14 +1871,14 @@ export const GroceryOptimizerView: React.FC<GroceryOptimizerViewProps> = ({
                   className="px-3.5 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-stone-950 font-bold text-xs flex items-center gap-1 cursor-pointer transition shadow-md"
                 >
                   <Plus className="w-3.5 h-3.5" />
-                  <span>{isRo ? 'Adauga Produs' : 'Add Item'}</span>
+                  <span>{isRo ? 'Adaugă Produs' : 'Add Item'}</span>
                 </button>
                 {checkedCount > 0 && (
                   <button
                     onClick={handleClearCheckedItems}
                     className="px-3.5 py-2 rounded-xl bg-stone-800 hover:bg-stone-750 text-stone-300 text-xs font-semibold cursor-pointer transition"
                   >
-                    {isRo ? 'Sterge Bifatele' : 'Clear Checked'}
+                    {isRo ? 'Șterge Bifatele' : 'Clear Checked'}
                   </button>
                 )}
               </div>
@@ -1228,25 +1888,25 @@ export const GroceryOptimizerView: React.FC<GroceryOptimizerViewProps> = ({
               <div className="py-12 text-center text-stone-500 space-y-3">
                 <ShoppingCart className="w-12 h-12 mx-auto text-stone-600" />
                 <p className="text-base font-bold text-stone-300">
-                  {isRo ? 'Lista ta de cumparaturi este goala.' : 'Your shopping list is currently empty.'}
+                  {isRo ? 'Lista ta de cumpărături este goală.' : 'Your shopping list is currently empty.'}
                 </p>
                 <p className="text-xs text-stone-400 max-w-md mx-auto">
                   {isRo
-                    ? 'Alege o rețetă din Reels, un pachet cultural sau folosește "Coș pe Bugetul Meu"!'
-                    : 'Choose a recipe from Reels, a cultural bundle or use "Smart Budget Fitter"!'}
+                    ? 'Alege un plan de aprovizionare pentru 15/30 de zile, o rețetă din Reels sau generează un coș pe buget!'
+                    : 'Choose a 15/30-day stock up plan, a reel recipe or generate a basket on your budget!'}
                 </p>
-                <div className="flex justify-center gap-2 pt-2">
+                <div className="flex justify-center gap-2 pt-2 flex-wrap">
+                  <button
+                    onClick={() => setActiveSubTab('stockup')}
+                    className="px-4 py-2.5 rounded-xl bg-teal-500 hover:bg-teal-400 text-stone-950 font-bold text-xs cursor-pointer shadow-md"
+                  >
+                    🗓️ {isRo ? 'Aprovizionare 15 / 30 Zile' : '15 / 30 Day Stock-Up'}
+                  </button>
                   <button
                     onClick={() => setActiveSubTab('reels')}
                     className="px-4 py-2.5 rounded-xl bg-pink-500 hover:bg-pink-400 text-white font-bold text-xs cursor-pointer shadow-md"
                   >
                     🎬 {isRo ? 'Vezi Rețete din Reels' : 'View Reel Recipes'}
-                  </button>
-                  <button
-                    onClick={() => setActiveSubTab('budgetFitter')}
-                    className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-emerald-500 text-stone-950 font-bold text-xs cursor-pointer shadow-md"
-                  >
-                    {isRo ? 'Generează Coș pe Buget' : 'Generate Budget Basket'}
                   </button>
                 </div>
               </div>
@@ -1261,10 +1921,12 @@ export const GroceryOptimizerView: React.FC<GroceryOptimizerViewProps> = ({
                   return (
                     <div
                       key={item.id}
-                      className={'w-full p-3.5 sm:p-4 rounded-2xl border transition-all flex flex-col md:flex-row md:items-center justify-between gap-3 overflow-hidden ' +
+                      className={
+                        'w-full p-3.5 sm:p-4 rounded-2xl border transition-all flex flex-col md:flex-row md:items-center justify-between gap-3 overflow-hidden ' +
                         (item.isChecked
                           ? 'bg-stone-950/60 border-stone-800/80 opacity-60'
-                          : 'bg-stone-850 border-stone-750 hover:border-stone-650')}
+                          : 'bg-stone-850 border-stone-750 hover:border-stone-650')
+                      }
                     >
                       {/* Left: Checkbox & Item Details */}
                       <div className="flex items-start sm:items-center gap-3 min-w-0 flex-1">
@@ -1347,7 +2009,7 @@ export const GroceryOptimizerView: React.FC<GroceryOptimizerViewProps> = ({
                           type="button"
                           onClick={() => handleDeleteItem(item.id)}
                           className="w-8 h-8 rounded-xl bg-stone-900/80 hover:bg-rose-500/20 border border-stone-750 hover:border-rose-500/40 text-stone-400 hover:text-rose-400 flex items-center justify-center cursor-pointer transition shrink-0"
-                          title={isRo ? 'Sterge din lista' : 'Delete item'}
+                          title={isRo ? 'Șterge din listă' : 'Delete item'}
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>
@@ -1361,7 +2023,9 @@ export const GroceryOptimizerView: React.FC<GroceryOptimizerViewProps> = ({
         </div>
       )}
 
+      {/* ========================================================================= */}
       {/* SUBTAB 2: SMART BUDGET FITTER */}
+      {/* ========================================================================= */}
       {activeSubTab === 'budgetFitter' && (
         <div className="space-y-6 animate-in fade-in duration-200">
           <div className="bg-gradient-to-br from-stone-900 via-stone-850 to-stone-900 p-6 sm:p-7 rounded-3xl border border-amber-500/30 shadow-2xl space-y-4">
@@ -1403,8 +2067,10 @@ export const GroceryOptimizerView: React.FC<GroceryOptimizerViewProps> = ({
                       key={amt}
                       type="button"
                       onClick={() => setTargetBudgetInput(amt)}
-                      className={'px-3 py-2 rounded-xl text-xs font-bold cursor-pointer transition ' +
-                        (targetBudgetInput === amt ? 'bg-amber-500 text-stone-950 font-black' : 'bg-stone-800 text-stone-300 hover:bg-stone-750')}
+                      className={
+                        'px-3 py-2 rounded-xl text-xs font-bold cursor-pointer transition ' +
+                        (targetBudgetInput === amt ? 'bg-amber-500 text-stone-950 font-black' : 'bg-stone-800 text-stone-300 hover:bg-stone-750')
+                      }
                     >
                       {amt} {currency}
                     </button>
@@ -1454,10 +2120,12 @@ export const GroceryOptimizerView: React.FC<GroceryOptimizerViewProps> = ({
                     key={item.id}
                     type="button"
                     onClick={() => setBudgetDiversityFocus(item.id as any)}
-                    className={'p-2.5 rounded-2xl border text-center transition cursor-pointer ' +
+                    className={
+                      'p-2.5 rounded-2xl border text-center transition cursor-pointer ' +
                       (budgetDiversityFocus === item.id
                         ? 'bg-gradient-to-r from-amber-500/20 to-emerald-500/20 border-emerald-500 text-white ring-1 ring-emerald-500/50 shadow-md font-bold'
-                        : 'bg-stone-900 border-stone-800 text-stone-400 hover:text-stone-200')}
+                        : 'bg-stone-900 border-stone-800 text-stone-400 hover:text-stone-200')
+                    }
                   >
                     <div className="text-base">{item.flag}</div>
                     <div className="text-[11px] mt-0.5 truncate">{item.label}</div>
@@ -1563,7 +2231,9 @@ export const GroceryOptimizerView: React.FC<GroceryOptimizerViewProps> = ({
         </div>
       )}
 
+      {/* ========================================================================= */}
       {/* SUBTAB 3: CULTURAL QUICK BUNDLES (6 CUISINES) */}
+      {/* ========================================================================= */}
       {activeSubTab === 'bundles' && (
         <div className="space-y-4 animate-in fade-in duration-200">
           <div className="bg-stone-900 p-5 sm:p-6 rounded-3xl border border-stone-800">
@@ -1626,32 +2296,37 @@ export const GroceryOptimizerView: React.FC<GroceryOptimizerViewProps> = ({
         </div>
       )}
 
+      {/* ========================================================================= */}
       {/* SUBTAB 4: 6-STORE PRICE MATRIX */}
+      {/* ========================================================================= */}
       {activeSubTab === 'matrix' && (
         <div className="space-y-4 animate-in fade-in duration-200">
           <div className="bg-stone-900 p-4 rounded-3xl border border-stone-800 space-y-3">
             <div className="flex flex-col sm:flex-row gap-3">
               <input
                 type="text"
-                placeholder={isRo ? 'Caută în catalog (paella, carbonara, burger, bratwurst, couscous, telemea...)' : 'Search catalog (paella, carbonara, burger, bratwurst, couscous, cheese...)'}
+                placeholder={isRo ? 'Caută în catalog (chipsuri, ciocolată, lenor, ariel, borsec, cafea, paella, burger...)' : 'Search catalog (chips, chocolate, lenor, ariel, water, coffee, paella...)'}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="flex-1 bg-stone-950 border border-stone-800 rounded-xl px-3.5 py-2 text-xs text-white placeholder-stone-500 focus:outline-none focus:border-emerald-500"
               />
+
+              {/* Category Filter Pills */}
               <div className="flex gap-1.5 flex-wrap">
-                {(['ALL', 'SPANISH', 'ITALIAN', 'AMERICAN', 'GERMAN', 'MOROCCAN', 'ROMANIAN'] as (GroceryCuisineType | 'ALL')[]).map((c) => {
-                  const b = c === 'ALL' ? { label: isRo ? 'Toate' : 'All', flag: '🌍' } : getCuisineBadge(c);
+                {(['ALL', 'DAIRY', 'MEAT_FISH', 'PANTRY', 'SNACKS', 'BEVERAGES', 'CLEANING'] as (GroceryCategory | 'ALL')[]).map((cat) => {
+                  const cfg = cat === 'ALL' ? { labelRo: 'Toate', icon: '🌍' } : GROCERY_CATEGORIES_CONFIG[cat];
                   return (
                     <button
-                      key={c}
+                      key={cat}
                       type="button"
-                      onClick={() => setCuisineFilter(c)}
-                      className={'px-3 py-1.5 rounded-xl text-xs font-bold cursor-pointer transition ' +
-                        (cuisineFilter === c
-                          ? 'bg-emerald-500 text-stone-950 font-black'
-                          : 'bg-stone-800 text-stone-300')}
+                      onClick={() => setCategoryFilter(cat)}
+                      className={
+                        'px-2.5 py-1.5 rounded-xl text-xs font-bold cursor-pointer transition flex items-center gap-1 ' +
+                        (categoryFilter === cat ? 'bg-emerald-500 text-stone-950 font-black' : 'bg-stone-800 text-stone-300')
+                      }
                     >
-                      {b.flag} {b.label}
+                      <span>{cfg.icon}</span>
+                      <span className="hidden sm:inline">{cfg.labelRo}</span>
                     </button>
                   );
                 })}
@@ -1663,6 +2338,7 @@ export const GroceryOptimizerView: React.FC<GroceryOptimizerViewProps> = ({
             {groceryCatalog
               .filter((item) => {
                 if (cuisineFilter !== 'ALL' && item.cuisine !== cuisineFilter) return false;
+                if (categoryFilter !== 'ALL' && item.category !== categoryFilter) return false;
                 if (searchQuery.trim() && !item.name.toLowerCase().includes(searchQuery.toLowerCase())) return false;
                 return true;
               })
@@ -1670,6 +2346,7 @@ export const GroceryOptimizerView: React.FC<GroceryOptimizerViewProps> = ({
                 const storeEntries = Object.entries(catItem.stores || {}) as [SupermarketId, { price: number; qualityScore: number; brandName?: string }][];
                 const lowestStore = storeEntries.length > 0 ? storeEntries.sort((a, b) => a[1].price - b[1].price)[0] : null;
                 const b = catItem.cuisine ? getCuisineBadge(catItem.cuisine) : null;
+                const catCfg = GROCERY_CATEGORIES_CONFIG[catItem.category];
 
                 return (
                   <div
@@ -1678,8 +2355,9 @@ export const GroceryOptimizerView: React.FC<GroceryOptimizerViewProps> = ({
                   >
                     <div>
                       <div className="flex items-center justify-between mb-1.5">
-                        <span className="text-[10px] font-bold text-stone-400 uppercase tracking-wider">
-                          {catItem.category}
+                        <span className="text-[10px] font-bold text-stone-400 uppercase tracking-wider flex items-center gap-1">
+                          <span>{catCfg?.icon}</span>
+                          <span>{catCfg?.labelRo || catItem.category}</span>
                         </span>
                         {b && (
                           <span className={'text-[10px] font-bold px-2 py-0.5 rounded-md border ' + b.color}>
@@ -1697,10 +2375,12 @@ export const GroceryOptimizerView: React.FC<GroceryOptimizerViewProps> = ({
                           return (
                             <div
                               key={st.id}
-                              className={'flex items-center justify-between p-2 rounded-xl ' +
+                              className={
+                                'flex items-center justify-between p-2 rounded-xl ' +
                                 (isLowest
                                   ? 'bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 font-bold'
-                                  : 'bg-stone-950/60 text-stone-300')}
+                                  : 'bg-stone-950/60 text-stone-300')
+                              }
                             >
                               <div className="flex items-center gap-2">
                                 <span>{st.icon}</span>
@@ -1841,7 +2521,7 @@ export const GroceryOptimizerView: React.FC<GroceryOptimizerViewProps> = ({
                 <input
                   type="text"
                   required
-                  placeholder={isRo ? 'ex: Orez Bomba, Guanciale, Piept pui, Cheddar' : 'e.g., Rice, Cheese, Chicken'}
+                  placeholder={isRo ? 'ex: Chipsuri Lays, Ciocolată Milka, Detergent Ariel, Suc portocale' : 'e.g., Chips, Chocolate, Detergent, Juice'}
                   value={newItemName}
                   onChange={(e) => setNewItemName(e.target.value)}
                   className="w-full bg-stone-950 border border-stone-800 rounded-xl px-3.5 py-2 text-xs text-white focus:outline-none focus:border-emerald-500"
@@ -1872,9 +2552,9 @@ export const GroceryOptimizerView: React.FC<GroceryOptimizerViewProps> = ({
                     className="w-full bg-stone-950 border border-stone-800 rounded-xl px-3.5 py-2 text-xs text-white focus:outline-none focus:border-emerald-500"
                   >
                     <option value="buc">{isRo ? 'buc (bucăți)' : 'pcs (pieces)'}</option>
-                    <option value="kg">{isRo ? 'kg (kilograme)' : 'kg (kilograms)'}</option>
-                    <option value="L">{isRo ? 'L (litri)' : 'L (liters)'}</option>
-                    <option value="pachet">{isRo ? 'pachet' : 'pack'}</option>
+                    <option value="pachet">{isRo ? 'pachet / bax' : 'pack'}</option>
+                    <option value="kg">{isRo ? 'kg (kilograme)' : 'kg'}</option>
+                    <option value="L">{isRo ? 'L (litri)' : 'L'}</option>
                   </select>
                 </div>
               </div>
@@ -1891,11 +2571,11 @@ export const GroceryOptimizerView: React.FC<GroceryOptimizerViewProps> = ({
                   <option value="DAIRY">{isRo ? 'Lactate & Ouă' : 'Dairy & Eggs'}</option>
                   <option value="MEAT_FISH">{isRo ? 'Carne & Pește' : 'Meat & Fish'}</option>
                   <option value="FRUITS_VEGGIES">{isRo ? 'Fructe & Legume' : 'Produce & Veggies'}</option>
-                  <option value="BAKERY">{isRo ? 'Pâine & Brutării' : 'Bakery & Bread'}</option>
+                  <option value="BAKERY">{isRo ? 'Pâine & Brutărie' : 'Bakery & Bread'}</option>
                   <option value="PANTRY">{isRo ? 'Cămară & Uleiuri' : 'Pantry & Oils'}</option>
+                  <option value="SNACKS">{isRo ? 'Snacks & Dulciuri' : 'Snacks & Sweets'}</option>
+                  <option value="BEVERAGES">{isRo ? 'Băuturi & Sucuri' : 'Beverages & Drinks'}</option>
                   <option value="CLEANING">{isRo ? 'Curățenie & Menaj' : 'Cleaning & Home'}</option>
-                  <option value="BEVERAGES">{isRo ? 'Băuturi & Ceai' : 'Beverages & Tea'}</option>
-                  <option value="SNACKS">{isRo ? 'Gustări & Dulciuri' : 'Snacks & Sweets'}</option>
                 </select>
               </div>
 
@@ -2054,22 +2734,24 @@ export const GroceryOptimizerView: React.FC<GroceryOptimizerViewProps> = ({
                         ? husbandBal
                         : sharedBal) < logAmount
                     }
-                    className={'px-5 py-2.5 rounded-xl text-xs font-bold shadow-lg transition cursor-pointer ' +
+                    className={
+                      'px-5 py-2.5 rounded-xl text-xs font-bold shadow-lg transition cursor-pointer ' +
                       ((logPayer === 'WIFE_SALARY'
                         ? wifeBal
                         : logPayer === 'FREELANCE_BUFFER'
                         ? husbandBal
                         : sharedBal) < logAmount
                         ? 'bg-stone-800 text-stone-500 border border-stone-700 cursor-not-allowed opacity-60'
-                        : 'bg-emerald-500 hover:bg-emerald-400 text-stone-950 shadow-emerald-500/20 active:scale-98')}
+                        : 'bg-emerald-500 hover:bg-emerald-400 text-stone-950 shadow-emerald-500/20 active:scale-98')
+                    }
                   >
                     {(logPayer === 'WIFE_SALARY'
                       ? wifeBal
                       : logPayer === 'FREELANCE_BUFFER'
                       ? husbandBal
                       : sharedBal) < logAmount
-                      ? (isRo ? 'Sold Insuficient — Blocat' : '0 Balance — Blocked')
-                      : (isRo ? 'Salvează & Scade din Buget' : 'Save & Deduct from Budget')}
+                      ? isRo ? 'Sold Insuficient — Blocat' : '0 Balance — Blocked'
+                      : isRo ? 'Salvează & Scade din Buget' : 'Save & Deduct from Budget'}
                   </button>
                 </div>
               </form>

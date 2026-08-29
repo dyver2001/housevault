@@ -38,6 +38,8 @@ import {
   saveGroceryList,
   loadGroceryCatalog,
   saveGroceryCatalog,
+  loadActivities,
+  saveActivities,
   resetAllToDefaults,
   exportBackupJson,
   importBackupJson
@@ -81,8 +83,11 @@ export const App: React.FC = () => {
   const [expenses, setExpenses] = useState<HouseholdExpense[]>(loadExpenses);
   const [splitRule, setSplitRule] = useState<WindfallSplitRule>(loadSplitRule);
   const [groceryList, setGroceryList] = useState<ShoppingListItem[]>(loadGroceryList);
-  const [groceryCatalog, setGroceryCatalog] = useState<GroceryCatalogItem[]>(loadGroceryCatalog);
-  const [activities, setActivities] = useState<ActivityItem[]>([]);
+  const [activities, setActivities] = useState<ActivityItem[]>(loadActivities);
+
+  useEffect(() => {
+    saveActivities(activities);
+  }, [activities]);
 
   // Live Cash Pockets & Account Balances Calculation
   const wifeSalaryBalance = useMemo(() => {
@@ -254,8 +259,33 @@ export const App: React.FC = () => {
 
   // Emoji Reaction Handler
   const handleReactToActivity = async (activityId: string, emoji: string) => {
-    // Optimistic local update
-    const updated = activities.map((a) => {
+    let currentList = activities;
+    if (currentList.length === 0) {
+      currentList = [
+        {
+          id: 'act-1',
+          timestamp: new Date(Date.now() - 15 * 60 * 1000).toISOString(),
+          actorName: profile.husbandName.split(' ')[0],
+          actorRole: 'husband',
+          type: 'PROJECT_COLLECTED',
+          title: 'A încasat 4.500 lei pentru Proiectul Commercial Video Shoot',
+          amount: 4500,
+          reactions: { '🎉': 3, '❤️': 2, '🚀': 1 }
+        },
+        {
+          id: 'act-2',
+          timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
+          actorName: profile.wifeName.split(' ')[0],
+          actorRole: 'wife',
+          type: 'EXPENSE_PAID',
+          title: 'A bifat factura de Utilități & Curent (380 lei)',
+          amount: 380,
+          reactions: { '✅': 2, '❤️': 1 }
+        }
+      ];
+    }
+
+    const updated = currentList.map((a) => {
       if (a.id === activityId) {
         const reacts = { ...(a.reactions || {}) };
         reacts[emoji] = (reacts[emoji] || 0) + 1;
@@ -264,6 +294,7 @@ export const App: React.FC = () => {
       return a;
     });
     setActivities(updated);
+    pushCurrentStateToCloud({ activities: updated });
 
     if (syncCode) {
       try {
@@ -280,6 +311,17 @@ export const App: React.FC = () => {
         // ignore
       }
     }
+  };
+
+  const handleDeleteActivity = (activityId: string) => {
+    const updated = activities.filter((a) => a.id !== activityId);
+    setActivities(updated);
+    pushCurrentStateToCloud({ activities: updated });
+  };
+
+  const handleClearAllActivities = () => {
+    setActivities([]);
+    pushCurrentStateToCloud({ activities: [] });
   };
 
   // Subscribe to Live Cloud Vault when syncCode is present
@@ -720,6 +762,8 @@ export const App: React.FC = () => {
         onClose={() => setIsActivityFeedOpen(false)}
         activities={activities}
         onReact={handleReactToActivity}
+        onDeleteActivity={handleDeleteActivity}
+        onClearAllActivities={handleClearAllActivities}
         currencySymbol={profile.currencySymbol}
         lang={profile.language || 'ro'}
       />

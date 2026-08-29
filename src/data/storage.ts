@@ -7,7 +7,9 @@ import {
   WindfallSplitRule,
   GroceryCatalogItem,
   ShoppingListItem,
-  SavedRecipeReel
+  SavedRecipeReel,
+  ReceiptPurchaseRecord,
+  ActivityItem
 } from '../types';
 import {
   DEFAULT_PROFILE,
@@ -20,7 +22,8 @@ import {
 import {
   DEFAULT_GROCERY_CATALOG,
   DEFAULT_SHOPPING_LIST,
-  DEFAULT_SAVED_RECIPES
+  DEFAULT_SAVED_RECIPES,
+  DEFAULT_PURCHASE_HISTORY
 } from './groceryData';
 
 const KEYS = {
@@ -32,7 +35,9 @@ const KEYS = {
   SPLIT_RULE: 'housevault_split_rule',
   GROCERY_LIST: 'housevault_grocery_list',
   GROCERY_CATALOG: 'housevault_grocery_catalog',
-  SAVED_RECIPES: 'housevault_saved_recipes'
+  SAVED_RECIPES: 'housevault_saved_recipes',
+  PURCHASE_HISTORY: 'housevault_purchase_history',
+  ACTIVITIES: 'housevault_activities'
 };
 
 export function loadProfile(): HouseholdProfile {
@@ -184,6 +189,39 @@ export function loadSavedRecipes(): SavedRecipeReel[] {
 export function saveSavedRecipes(recipes: SavedRecipeReel[]): void {
   localStorage.setItem(KEYS.SAVED_RECIPES, JSON.stringify(recipes));
 }
+
+export function loadPurchaseHistory(): ReceiptPurchaseRecord[] {
+  try {
+    const raw = localStorage.getItem(KEYS.PURCHASE_HISTORY);
+    if (!raw) return DEFAULT_PURCHASE_HISTORY;
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed) || parsed.length === 0) return DEFAULT_PURCHASE_HISTORY;
+    return parsed;
+  } catch {
+    return DEFAULT_PURCHASE_HISTORY;
+  }
+}
+
+export function savePurchaseHistory(records: ReceiptPurchaseRecord[]): void {
+  localStorage.setItem(KEYS.PURCHASE_HISTORY, JSON.stringify(records));
+}
+
+export function loadActivities(): ActivityItem[] {
+  try {
+    const raw = localStorage.getItem(KEYS.ACTIVITIES);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return [];
+    return parsed;
+  } catch {
+    return [];
+  }
+}
+
+export function saveActivities(activities: ActivityItem[]): void {
+  localStorage.setItem(KEYS.ACTIVITIES, JSON.stringify(activities));
+}
+
 
 
 export function resetAllToDefaults(): {
