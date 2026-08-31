@@ -194,19 +194,47 @@ export const App: React.FC = () => {
 
   // Apply a remote snapshot received from cloud
   const applyRemoteSnapshot = (data: any) => {
+    if (!data) return;
     isInternalUpdate.current = true;
-    if (data.profile) setProfile(data.profile);
-    if (data.projects) setProjects(data.projects);
-    if (data.debts) setDebts(data.debts);
-    if (data.targets) setTargets(data.targets);
-    if (data.expenses) setExpenses(data.expenses);
-    if (data.splitRule) setSplitRule(data.splitRule);
-    if (data.activities) setActivities(data.activities);
-    if (data.groceryList) setGroceryList(data.groceryList);
-    if (data.groceryCatalog) setGroceryCatalog(data.groceryCatalog);
+    if (data.profile) {
+      setProfile(data.profile);
+      saveProfile(data.profile);
+    }
+    if (data.projects) {
+      setProjects(data.projects);
+      saveProjects(data.projects);
+    }
+    if (data.debts) {
+      setDebts(data.debts);
+      saveDebts(data.debts);
+    }
+    if (data.targets) {
+      setTargets(data.targets);
+      saveTargets(data.targets);
+    }
+    if (data.expenses) {
+      setExpenses(data.expenses);
+      saveExpenses(data.expenses);
+    }
+    if (data.splitRule) {
+      setSplitRule(data.splitRule);
+      saveSplitRule(data.splitRule);
+    }
+    if (data.activities) {
+      setActivities(data.activities);
+      saveActivities(data.activities);
+    }
+    if (data.groceryList) {
+      setGroceryList(data.groceryList);
+      saveGroceryList(data.groceryList);
+    }
+    if (data.groceryCatalog) {
+      setGroceryCatalog(data.groceryCatalog);
+      saveGroceryCatalog(data.groceryCatalog);
+    }
     setTimeout(() => {
       isInternalUpdate.current = false;
-    }, 300);
+    }, 400);
   };
 
   // Push local updates to Cloud Vault (Real-time Broadcast)
@@ -223,17 +251,17 @@ export const App: React.FC = () => {
   }) => {
     if (!syncCode || isInternalUpdate.current) return;
     const fullData = {
-      profile: override?.profile || profile,
-      projects: override?.projects || projects,
-      debts: override?.debts || debts,
-      targets: override?.targets || targets,
-      expenses: override?.expenses || expenses,
-      splitRule: override?.splitRule || splitRule,
-      activities: override?.activities || activities,
-      groceryList: override?.groceryList || groceryList,
-      groceryCatalog: override?.groceryCatalog || groceryCatalog
+      profile: override?.profile || loadProfile(),
+      projects: override?.projects || loadProjects(),
+      debts: override?.debts || loadDebts(),
+      targets: override?.targets || loadTargets(),
+      expenses: override?.expenses || loadExpenses(),
+      splitRule: override?.splitRule || loadSplitRule(),
+      activities: override?.activities || loadActivities(),
+      groceryList: override?.groceryList || loadGroceryList(),
+      groceryCatalog: override?.groceryCatalog || loadGroceryCatalog()
     };
-    pushCloudVault(syncCode, fullData, `${profile.husbandName} & ${profile.wifeName}`).then((res) => {
+    pushCloudVault(syncCode, fullData, `${profile?.husbandName || 'Haytham'} & ${profile?.wifeName || 'Cati'}`).then((res) => {
       if (res.success && res.vault) {
         setLastSyncTime(res.vault.lastUpdated || new Date().toISOString());
       }
@@ -256,6 +284,7 @@ export const App: React.FC = () => {
 
     const updated = [newActivity, ...activities].slice(0, 30);
     setActivities(updated);
+    saveActivities(updated);
     pushCurrentStateToCloud({ activities: updated });
   };
 
@@ -296,6 +325,7 @@ export const App: React.FC = () => {
       return a;
     });
     setActivities(updated);
+    saveActivities(updated);
     pushCurrentStateToCloud({ activities: updated });
 
     if (syncCode) {
@@ -318,11 +348,13 @@ export const App: React.FC = () => {
   const handleDeleteActivity = (activityId: string) => {
     const updated = activities.filter((a) => a.id !== activityId);
     setActivities(updated);
+    saveActivities(updated);
     pushCurrentStateToCloud({ activities: updated });
   };
 
   const handleClearAllActivities = () => {
     setActivities([]);
+    saveActivities([]);
     pushCurrentStateToCloud({ activities: [] });
   };
 
@@ -353,6 +385,7 @@ export const App: React.FC = () => {
     setProjects((prev) => {
       const idx = prev.findIndex((p) => p.id === project.id);
       const nextProjects = idx >= 0 ? prev.map((p) => (p.id === project.id ? project : p)) : [project, ...prev];
+      saveProjects(nextProjects);
       pushCurrentStateToCloud({ projects: nextProjects });
       return nextProjects;
     });
@@ -361,6 +394,7 @@ export const App: React.FC = () => {
   const handleDeleteProject = (projectId: string) => {
     setProjects((prev) => {
       const nextProjects = prev.filter((p) => p.id !== projectId);
+      saveProjects(nextProjects);
       pushCurrentStateToCloud({ projects: nextProjects });
       return nextProjects;
     });
@@ -371,6 +405,7 @@ export const App: React.FC = () => {
     setDebts((prev) => {
       const idx = prev.findIndex((d) => d.id === debt.id);
       const nextDebts = idx >= 0 ? prev.map((d) => (d.id === debt.id ? debt : d)) : [...prev, debt];
+      saveDebts(nextDebts);
       pushCurrentStateToCloud({ debts: nextDebts });
       return nextDebts;
     });
@@ -379,6 +414,7 @@ export const App: React.FC = () => {
   const handleDeleteDebt = (debtId: string) => {
     setDebts((prev) => {
       const nextDebts = prev.filter((d) => d.id !== debtId);
+      saveDebts(nextDebts);
       pushCurrentStateToCloud({ debts: nextDebts });
       return nextDebts;
     });
@@ -393,6 +429,7 @@ export const App: React.FC = () => {
         }
         return d;
       });
+      saveDebts(nextDebts);
       pushCurrentStateToCloud({ debts: nextDebts });
       return nextDebts;
     });
@@ -403,6 +440,7 @@ export const App: React.FC = () => {
     setTargets((prev) => {
       const idx = prev.findIndex((t) => t.id === target.id);
       const nextTargets = idx >= 0 ? prev.map((t) => (t.id === target.id ? target : t)) : [...prev, target];
+      saveTargets(nextTargets);
       pushCurrentStateToCloud({ targets: nextTargets });
       return nextTargets;
     });
@@ -411,6 +449,7 @@ export const App: React.FC = () => {
   const handleDeleteTarget = (targetId: string) => {
     setTargets((prev) => {
       const nextTargets = prev.filter((t) => t.id !== targetId);
+      saveTargets(nextTargets);
       pushCurrentStateToCloud({ targets: nextTargets });
       return nextTargets;
     });
@@ -424,6 +463,7 @@ export const App: React.FC = () => {
         }
         return t;
       });
+      saveTargets(nextTargets);
       pushCurrentStateToCloud({ targets: nextTargets });
       return nextTargets;
     });
@@ -434,6 +474,7 @@ export const App: React.FC = () => {
     setExpenses((prev) => {
       const idx = prev.findIndex((e) => e.id === expense.id);
       const nextExpenses = idx >= 0 ? prev.map((e) => (e.id === expense.id ? expense : e)) : [...prev, expense];
+      saveExpenses(nextExpenses);
       pushCurrentStateToCloud({ expenses: nextExpenses });
       return nextExpenses;
     });
@@ -442,6 +483,7 @@ export const App: React.FC = () => {
   const handleDeleteExpense = (expenseId: string) => {
     setExpenses((prev) => {
       const nextExpenses = prev.filter((e) => e.id !== expenseId);
+      saveExpenses(nextExpenses);
       pushCurrentStateToCloud({ expenses: nextExpenses });
       return nextExpenses;
     });
@@ -538,8 +580,11 @@ export const App: React.FC = () => {
     }
 
     setProjects(nextProjects);
+    saveProjects(nextProjects);
     setDebts(nextDebts);
+    saveDebts(nextDebts);
     setTargets(nextTargets);
+    saveTargets(nextTargets);
     setCollectProject(null);
 
     pushCurrentStateToCloud({
@@ -845,10 +890,12 @@ export const App: React.FC = () => {
           onOpenInstall={() => setIsInstallOpen(true)}
           onSaveProfile={(p) => {
             setProfile(p);
+            saveProfile(p);
             pushCurrentStateToCloud({ profile: p });
           }}
           onSaveSplitRule={(s) => {
             setSplitRule(s);
+            saveSplitRule(s);
             pushCurrentStateToCloud({ splitRule: s });
           }}
           onExportJson={handleExportJson}
