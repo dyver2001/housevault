@@ -11,6 +11,11 @@ const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
 app.use(cors());
 app.use(express.json({ limit: '10mb' }));
 
+// Health Check endpoints for Render / Pingers (UptimeRobot, cron-jobs)
+app.get(['/health', '/healthz', '/api/health'], (_req: Request, res: Response) => {
+  res.status(200).json({ status: 'ok', uptime: process.uptime(), timestamp: new Date().toISOString() });
+});
+
 // Ensure data directory exists
 const DATA_DIR = path.join(process.cwd(), 'data');
 if (!fs.existsSync(DATA_DIR)) {
@@ -1264,7 +1269,9 @@ async function start() {
     res.sendFile(path.join(distPath, 'index.html'));
   };
 
-  if (process.env.NODE_ENV === 'production') {
+  const isDistBuilt = fs.existsSync(path.join(distPath, 'index.html'));
+
+  if (process.env.NODE_ENV === 'production' || isDistBuilt) {
     app.use(express.static(distPath, staticOptions));
     app.get('*', sendFreshIndex);
   } else {
