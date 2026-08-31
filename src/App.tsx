@@ -21,6 +21,7 @@ import { ActivityFeedModal } from './components/ActivityFeedModal';
 import { ReceiptScannerModal } from './components/ReceiptScannerModal';
 import { MonthlyReportModal } from './components/MonthlyReportModal';
 import { GearTaxToolsModal } from './components/GearTaxToolsModal';
+import { QuickBuyModal } from './components/QuickBuyModal';
 
 import {
   loadProfile,
@@ -139,6 +140,7 @@ export const App: React.FC = () => {
   // Modals state
   const [isActivityFeedOpen, setIsActivityFeedOpen] = useState(false);
   const [isReceiptScannerOpen, setIsReceiptScannerOpen] = useState(false);
+  const [isQuickBuyOpen, setIsQuickBuyOpen] = useState(false);
   const [isMonthlyReportOpen, setIsMonthlyReportOpen] = useState(false);
   const [isGearTaxOpen, setIsGearTaxOpen] = useState(false);
 
@@ -794,6 +796,7 @@ export const App: React.FC = () => {
             onOpenCollectModal={(project) => setCollectProject(project)}
             onOpenNewProject={() => setEditingProject(null)}
             onOpenNewExpense={() => setEditingExpense(null)}
+            onOpenQuickBuy={() => setIsQuickBuyOpen(true)}
             onOpenSettings={() => setIsSettingsOpen(true)}
             onOpenScanner={() => setIsReceiptScannerOpen(true)}
             onOpenReport={() => setIsMonthlyReportOpen(true)}
@@ -828,6 +831,7 @@ export const App: React.FC = () => {
             cashBalances={cashBalances}
             onOpenNewExpense={() => setEditingExpense(null)}
             onOpenScanner={() => setIsReceiptScannerOpen(true)}
+            onOpenQuickBuy={() => setIsQuickBuyOpen(true)}
             onEditExpense={(e) => setEditingExpense(e)}
             onDeleteExpense={handleDeleteExpense}
             onOpenNewDebt={() => setEditingDebt(null)}
@@ -1022,6 +1026,15 @@ export const App: React.FC = () => {
           onSave={handleSaveExpense}
         />
       )}
+
+      {/* Quick Buy / Personal Direct Spend Modal */}
+      <QuickBuyModal
+        isOpen={isQuickBuyOpen}
+        onClose={() => setIsQuickBuyOpen(false)}
+        profile={profile}
+        cashBalances={cashBalances}
+        onConfirmPurchase={handleAddDirectExpense}
+      />
 
       {/* Auth Modal */}
       <AuthModal

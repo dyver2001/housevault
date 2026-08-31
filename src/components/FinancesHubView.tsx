@@ -1,5 +1,5 @@
 ﻿import React, { useState } from 'react';
-import { Receipt, Landmark, ShoppingCart, Sparkles, Plus, Camera } from 'lucide-react';
+import { Receipt, Landmark, ShoppingCart, Sparkles, Plus, Camera, Zap } from 'lucide-react';
 import {
   HouseholdProfile,
   HouseholdExpense,
@@ -25,6 +25,7 @@ interface FinancesHubViewProps {
   cashBalances: CashPocketsBalance;
   onOpenNewExpense: () => void;
   onOpenScanner: () => void;
+  onOpenQuickBuy?: () => void;
   onEditExpense: (expense: HouseholdExpense) => void;
   onDeleteExpense: (expenseId: string) => void;
   onOpenNewDebt: () => void;
@@ -46,6 +47,7 @@ export const FinancesHubView: React.FC<FinancesHubViewProps> = ({
   cashBalances,
   onOpenNewExpense,
   onOpenScanner,
+  onOpenQuickBuy,
   onEditExpense,
   onDeleteExpense,
   onOpenNewDebt,
@@ -126,15 +128,28 @@ export const FinancesHubView: React.FC<FinancesHubViewProps> = ({
           </button>
         </div>
 
-        {/* Joyful Scanner Action Button */}
-        <button
-          type="button"
-          onClick={onOpenScanner}
-          className="hidden md:flex items-center space-x-2 px-4 py-2.5 rounded-2xl bg-cyan-500/15 hover:bg-cyan-500/25 text-cyan-300 border border-cyan-500/30 font-bold text-xs shadow-md transition-all cursor-pointer shrink-0"
-        >
-          <Camera className="w-4 h-4 text-cyan-400" />
-          <span>{isRo ? 'Scanează Bon' : 'Scan Receipt'}</span>
-        </button>
+        {/* Action Buttons */}
+        <div className="flex items-center gap-1.5 shrink-0">
+          {onOpenQuickBuy && (
+            <button
+              type="button"
+              onClick={onOpenQuickBuy}
+              className="flex items-center space-x-1.5 px-3.5 py-2.5 rounded-2xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-stone-950 font-black text-xs shadow-md transition-all cursor-pointer active:scale-95"
+            >
+              <Zap className="w-3.5 h-3.5 fill-stone-950" />
+              <span className="hidden sm:inline">⚡ Cumpără Rapid</span>
+            </button>
+          )}
+
+          <button
+            type="button"
+            onClick={onOpenScanner}
+            className="hidden md:flex items-center space-x-2 px-4 py-2.5 rounded-2xl bg-cyan-500/15 hover:bg-cyan-500/25 text-cyan-300 border border-cyan-500/30 font-bold text-xs shadow-md transition-all cursor-pointer shrink-0 active:scale-95"
+          >
+            <Camera className="w-4 h-4 text-cyan-400" />
+            <span>{isRo ? 'Scanează Bon' : 'Scan Receipt'}</span>
+          </button>
+        </div>
       </div>
 
       {/* Sub-View Content */}
@@ -145,6 +160,7 @@ export const FinancesHubView: React.FC<FinancesHubViewProps> = ({
             profile={profile}
             onOpenNewExpense={onOpenNewExpense}
             onOpenScanner={onOpenScanner}
+            onOpenQuickBuy={onOpenQuickBuy}
             onEditExpense={onEditExpense}
             onDeleteExpense={onDeleteExpense}
           />

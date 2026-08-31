@@ -82,7 +82,8 @@ export type ExpensePayer =
   | 'WIFE_SALARY'
   | 'WIFE_MEAL_TICKETS'
   | 'FREELANCE_BUFFER'
-  | 'SHARED_POOL';
+  | 'SHARED_POOL'
+  | 'DECIDE_LATER';
 
 export interface HouseholdExpense {
   id: string;
@@ -91,6 +92,7 @@ export interface HouseholdExpense {
   category: ExpenseCategory;
   isFixed: boolean;
   assignedPayer: ExpensePayer;
+  isPaid?: boolean;
 }
 
 export interface HouseholdProfile {

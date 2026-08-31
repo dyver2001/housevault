@@ -1,11 +1,14 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import {
   Receipt,
   Plus,
   ShieldCheck,
   Trash2,
   Edit2,
-  Camera
+  Camera,
+  Zap,
+  HelpCircle,
+  CheckCircle2
 } from 'lucide-react';
 import { HouseholdExpense, HouseholdProfile, ExpenseCategory, ExpensePayer } from '../types';
 
@@ -14,8 +17,10 @@ interface HouseholdBudgetViewProps {
   expenses: HouseholdExpense[];
   onOpenNewExpense: () => void;
   onOpenScanner?: () => void;
+  onOpenQuickBuy?: () => void;
   onEditExpense: (expense: HouseholdExpense) => void;
   onDeleteExpense: (expenseId: string) => void;
+  onAssignPayer?: (expenseId: string, payer: ExpensePayer) => void;
 }
 
 export const HouseholdBudgetView: React.FC<HouseholdBudgetViewProps> = ({
@@ -23,10 +28,14 @@ export const HouseholdBudgetView: React.FC<HouseholdBudgetViewProps> = ({
   expenses,
   onOpenNewExpense,
   onOpenScanner,
+  onOpenQuickBuy,
   onEditExpense,
-  onDeleteExpense
+  onDeleteExpense,
+  onAssignPayer
 }) => {
   const sym = profile.currencySymbol;
+  const husbandShort = (profile.husbandName || 'Haytham').split(' ')[0];
+  const wifeShort = (profile.wifeName || 'Cati').split(' ')[0];
   const [filterPayer, setFilterPayer] = useState<string>('ALL');
 
   const fixedExpenses = expenses
@@ -52,6 +61,10 @@ export const HouseholdBudgetView: React.FC<HouseholdBudgetViewProps> = ({
 
   const freelanceCovered = expenses
     .filter((e) => e.assignedPayer === 'FREELANCE_BUFFER')
+    .reduce((acc, e) => acc + e.amount, 0);
+
+  const decideLaterCovered = expenses
+    .filter((e) => e.assignedPayer === 'DECIDE_LATER')
     .reduce((acc, e) => acc + e.amount, 0);
 
   const wifeSurplus = profile.wifeMonthlySalary - wifeCovered;
@@ -88,28 +101,34 @@ export const HouseholdBudgetView: React.FC<HouseholdBudgetViewProps> = ({
 
   const getPayerBadge = (payer: ExpensePayer) => {
     switch (payer) {
+      case 'DECIDE_LATER':
+        return (
+          <span className="px-2 py-0.5 rounded-md text-[11px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30 flex items-center gap-1">
+            <span>🤔 Se decide la plată</span>
+          </span>
+        );
       case 'WIFE_SALARY':
         return (
           <span className="px-2 py-0.5 rounded-md text-[11px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
-            💳 Salariu {profile.wifeName.split(' ')[0]}
+            💳 Salariu {wifeShort}
           </span>
         );
       case 'WIFE_MEAL_TICKETS':
         return (
           <span className="px-2 py-0.5 rounded-md text-[11px] font-bold bg-lime-500/20 text-lime-300 border border-lime-500/30">
-            🥗 Bonuri Masă {profile.wifeName.split(' ')[0]} (Edenred/Pluxee)
+            🥗 Bonuri Masă {wifeShort} (Edenred)
           </span>
         );
       case 'FREELANCE_BUFFER':
         return (
           <span className="px-2 py-0.5 rounded-md text-[11px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">
-            💼 Freelance Buffer
+            💼 Buffer Freelance {husbandShort}
           </span>
         );
       case 'SHARED_POOL':
         return (
           <span className="px-2 py-0.5 rounded-md text-[11px] font-bold bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">
-            🏡 Fond Comun
+            🏡 Fond Comun Familie
           </span>
         );
     }
@@ -124,73 +143,87 @@ export const HouseholdBudgetView: React.FC<HouseholdBudgetViewProps> = ({
             <Receipt className="w-7 h-7 text-emerald-400" />
             <span>Buget Familie & Facturi Lunare</span>
           </h1>
-          <p className="text-stone-400 text-sm mt-1">
-            Susținut de salariul fix și cardul de bonuri de masă al {profile.wifeName.split(' ')[0]} pentru a garanta acoperirea tuturor nevoilor de bază.
+          <p className="text-stone-400 text-xs sm:text-sm mt-1">
+            Plătește din salariul lui {wifeShort}, din bonurile de masă sau din încasările video ale lui {husbandShort}.
           </p>
         </div>
 
         <div className="flex flex-wrap gap-2 items-center self-start sm:self-auto">
+          {onOpenQuickBuy && (
+            <button
+              type="button"
+              onClick={onOpenQuickBuy}
+              className="flex items-center space-x-1.5 px-3.5 py-2.5 rounded-2xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-stone-950 font-black text-xs shadow-lg shadow-amber-500/20 transition-all cursor-pointer active:scale-95"
+            >
+              <Zap className="w-4 h-4 fill-stone-950" />
+              <span>⚡ Cumpără Rapid (Hell, Țigări)</span>
+            </button>
+          )}
+
           {onOpenScanner && (
             <button
               type="button"
               onClick={onOpenScanner}
-              className="flex items-center space-x-2 px-4 py-2.5 rounded-xl bg-stone-800 hover:bg-stone-750 text-cyan-300 border border-cyan-500/30 font-bold text-sm shadow-md transition-all cursor-pointer"
+              className="flex items-center space-x-1.5 px-3.5 py-2.5 rounded-2xl bg-stone-850 hover:bg-stone-800 text-cyan-300 border border-cyan-500/30 font-bold text-xs shadow-md transition-all cursor-pointer active:scale-95"
             >
               <Camera className="w-4 h-4 text-cyan-400" />
-              <span>Scanează Bon / Galerie</span>
+              <span>Scanează Bon</span>
             </button>
           )}
+
           <button
             id="btn-add-new-expense"
             onClick={onOpenNewExpense}
-            className="flex items-center space-x-2 px-4 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-stone-950 font-bold text-sm shadow-lg shadow-emerald-500/20 transition-all cursor-pointer"
+            className="flex items-center space-x-1.5 px-4 py-2.5 rounded-2xl bg-emerald-500 hover:bg-emerald-400 text-stone-950 font-black text-xs shadow-lg shadow-emerald-500/20 transition-all cursor-pointer active:scale-95"
           >
-            <Plus className="w-4 h-4" />
-            <span>Adaugă Factură / Cheltuială</span>
+            <Plus className="w-4 h-4 stroke-[3]" />
+            <span>+ Adaugă Factură</span>
           </button>
         </div>
       </div>
 
       {/* Salary & Meal Tickets Foundation Banner */}
-      <div className="bg-gradient-to-br from-stone-850 to-stone-900 border border-emerald-500/30 rounded-2xl p-6 shadow-xl relative overflow-hidden">
+      <div className="bg-gradient-to-br from-stone-900/90 via-stone-850/80 to-stone-900/90 border border-emerald-500/30 rounded-3xl p-6 shadow-xl relative overflow-hidden backdrop-blur-2xl">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
           <div className="space-y-2">
             <div className="flex items-center space-x-2 text-emerald-400 text-xs font-bold uppercase tracking-wider">
               <ShieldCheck className="w-4 h-4" />
-              <span>Regula de Bază: 100% Facturi Fixe Acoperite</span>
+              <span>Garanție Cheltuieli Lunare</span>
             </div>
             <div className="flex flex-wrap items-baseline gap-3">
               <span className="text-3xl sm:text-4xl font-black font-display text-white">
                 {sym}{profile.wifeMonthlySalary.toLocaleString()}
               </span>
-              <span className="text-stone-400 text-sm">Salariu Fix {profile.wifeName.split(' ')[0]}</span>
+              <span className="text-stone-400 text-sm">Salariu {wifeShort}</span>
               <span className="text-xs font-extrabold px-2.5 py-1 rounded-full bg-lime-500/20 text-lime-300 border border-lime-500/30">
                 + {sym}{wifeTicketsAllowance.toLocaleString()} Bonuri de Masă (Edenred)
               </span>
-              <span className="text-xs font-extrabold px-2.5 py-1 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
-                {coveragePercent}% Acoperire Fixă
-              </span>
+              {decideLaterCovered > 0 && (
+                <span className="text-xs font-extrabold px-2.5 py-1 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                  {sym}{decideLaterCovered.toLocaleString()} De Decis la Plată
+                </span>
+              )}
             </div>
             <p className="text-xs text-stone-300 max-w-xl">
-              Facturile fixe esențiale totalizează <strong className="text-white">{sym}{fixedExpenses.toLocaleString()}/lună</strong>.
-              Venitul stabil lasă un surplus de <strong className="text-emerald-400">+{sym}{wifeSurplus.toLocaleString()}</strong> și <strong className="text-lime-400">{sym}{wifeTicketsRemaining.toLocaleString()}</strong> pe cardul de tichete de masă pentru alimente.
+              Facturile fixe planificate totalizează <strong className="text-white">{sym}{fixedExpenses.toLocaleString()}/lună</strong>.
+              Salariul acoperă nevoile de bază, iar facturile flexibile se pot plăti direct din proiectele video când intră banii!
             </p>
           </div>
 
           {/* Mini Coverage Bar */}
-          <div className="w-full lg:w-72 bg-stone-800/80 p-4 rounded-xl border border-stone-700/60 space-y-2">
+          <div className="w-full lg:w-72 bg-stone-900/80 p-4 rounded-2xl border border-stone-700/60 space-y-2">
             <div className="flex items-center justify-between text-xs">
               <span className="text-stone-400">Facturi Fixe</span>
               <span className="text-white font-bold">{sym}{fixedExpenses.toLocaleString()}</span>
             </div>
-            <div className="w-full bg-stone-700 h-2 rounded-full overflow-hidden">
+            <div className="w-full bg-stone-800 h-2 rounded-full overflow-hidden">
               <div
-                className="bg-emerald-400 h-full rounded-full"
-                style={{ width: `${Math.min(100, (fixedExpenses / profile.wifeMonthlySalary) * 100)}%` }}
+                className="bg-emerald-400 h-full rounded-full transition-all duration-500"
+                style={{ width: `${Math.min(100, (fixedExpenses / (profile.wifeMonthlySalary || 1)) * 100)}%` }}
               />
             </div>
             <div className="flex items-center justify-between text-xs text-stone-400">
-              <span>Surplus Net {profile.wifeName.split(' ')[0]}:</span>
+              <span>Surplus Net {wifeShort}:</span>
               <span className="text-emerald-300 font-bold">+{sym}{wifeSurplus.toLocaleString()}/mo</span>
             </div>
           </div>
@@ -199,15 +232,15 @@ export const HouseholdBudgetView: React.FC<HouseholdBudgetViewProps> = ({
 
       {/* 4 Overview Account Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <div className="bg-stone-850 border border-emerald-500/30 rounded-xl p-4">
-          <span className="text-[11px] text-emerald-400 font-bold uppercase tracking-wider">💳 Salariu {profile.wifeName.split(' ')[0]}</span>
+        <div className="bg-stone-900/80 border border-emerald-500/30 rounded-2xl p-4">
+          <span className="text-[11px] text-emerald-400 font-bold uppercase tracking-wider">💳 Salariu {wifeShort}</span>
           <div className="text-xl font-black font-display text-white mt-1">
             {sym}{(profile.wifeMonthlySalary - wifeCovered).toLocaleString()}
           </div>
           <span className="text-[10px] text-stone-400">Disponibil din {sym}{profile.wifeMonthlySalary.toLocaleString()}</span>
         </div>
 
-        <div className="bg-stone-850 border border-lime-500/30 rounded-xl p-4">
+        <div className="bg-stone-900/80 border border-lime-500/30 rounded-2xl p-4">
           <span className="text-[11px] text-lime-400 font-bold uppercase tracking-wider">🥗 Card Bonuri Masă</span>
           <div className="text-xl font-black font-display text-lime-300 mt-1">
             {sym}{wifeTicketsRemaining.toLocaleString()}
@@ -215,29 +248,30 @@ export const HouseholdBudgetView: React.FC<HouseholdBudgetViewProps> = ({
           <span className="text-[10px] text-stone-400">Rămas din {sym}{wifeTicketsAllowance.toLocaleString()}/lună</span>
         </div>
 
-        <div className="bg-stone-850 border border-amber-500/30 rounded-xl p-4">
+        <div className="bg-stone-900/80 border border-amber-500/30 rounded-2xl p-4">
           <span className="text-[11px] text-amber-400 font-bold uppercase tracking-wider">💼 Buffer Freelance</span>
           <div className="text-xl font-black font-display text-amber-400 mt-1">
             {sym}{freelanceCovered.toLocaleString()}
           </div>
-          <span className="text-[10px] text-stone-400">Cheltuieli din proiecte video</span>
+          <span className="text-[10px] text-stone-400">Plătit din onorarii {husbandShort}</span>
         </div>
 
-        <div className="bg-stone-850 border border-stone-700/60 rounded-xl p-4">
-          <span className="text-[11px] text-stone-400 font-bold uppercase tracking-wider">Total Cheltuieli</span>
-          <div className="text-xl font-black font-display text-white mt-1">
-            {sym}{totalMonthlyExpenses.toLocaleString()}
+        <div className="bg-stone-900/80 border border-cyan-500/30 rounded-2xl p-4">
+          <span className="text-[11px] text-cyan-400 font-bold uppercase tracking-wider">🤔 De Decis la Plată</span>
+          <div className="text-xl font-black font-display text-cyan-300 mt-1">
+            {sym}{decideLaterCovered.toLocaleString()}
           </div>
-          <span className="text-[10px] text-stone-400">{expenses.length} facturi înregistrate</span>
+          <span className="text-[10px] text-stone-400">Se alege cine plătește la scadență</span>
         </div>
       </div>
 
       {/* Filters */}
-      <div className="flex overflow-x-auto py-1 space-x-2 border-b border-stone-800">
+      <div className="flex overflow-x-auto py-1 space-x-2 border-b border-stone-800 no-scrollbar">
         {[
           { id: 'ALL', label: 'Toate' },
-          { id: 'WIFE_SALARY', label: `💳 Salariu ${profile.wifeName.split(' ')[0]}` },
-          { id: 'WIFE_MEAL_TICKETS', label: `🥗 Bonuri Masă ${profile.wifeName.split(' ')[0]}` },
+          { id: 'DECIDE_LATER', label: '🤔 De Decis la Plată' },
+          { id: 'WIFE_SALARY', label: `💳 Salariu ${wifeShort}` },
+          { id: 'WIFE_MEAL_TICKETS', label: `🥗 Bonuri Masă ${wifeShort}` },
           { id: 'FREELANCE_BUFFER', label: `💼 Buffer Freelance` },
           { id: 'SHARED_POOL', label: `🏡 Fond Comun` },
           { id: 'FIXED', label: 'Fixe' },
@@ -246,9 +280,9 @@ export const HouseholdBudgetView: React.FC<HouseholdBudgetViewProps> = ({
           <button
             key={tab.id}
             onClick={() => setFilterPayer(tab.id)}
-            className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-colors cursor-pointer ${
+            className={`px-3.5 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-colors cursor-pointer ${
               filterPayer === tab.id
-                ? 'bg-stone-700 text-white border border-stone-600'
+                ? 'bg-stone-800 text-white border border-stone-600 shadow-sm'
                 : 'text-stone-400 hover:text-stone-200 hover:bg-stone-850'
             }`}
           >
@@ -263,27 +297,38 @@ export const HouseholdBudgetView: React.FC<HouseholdBudgetViewProps> = ({
           return (
             <div
               key={expense.id}
-              className="p-4 rounded-xl bg-stone-850 border border-stone-700/60 hover:border-stone-600 transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-md"
+              className="p-4 rounded-2xl bg-stone-900/80 border border-stone-750/70 hover:border-stone-600 transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-md"
             >
               <div className="space-y-1.5">
-                <div className="flex items-center space-x-2">
+                <div className="flex items-center space-x-2 flex-wrap gap-y-1">
                   <span className="font-bold text-white text-base">{expense.title}</span>
                   <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md border ${getCategoryColor(expense.category)}`}>
                     {expense.category.replace('_', ' ')}
                   </span>
                   {expense.isFixed ? (
                     <span className="text-[10px] px-1.5 py-0.5 rounded bg-stone-800 text-stone-300 border border-stone-700">
-                      Fixed
+                      Fixă lunară
                     </span>
                   ) : (
                     <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-300 border border-amber-500/20">
-                      Flexible
+                      Variabilă
                     </span>
                   )}
                 </div>
 
-                <div className="flex items-center space-x-2">
+                <div className="flex items-center space-x-2 flex-wrap gap-1.5">
                   {getPayerBadge(expense.assignedPayer)}
+
+                  {/* Quick Change Payer dropdown / buttons if DECIDE_LATER */}
+                  {expense.assignedPayer === 'DECIDE_LATER' && onEditExpense && (
+                    <button
+                      type="button"
+                      onClick={() => onEditExpense(expense)}
+                      className="px-2 py-0.5 rounded-md bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 text-[10px] font-bold transition cursor-pointer"
+                    >
+                      👉 Alege cine o achită acum
+                    </button>
+                  )}
                 </div>
               </div>
 
@@ -298,15 +343,15 @@ export const HouseholdBudgetView: React.FC<HouseholdBudgetViewProps> = ({
                 <div className="flex items-center space-x-1">
                   <button
                     onClick={() => onEditExpense(expense)}
-                    className="p-1.5 rounded-lg text-stone-400 hover:text-white hover:bg-stone-800 transition-colors"
-                    title="Edit expense"
+                    className="p-2 rounded-xl text-stone-400 hover:text-white hover:bg-stone-800 transition-colors cursor-pointer"
+                    title="Editează cheltuiala"
                   >
                     <Edit2 className="w-4 h-4" />
                   </button>
                   <button
                     onClick={() => onDeleteExpense(expense.id)}
-                    className="p-1.5 rounded-lg text-stone-400 hover:text-rose-400 hover:bg-stone-800 transition-colors"
-                    title="Delete expense"
+                    className="p-2 rounded-xl text-stone-400 hover:text-rose-400 hover:bg-stone-800 transition-colors cursor-pointer"
+                    title="Șterge cheltuiala"
                   >
                     <Trash2 className="w-4 h-4" />
                   </button>

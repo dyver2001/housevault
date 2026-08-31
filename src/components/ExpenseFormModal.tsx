@@ -119,12 +119,15 @@ export const ExpenseFormModal: React.FC<ExpenseFormModalProps> = ({
 
           {/* Assigned Income Source with Live Balances */}
           <div>
-            <label className="block text-xs font-semibold text-stone-300 mb-1">Sursă de Plată (Din ce cont se susține?)</label>
+            <label className="block text-xs font-semibold text-stone-300 mb-1">Sursă de Plată (Cine plătește?)</label>
             <select
               value={form.assignedPayer}
               onChange={(e) => setForm({ ...form, assignedPayer: e.target.value as ExpensePayer })}
-              className="w-full px-3 py-2 rounded-xl bg-stone-800 border border-stone-700 text-white text-xs focus:outline-none"
+              className="w-full px-3 py-2.5 rounded-xl bg-stone-800 border border-stone-700 text-white text-xs font-semibold focus:outline-none focus:border-emerald-500"
             >
+              <option value="DECIDE_LATER">
+                🤔 Se decide la plată (Haytham sau Cati în funcție de proiecte)
+              </option>
               <option value="WIFE_SALARY">
                 💳 Salariu {profile.wifeName.split(' ')[0]} ({profile.wifeMonthlySalary.toLocaleString()} {sym}/lună)
               </option>
@@ -132,7 +135,7 @@ export const ExpenseFormModal: React.FC<ExpenseFormModalProps> = ({
                 🥗 Card Bonuri de Masă {profile.wifeName.split(' ')[0]} ({(profile.wifeMealTicketsMonthly ?? 800).toLocaleString()} {sym}/lună)
               </option>
               <option value="FREELANCE_BUFFER">
-                💼 Buffer Freelance {profile.husbandName.split(' ')[0]}
+                💼 Buffer Freelance {profile.husbandName.split(' ')[0]} (din onorarii video)
               </option>
               <option value="SHARED_POOL">
                 🏡 Fond Comun Familie
@@ -141,22 +144,31 @@ export const ExpenseFormModal: React.FC<ExpenseFormModalProps> = ({
           </div>
 
           {/* Cash Reduction Preview Card */}
-          <div className="p-3 bg-stone-950 rounded-xl border border-stone-800 text-xs space-y-1">
-            <div className="flex justify-between text-stone-400">
-              <span>Disponibil în cont:</span>
-              <span className="font-mono font-bold text-white">{currentAvailable.toFixed(2)} {sym}</span>
+          {form.assignedPayer === 'DECIDE_LATER' ? (
+            <div className="p-3 bg-amber-500/10 border border-amber-500/30 rounded-xl text-xs space-y-1 text-amber-200">
+              <span className="font-bold block">✨ Plată Flexibilă:</span>
+              <p className="text-[11px] leading-relaxed text-amber-300/90">
+                Această factură este salvată în buget, dar nu blochează niciun ban din cont acum. Când vine scadența sau când Haytham încasează un proiect nou, decideți pe loc cine o achită.
+              </p>
             </div>
-            <div className="flex justify-between text-rose-400">
-              <span>Valoare factură:</span>
-              <span className="font-mono font-bold">-{Number(form.amount || 0).toFixed(2)} {sym}</span>
+          ) : (
+            <div className="p-3 bg-stone-950 rounded-xl border border-stone-800 text-xs space-y-1">
+              <div className="flex justify-between text-stone-400">
+                <span>Disponibil în cont:</span>
+                <span className="font-mono font-bold text-white">{currentAvailable.toFixed(2)} {sym}</span>
+              </div>
+              <div className="flex justify-between text-rose-400">
+                <span>Valoare factură:</span>
+                <span className="font-mono font-bold">-{Number(form.amount || 0).toFixed(2)} {sym}</span>
+              </div>
+              <div className="flex justify-between font-bold pt-1 border-t border-stone-800">
+                <span className="text-stone-300">Sold estimat după plată:</span>
+                <span className={`font-mono ${remainingAfterBill < 0 ? 'text-amber-400 font-bold' : 'text-emerald-400'}`}>
+                  {remainingAfterBill.toFixed(2)} {sym}
+                </span>
+              </div>
             </div>
-            <div className="flex justify-between font-bold pt-1 border-t border-stone-800">
-              <span className="text-stone-300">Sold estimat după plată:</span>
-              <span className={`font-mono ${remainingAfterBill < 0 ? 'text-amber-400 font-bold' : 'text-emerald-400'}`}>
-                {remainingAfterBill.toFixed(2)} {sym}
-              </span>
-            </div>
-          </div>
+          )}
 
           <div className="flex items-center space-x-2 pt-1">
             <input
