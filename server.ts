@@ -130,16 +130,33 @@ function saveVaultsToDisk() {
 const sseClients: Record<string, Response[]> = {};
 
 function broadcastVaultUpdate(vaultCode: string, payload: VaultPayload) {
-  const listeners = sseClients[vaultCode] || [];
+  const norm = vaultCode.toUpperCase().replace(/[^A-Z0-9]/g, '');
+  const keys = Object.keys(sseClients).filter(k => {
+    const knorm = k.toUpperCase().replace(/[^A-Z0-9]/g, '');
+    return knorm === norm || k === vaultCode;
+  });
   const eventData = `data: ${JSON.stringify(payload)}\n\n`;
-  listeners.forEach((client) => {
-    try {
-      client.write(eventData);
-    } catch (e) {
-      // client disconnected
-    }
+  keys.forEach(k => {
+    (sseClients[k] || []).forEach((client) => {
+      try {
+        client.write(eventData);
+      } catch (e) {
+        // client disconnected
+      }
+    });
   });
 }
+
+// Periodic SSE heartbeat every 15s to keep Render / mobile carrier proxies alive
+setInterval(() => {
+  Object.values(sseClients).forEach(clients => {
+    clients.forEach(client => {
+      try {
+        client.write(': heartbeat\n\n');
+      } catch (e) {}
+    });
+  });
+}, 15000);
 
 function generateVaultCode(): string {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';

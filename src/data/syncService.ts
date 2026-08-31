@@ -164,48 +164,91 @@ export function subscribeToLiveVault(
   vaultCode: string,
   onUpdate: (vault: any) => void
 ): () => void {
-  if (typeof window === 'undefined' || !window.EventSource) {
+  if (typeof window === 'undefined' || !vaultCode) {
     return () => {};
   }
 
   let eventSource: EventSource | null = null;
   let isClosed = false;
+  let lastKnownVersion = 0;
+  let lastKnownUpdated = '';
 
-  const connect = () => {
-    if (isClosed) return;
-    try {
-      eventSource = new EventSource(`/api/sync/${encodeURIComponent(vaultCode)}/live`);
-
-      eventSource.onmessage = (event) => {
-        try {
-          const payload = JSON.parse(event.data);
-          if (payload && payload.data) {
-            onUpdate(payload);
-          }
-        } catch (e) {
-          console.error('[CloudSync] Error parsing SSE payload:', e);
-        }
-      };
-
-      eventSource.onerror = () => {
-        if (eventSource) {
-          eventSource.close();
-          eventSource = null;
-        }
-        // Auto-reconnect after 3 seconds
-        if (!isClosed) {
-          setTimeout(connect, 3000);
-        }
-      };
-    } catch (err) {
-      console.warn('[CloudSync] SSE connection error:', err);
+  const handleNewVaultData = (vault: any) => {
+    if (!vault) return;
+    const version = Number(vault.version) || 0;
+    const updated = vault.lastUpdated || '';
+    if (version > lastKnownVersion || updated !== lastKnownUpdated || lastKnownVersion === 0) {
+      lastKnownVersion = version;
+      lastKnownUpdated = updated;
+      onUpdate(vault);
     }
   };
 
-  connect();
+  const pollNow = async () => {
+    if (isClosed || !vaultCode) return;
+    try {
+      const res = await fetchCloudVault(vaultCode);
+      if (res.success && res.vault) {
+        handleNewVaultData(res.vault);
+      }
+    } catch {}
+  };
+
+  // Immediate check on connect
+  pollNow();
+
+  // Fast background polling every 2.5s guarantees mobile & desktop stay 100% in sync
+  const pollInterval = setInterval(pollNow, 2500);
+
+  const onVisibilityOrFocus = () => {
+    if (typeof document !== 'undefined' && !document.hidden) {
+      pollNow();
+    }
+  };
+
+  if (typeof window !== 'undefined') {
+    window.addEventListener('visibilitychange', onVisibilityOrFocus);
+    window.addEventListener('focus', onVisibilityOrFocus);
+  }
+
+  // Also setup SSE for zero-latency instant push if browser supports it
+  if (typeof window !== 'undefined' && window.EventSource) {
+    const connectSSE = () => {
+      if (isClosed) return;
+      try {
+        eventSource = new EventSource(`/api/sync/${encodeURIComponent(vaultCode)}/live`);
+
+        eventSource.onmessage = (event) => {
+          try {
+            const payload = JSON.parse(event.data);
+            if (payload && (payload.data || payload.vaultCode)) {
+              handleNewVaultData(payload);
+            }
+          } catch (e) {}
+        };
+
+        eventSource.onerror = () => {
+          if (eventSource) {
+            eventSource.close();
+            eventSource = null;
+          }
+          if (!isClosed) {
+            setTimeout(connectSSE, 4000);
+          }
+        };
+      } catch (err) {}
+    };
+
+    connectSSE();
+  }
 
   return () => {
     isClosed = true;
+    clearInterval(pollInterval);
+    if (typeof window !== 'undefined') {
+      window.removeEventListener('visibilitychange', onVisibilityOrFocus);
+      window.removeEventListener('focus', onVisibilityOrFocus);
+    }
     if (eventSource) {
       eventSource.close();
       eventSource = null;

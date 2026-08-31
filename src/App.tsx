@@ -335,19 +335,14 @@ export const App: React.FC = () => {
 
     setIsSyncConnected(true);
 
-    // Initial fetch to get latest
-    fetchCloudVault(syncCode).then((res) => {
-      if (res.success && res.vault?.data) {
-        applyRemoteSnapshot(res.vault.data);
-        setLastSyncTime(res.vault.lastUpdated || new Date().toISOString());
-      }
-    });
-
     const unsubscribe = subscribeToLiveVault(syncCode, (vault) => {
-      if (vault?.data) {
+      if (vault?.data && Object.keys(vault.data).length > 0) {
         applyRemoteSnapshot(vault.data);
-        setLastSyncTime(vault.lastUpdated || new Date().toISOString());
+      } else if (vault && (!vault.data || Object.keys(vault.data).length === 0)) {
+        // If the cloud vault has no data yet, populate it with our local state
+        pushCurrentStateToCloud();
       }
+      setLastSyncTime(vault?.lastUpdated || new Date().toISOString());
     });
 
     return () => unsubscribe();
