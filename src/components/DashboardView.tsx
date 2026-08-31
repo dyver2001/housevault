@@ -71,10 +71,10 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   onDepositMoreTarget
 }) => {
   const [isVaultDoorOpen, setIsVaultDoorOpen] = React.useState(false);
-  const sym = profile.currencySymbol;
+  const sym = profile?.currencySymbol || 'lei';
 
   // Uncollected freelance
-  const uncollectedProjects = projects.filter(
+  const uncollectedProjects = (projects || []).filter(
     (p) => p.status !== 'COLLECTED' && (p.totalFee - p.depositReceived) > 0
   );
   const totalUncollected = uncollectedProjects.reduce(
@@ -83,26 +83,27 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   );
 
   // Debts
-  const totalDebt = debts.reduce((acc, d) => acc + d.currentBalance, 0);
-  const originalDebt = debts.reduce((acc, d) => acc + d.originalBalance, 0);
+  const totalDebt = (debts || []).reduce((acc, d) => acc + d.currentBalance, 0);
+  const originalDebt = (debts || []).reduce((acc, d) => acc + d.originalBalance, 0);
   const totalDebtPaid = Math.max(0, originalDebt - totalDebt);
   const debtProgressPercent =
     originalDebt > 0 ? Math.min(100, Math.round((totalDebtPaid / originalDebt) * 100)) : 100;
 
   // Savings Targets
-  const totalSaved = targets.reduce((acc, t) => acc + t.currentSavedAmount, 0);
-  const totalTargetGoal = targets.reduce((acc, t) => acc + t.targetAmount, 0);
+  const totalSaved = (targets || []).reduce((acc, t) => acc + t.currentSavedAmount, 0);
+  const totalTargetGoal = (targets || []).reduce((acc, t) => acc + t.targetAmount, 0);
   const savingsProgressPercent =
     totalTargetGoal > 0 ? Math.min(100, Math.round((totalSaved / totalTargetGoal) * 100)) : 0;
 
   // Expenses & Wife Salary
-  const fixedExpenses = expenses
+  const fixedExpenses = (expenses || [])
     .filter((e) => e.isFixed)
     .reduce((acc, e) => acc + e.amount, 0);
 
-  const wifeSurplus = Math.max(0, profile.wifeMonthlySalary - fixedExpenses);
+  const wifeSalary = profile?.wifeMonthlySalary || 0;
+  const wifeSurplus = Math.max(0, wifeSalary - fixedExpenses);
   const salaryCoveragePercent =
-    fixedExpenses > 0 ? Math.min(150, Math.round((profile.wifeMonthlySalary / fixedExpenses) * 100)) : 100;
+    fixedExpenses > 0 ? Math.min(150, Math.round((wifeSalary / fixedExpenses) * 100)) : 100;
 
   // Financial runway = months we can survive on savings + surplus alone
   const monthlyBurn = fixedExpenses > 0 ? fixedExpenses : 1;

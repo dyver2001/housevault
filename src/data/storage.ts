@@ -51,7 +51,7 @@ export function loadProfile(): HouseholdProfile {
     if (parsed.wifeName?.includes('Elena')) {
       parsed.wifeName = 'Cati (IT Support)';
     }
-    return parsed;
+    return { ...DEFAULT_PROFILE, ...parsed };
   } catch {
     return DEFAULT_PROFILE;
   }
@@ -124,7 +124,9 @@ export function saveExpenses(expenses: HouseholdExpense[]): void {
 export function loadSplitRule(): WindfallSplitRule {
   try {
     const raw = localStorage.getItem(KEYS.SPLIT_RULE);
-    return raw ? JSON.parse(raw) : DEFAULT_SPLIT_RULE;
+    if (!raw) return DEFAULT_SPLIT_RULE;
+    const parsed = JSON.parse(raw);
+    return { ...DEFAULT_SPLIT_RULE, ...parsed };
   } catch {
     return DEFAULT_SPLIT_RULE;
   }

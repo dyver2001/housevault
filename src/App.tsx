@@ -91,25 +91,26 @@ export const App: React.FC = () => {
 
   // Live Cash Pockets & Account Balances Calculation
   const wifeSalaryBalance = useMemo(() => {
-    const wifeSpent = expenses
+    const wifeSpent = (expenses || [])
       .filter((e) => e.assignedPayer === 'WIFE_SALARY')
-      .reduce((s, e) => s + e.amount, 0);
-    return Math.max(0, profile.wifeMonthlySalary - wifeSpent);
-  }, [profile.wifeMonthlySalary, expenses]);
+      .reduce((s, e) => s + (e.amount || 0), 0);
+    return Math.max(0, (profile?.wifeMonthlySalary || 0) - wifeSpent);
+  }, [profile?.wifeMonthlySalary, expenses]);
 
   const freelanceBufferBalance = useMemo(() => {
-    const totalCollected = projects.reduce((s, p) => s + (p.depositReceived || 0), 0);
-    const safePocketPool = totalCollected * (splitRule.safePocketPercent / 100);
-    const freelanceSpent = expenses
+    const totalCollected = (projects || []).reduce((s, p) => s + (p.depositReceived || 0), 0);
+    const safePercent = splitRule?.safePocketPercent ?? 20;
+    const safePocketPool = totalCollected * (safePercent / 100);
+    const freelanceSpent = (expenses || [])
       .filter((e) => e.assignedPayer === 'FREELANCE_BUFFER')
-      .reduce((s, e) => s + e.amount, 0);
+      .reduce((s, e) => s + (e.amount || 0), 0);
     return Math.max(0, safePocketPool - freelanceSpent);
   }, [projects, splitRule, expenses]);
 
   const sharedPoolBalance = useMemo(() => {
-    const sharedSpent = expenses
+    const sharedSpent = (expenses || [])
       .filter((e) => e.assignedPayer === 'SHARED_POOL')
-      .reduce((s, e) => s + e.amount, 0);
+      .reduce((s, e) => s + (e.amount || 0), 0);
     const combinedAvailable = wifeSalaryBalance + freelanceBufferBalance;
     return Math.max(0, combinedAvailable - sharedSpent);
   }, [wifeSalaryBalance, freelanceBufferBalance, expenses]);

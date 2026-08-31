@@ -97,10 +97,10 @@ export const GroceryOptimizerView: React.FC<GroceryOptimizerViewProps> = ({
   cashBalances,
   onOpenReceiptScanner
 }) => {
-  const currency = profile.currencySymbol || 'lei';
+  const currency = profile?.currencySymbol || 'lei';
 
   // Language state (defaults to profile.language or 'ro')
-  const [currentLang, setCurrentLang] = useState<'ro' | 'en'>((profile.language as 'ro' | 'en') || 'ro');
+  const [currentLang, setCurrentLang] = useState<'ro' | 'en'>((profile?.language as 'ro' | 'en') || 'ro');
   const isRo = currentLang === 'ro';
 
   // Subtabs: list | stockup | billAnalyzer | reels | budgetFitter | bundles | matrix
@@ -129,7 +129,13 @@ export const GroceryOptimizerView: React.FC<GroceryOptimizerViewProps> = ({
   const [savedRecipes, setSavedRecipes] = useState<SavedRecipeReel[]>(loadSavedRecipes);
   const [reelUrlInput, setReelUrlInput] = useState<string>('');
   const [recipeNotesInput, setRecipeNotesInput] = useState<string>('');
-  const [geminiApiKeyInput, setGeminiApiKeyInput] = useState<string>(() => localStorage.getItem('housevault_gemini_key') || '');
+  const [geminiApiKeyInput, setGeminiApiKeyInput] = useState<string>(() => {
+    try {
+      return localStorage.getItem('housevault_gemini_key') || '';
+    } catch {
+      return '';
+    }
+  });
   const [showApiKeyModal, setShowApiKeyModal] = useState<boolean>(false);
   const [isExtractingReel, setIsExtractingReel] = useState<boolean>(false);
   const [extractedRecipe, setExtractedRecipe] = useState<SavedRecipeReel | null>(null);
