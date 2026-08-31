@@ -80,6 +80,7 @@ export type ExpenseCategory =
 
 export type ExpensePayer =
   | 'WIFE_SALARY'
+  | 'WIFE_MEAL_TICKETS'
   | 'FREELANCE_BUFFER'
   | 'SHARED_POOL';
 
@@ -98,6 +99,7 @@ export interface HouseholdProfile {
   husbandName: string;
   wifeName: string;
   wifeMonthlySalary: number;
+  wifeMealTicketsMonthly?: number; // e.g. 800-880 lei / month
   husbandEstMonthlyGross: number;
   emergencyFundMonthsGoal: number;
   language?: string;
@@ -144,6 +146,7 @@ export interface ReceiptScanResult {
 
 export interface CashPocketsBalance {
   wifeSalaryBalance: number;
+  wifeMealTicketsBalance: number;
   freelanceBufferBalance: number;
   sharedPoolBalance: number;
 }

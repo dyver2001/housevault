@@ -500,6 +500,22 @@ export const SettingsShareModal: React.FC<SettingsShareModalProps> = ({
 
               <div>
                 <label className="block text-xs font-semibold text-stone-300 mb-1">
+                  {lang === 'ro' ? `Card Bonuri de Masă Soție (${profileForm.currencySymbol}/lună - Edenred/Pluxee)` : `Wife Monthly Meal Tickets (${profileForm.currencySymbol}/mo)`}
+                </label>
+                <input
+                  type="number"
+                  step="any"
+                  value={profileForm.wifeMealTicketsMonthly ?? 800}
+                  onChange={(e) =>
+                    setProfileForm({ ...profileForm, wifeMealTicketsMonthly: parseFloat(e.target.value) || 0 })
+                  }
+                  required
+                  className="w-full px-3 py-2 rounded-xl bg-stone-900 border border-lime-500/50 text-white text-xs focus:border-lime-400 focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-stone-300 mb-1">
                   {lang === 'ro' ? `Încasări Estimate Freelance Soț (${profileForm.currencySymbol})` : `Husband Est. Monthly Gross (${profileForm.currencySymbol})`}
                 </label>
                 <input

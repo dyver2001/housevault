@@ -44,6 +44,12 @@ export const HouseholdBudgetView: React.FC<HouseholdBudgetViewProps> = ({
     .filter((e) => e.assignedPayer === 'WIFE_SALARY')
     .reduce((acc, e) => acc + e.amount, 0);
 
+  const wifeTicketsAllowance = profile.wifeMealTicketsMonthly ?? 800;
+  const wifeTicketsCovered = expenses
+    .filter((e) => e.assignedPayer === 'WIFE_MEAL_TICKETS')
+    .reduce((acc, e) => acc + e.amount, 0);
+  const wifeTicketsRemaining = Math.max(0, wifeTicketsAllowance - wifeTicketsCovered);
+
   const freelanceCovered = expenses
     .filter((e) => e.assignedPayer === 'FREELANCE_BUFFER')
     .reduce((acc, e) => acc + e.amount, 0);
@@ -85,19 +91,25 @@ export const HouseholdBudgetView: React.FC<HouseholdBudgetViewProps> = ({
       case 'WIFE_SALARY':
         return (
           <span className="px-2 py-0.5 rounded-md text-[11px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
-            {profile.wifeName.split(' ')[0]}'s Salary Anchor
+            💳 Salariu {profile.wifeName.split(' ')[0]}
+          </span>
+        );
+      case 'WIFE_MEAL_TICKETS':
+        return (
+          <span className="px-2 py-0.5 rounded-md text-[11px] font-bold bg-lime-500/20 text-lime-300 border border-lime-500/30">
+            🥗 Bonuri Masă {profile.wifeName.split(' ')[0]} (Edenred/Pluxee)
           </span>
         );
       case 'FREELANCE_BUFFER':
         return (
           <span className="px-2 py-0.5 rounded-md text-[11px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">
-            Freelance Buffer
+            💼 Freelance Buffer
           </span>
         );
       case 'SHARED_POOL':
         return (
           <span className="px-2 py-0.5 rounded-md text-[11px] font-bold bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">
-            Shared Pool
+            🏡 Fond Comun
           </span>
         );
     }
@@ -110,10 +122,10 @@ export const HouseholdBudgetView: React.FC<HouseholdBudgetViewProps> = ({
         <div>
           <h1 className="text-2xl sm:text-3xl font-black font-display text-white tracking-tight flex items-center space-x-2">
             <Receipt className="w-7 h-7 text-emerald-400" />
-            <span>Household Budget & Bills</span>
+            <span>Buget Familie & Facturi Lunare</span>
           </h1>
           <p className="text-stone-400 text-sm mt-1">
-            Anchored by Elena's IT salary to guarantee all fixed family necessities are paid automatically.
+            Susținut de salariul fix și cardul de bonuri de masă al {profile.wifeName.split(' ')[0]} pentru a garanta acoperirea tuturor nevoilor de bază.
           </p>
         </div>
 
@@ -134,38 +146,41 @@ export const HouseholdBudgetView: React.FC<HouseholdBudgetViewProps> = ({
             className="flex items-center space-x-2 px-4 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-stone-950 font-bold text-sm shadow-lg shadow-emerald-500/20 transition-all cursor-pointer"
           >
             <Plus className="w-4 h-4" />
-            <span>Add Household Bill</span>
+            <span>Adaugă Factură / Cheltuială</span>
           </button>
         </div>
       </div>
 
-      {/* Salary Foundation Banner */}
+      {/* Salary & Meal Tickets Foundation Banner */}
       <div className="bg-gradient-to-br from-stone-850 to-stone-900 border border-emerald-500/30 rounded-2xl p-6 shadow-xl relative overflow-hidden">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
           <div className="space-y-2">
             <div className="flex items-center space-x-2 text-emerald-400 text-xs font-bold uppercase tracking-wider">
               <ShieldCheck className="w-4 h-4" />
-              <span>Foundation Rule: 100% Fixed Costs Covered</span>
+              <span>Regula de Bază: 100% Facturi Fixe Acoperite</span>
             </div>
-            <div className="flex items-baseline space-x-3">
+            <div className="flex flex-wrap items-baseline gap-3">
               <span className="text-3xl sm:text-4xl font-black font-display text-white">
                 {sym}{profile.wifeMonthlySalary.toLocaleString()}
               </span>
-              <span className="text-stone-400 text-sm">Elena's Monthly Salary</span>
+              <span className="text-stone-400 text-sm">Salariu Fix {profile.wifeName.split(' ')[0]}</span>
+              <span className="text-xs font-extrabold px-2.5 py-1 rounded-full bg-lime-500/20 text-lime-300 border border-lime-500/30">
+                + {sym}{wifeTicketsAllowance.toLocaleString()} Bonuri de Masă (Edenred)
+              </span>
               <span className="text-xs font-extrabold px-2.5 py-1 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
-                {coveragePercent}% Covered
+                {coveragePercent}% Acoperire Fixă
               </span>
             </div>
             <p className="text-xs text-stone-300 max-w-xl">
-              Fixed essential bills total <strong className="text-white">{sym}{fixedExpenses.toLocaleString()}/mo</strong>.
-              Elena's salary leaves a <strong className="text-emerald-400">+{sym}{wifeSurplus.toLocaleString()}</strong> monthly surplus before freelance earnings even begin.
+              Facturile fixe esențiale totalizează <strong className="text-white">{sym}{fixedExpenses.toLocaleString()}/lună</strong>.
+              Venitul stabil lasă un surplus de <strong className="text-emerald-400">+{sym}{wifeSurplus.toLocaleString()}</strong> și <strong className="text-lime-400">{sym}{wifeTicketsRemaining.toLocaleString()}</strong> pe cardul de tichete de masă pentru alimente.
             </p>
           </div>
 
           {/* Mini Coverage Bar */}
           <div className="w-full lg:w-72 bg-stone-800/80 p-4 rounded-xl border border-stone-700/60 space-y-2">
             <div className="flex items-center justify-between text-xs">
-              <span className="text-stone-400">Fixed Bills</span>
+              <span className="text-stone-400">Facturi Fixe</span>
               <span className="text-white font-bold">{sym}{fixedExpenses.toLocaleString()}</span>
             </div>
             <div className="w-full bg-stone-700 h-2 rounded-full overflow-hidden">
@@ -175,48 +190,58 @@ export const HouseholdBudgetView: React.FC<HouseholdBudgetViewProps> = ({
               />
             </div>
             <div className="flex items-center justify-between text-xs text-stone-400">
-              <span>Elena's Net Buffer:</span>
+              <span>Surplus Net {profile.wifeName.split(' ')[0]}:</span>
               <span className="text-emerald-300 font-bold">+{sym}{wifeSurplus.toLocaleString()}/mo</span>
             </div>
           </div>
         </div>
       </div>
 
-      {/* 3 Overview Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="bg-stone-850 border border-stone-700/60 rounded-xl p-4">
-          <span className="text-xs text-stone-400 font-semibold uppercase tracking-wider">Fixed Monthly Bills</span>
-          <div className="text-2xl font-black font-display text-white mt-1">
-            {sym}{fixedExpenses.toLocaleString()}
+      {/* 4 Overview Account Cards */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <div className="bg-stone-850 border border-emerald-500/30 rounded-xl p-4">
+          <span className="text-[11px] text-emerald-400 font-bold uppercase tracking-wider">💳 Salariu {profile.wifeName.split(' ')[0]}</span>
+          <div className="text-xl font-black font-display text-white mt-1">
+            {sym}{(profile.wifeMonthlySalary - wifeCovered).toLocaleString()}
           </div>
-          <span className="text-xs text-emerald-400 font-medium">100% covered by wife's salary</span>
+          <span className="text-[10px] text-stone-400">Disponibil din {sym}{profile.wifeMonthlySalary.toLocaleString()}</span>
         </div>
 
-        <div className="bg-stone-850 border border-stone-700/60 rounded-xl p-4">
-          <span className="text-xs text-stone-400 font-semibold uppercase tracking-wider">Freelance Buffer Bills</span>
-          <div className="text-2xl font-black font-display text-amber-400 mt-1">
+        <div className="bg-stone-850 border border-lime-500/30 rounded-xl p-4">
+          <span className="text-[11px] text-lime-400 font-bold uppercase tracking-wider">🥗 Card Bonuri Masă</span>
+          <div className="text-xl font-black font-display text-lime-300 mt-1">
+            {sym}{wifeTicketsRemaining.toLocaleString()}
+          </div>
+          <span className="text-[10px] text-stone-400">Rămas din {sym}{wifeTicketsAllowance.toLocaleString()}/lună</span>
+        </div>
+
+        <div className="bg-stone-850 border border-amber-500/30 rounded-xl p-4">
+          <span className="text-[11px] text-amber-400 font-bold uppercase tracking-wider">💼 Buffer Freelance</span>
+          <div className="text-xl font-black font-display text-amber-400 mt-1">
             {sym}{freelanceCovered.toLocaleString()}
           </div>
-          <span className="text-xs text-stone-400">Gear, Adobe & family dining</span>
+          <span className="text-[10px] text-stone-400">Cheltuieli din proiecte video</span>
         </div>
 
         <div className="bg-stone-850 border border-stone-700/60 rounded-xl p-4">
-          <span className="text-xs text-stone-400 font-semibold uppercase tracking-wider">Total Monthly Overhead</span>
-          <div className="text-2xl font-black font-display text-white mt-1">
+          <span className="text-[11px] text-stone-400 font-bold uppercase tracking-wider">Total Cheltuieli</span>
+          <div className="text-xl font-black font-display text-white mt-1">
             {sym}{totalMonthlyExpenses.toLocaleString()}
           </div>
-          <span className="text-xs text-stone-400">{expenses.length} recurring expenses</span>
+          <span className="text-[10px] text-stone-400">{expenses.length} facturi înregistrate</span>
         </div>
       </div>
 
       {/* Filters */}
       <div className="flex overflow-x-auto py-1 space-x-2 border-b border-stone-800">
         {[
-          { id: 'ALL', label: 'All Expenses' },
-          { id: 'WIFE_SALARY', label: `${profile.wifeName.split(' ')[0]}'s Anchor` },
-          { id: 'FREELANCE_BUFFER', label: 'Freelance Buffer' },
-          { id: 'FIXED', label: 'Fixed Only' },
-          { id: 'FLEXIBLE', label: 'Flexible / Discretionary' }
+          { id: 'ALL', label: 'Toate' },
+          { id: 'WIFE_SALARY', label: `💳 Salariu ${profile.wifeName.split(' ')[0]}` },
+          { id: 'WIFE_MEAL_TICKETS', label: `🥗 Bonuri Masă ${profile.wifeName.split(' ')[0]}` },
+          { id: 'FREELANCE_BUFFER', label: `💼 Buffer Freelance` },
+          { id: 'SHARED_POOL', label: `🏡 Fond Comun` },
+          { id: 'FIXED', label: 'Fixe' },
+          { id: 'FLEXIBLE', label: 'Variabile' }
         ].map((tab) => (
           <button
             key={tab.id}

@@ -37,6 +37,7 @@ export const ReceiptScannerModal: React.FC<ReceiptScannerModalProps> = ({
   const [newItemPrice, setNewItemPrice] = useState('');
 
   const wifeBal = Number(cashBalances?.wifeSalaryBalance) || 0;
+  const wifeTicketsBal = Number(cashBalances?.wifeMealTicketsBalance) || 0;
   const husbandBal = Number(cashBalances?.freelanceBufferBalance) || 0;
   const sharedBal = Number(cashBalances?.sharedPoolBalance) || 0;
   const wifeShort = (wifeName || 'Cati').split(' ')[0];
@@ -50,11 +51,12 @@ export const ReceiptScannerModal: React.FC<ReceiptScannerModalProps> = ({
   const selectedPayerBalance = useMemo(() => {
     switch (assignedPayer) {
       case 'WIFE_SALARY': return wifeBal;
+      case 'WIFE_MEAL_TICKETS': return wifeTicketsBal;
       case 'FREELANCE_BUFFER': return husbandBal;
       case 'SHARED_POOL': return sharedBal;
       default: return 0;
     }
-  }, [assignedPayer, wifeBal, husbandBal, sharedBal]);
+  }, [assignedPayer, wifeBal, wifeTicketsBal, husbandBal, sharedBal]);
 
   const isBalanceInsufficient = selectedPayerBalance <= 0 || selectedPayerBalance < totalAmount;
   const remainingBalanceAfterBill = selectedPayerBalance - totalAmount;
@@ -258,11 +260,16 @@ export const ReceiptScannerModal: React.FC<ReceiptScannerModalProps> = ({
 
                 <div className='space-y-3 bg-stone-850 p-4 rounded-2xl border border-stone-750'>
                   <div className='flex items-center justify-between'><span className='text-xs font-bold uppercase text-amber-400 tracking-wider flex items-center gap-1.5'><Wallet className='w-3.5 h-3.5 text-amber-400' />{isRo ? 'Din ce bani se scade acest bon?' : 'Deduct from which account?'}</span><span className='text-[11px] text-stone-400'>{isRo ? 'Alege contul sursa' : 'Select source'}</span></div>
-                  <div className='grid grid-cols-1 sm:grid-cols-3 gap-2'>
+                  <div className='grid grid-cols-2 sm:grid-cols-4 gap-2'>
                     <button type='button' onClick={() => setAssignedPayer('WIFE_SALARY')} className={'p-2.5 rounded-xl border text-left transition-all cursor-pointer ' + (assignedPayer === 'WIFE_SALARY' ? 'bg-emerald-500/20 border-emerald-500 text-white shadow-sm ring-1 ring-emerald-500/40' : 'bg-stone-900 border-stone-800 text-stone-400 hover:text-stone-200')}>
                       <div className='text-[11px] font-bold truncate'>Salariu {wifeShort}</div>
                       <div className='text-xs font-mono font-black mt-1 text-emerald-400'>{wifeBal.toFixed(2)} {currencySymbol}</div>
                       <div className='text-[9px] text-stone-400'>{isRo ? 'Disponibil' : 'Available'}</div>
+                    </button>
+                    <button type='button' onClick={() => setAssignedPayer('WIFE_MEAL_TICKETS')} className={'p-2.5 rounded-xl border text-left transition-all cursor-pointer ' + (assignedPayer === 'WIFE_MEAL_TICKETS' ? 'bg-lime-500/20 border-lime-500 text-white shadow-sm ring-1 ring-lime-500/40' : 'bg-stone-900 border-stone-800 text-stone-400 hover:text-stone-200')}>
+                      <div className='text-[11px] font-bold truncate'>🥗 Bonuri {wifeShort}</div>
+                      <div className='text-xs font-mono font-black mt-1 text-lime-400'>{wifeTicketsBal.toFixed(2)} {currencySymbol}</div>
+                      <div className='text-[9px] text-stone-400'>{isRo ? 'Edenred/Pluxee' : 'Meal Tickets'}</div>
                     </button>
                     <button type='button' onClick={() => setAssignedPayer('FREELANCE_BUFFER')} className={'p-2.5 rounded-xl border text-left transition-all cursor-pointer ' + (assignedPayer === 'FREELANCE_BUFFER' ? 'bg-amber-500/20 border-amber-500 text-white shadow-sm ring-1 ring-amber-500/40' : 'bg-stone-900 border-stone-800 text-stone-400 hover:text-stone-200')}>
                       <div className='text-[11px] font-bold truncate'>Buffer {husbandShort}</div>

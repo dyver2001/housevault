@@ -13,6 +13,7 @@ export const DEFAULT_PROFILE: HouseholdProfile = {
   husbandName: 'Haytham (Videograf)',
   wifeName: 'Cati (IT Support)',
   wifeMonthlySalary: 6500.0,
+  wifeMealTicketsMonthly: 800.0,
   husbandEstMonthlyGross: 12500.0,
   emergencyFundMonthsGoal: 6,
   language: 'ro',

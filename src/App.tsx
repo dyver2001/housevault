@@ -98,6 +98,14 @@ export const App: React.FC = () => {
     return Math.max(0, (profile?.wifeMonthlySalary || 0) - wifeSpent);
   }, [profile?.wifeMonthlySalary, expenses]);
 
+  const wifeMealTicketsBalance = useMemo(() => {
+    const ticketSpent = (expenses || [])
+      .filter((e) => e.assignedPayer === 'WIFE_MEAL_TICKETS')
+      .reduce((s, e) => s + (e.amount || 0), 0);
+    const monthlyAllowance = profile?.wifeMealTicketsMonthly ?? 800;
+    return Math.max(0, monthlyAllowance - ticketSpent);
+  }, [profile?.wifeMealTicketsMonthly, expenses]);
+
   const freelanceBufferBalance = useMemo(() => {
     const totalCollected = (projects || []).reduce((s, p) => s + (p.depositReceived || 0), 0);
     const safePercent = splitRule?.safePocketPercent ?? 20;
@@ -112,15 +120,16 @@ export const App: React.FC = () => {
     const sharedSpent = (expenses || [])
       .filter((e) => e.assignedPayer === 'SHARED_POOL')
       .reduce((s, e) => s + (e.amount || 0), 0);
-    const combinedAvailable = wifeSalaryBalance + freelanceBufferBalance;
+    const combinedAvailable = wifeSalaryBalance + wifeMealTicketsBalance + freelanceBufferBalance;
     return Math.max(0, combinedAvailable - sharedSpent);
-  }, [wifeSalaryBalance, freelanceBufferBalance, expenses]);
+  }, [wifeSalaryBalance, wifeMealTicketsBalance, freelanceBufferBalance, expenses]);
 
   const cashBalances: CashPocketsBalance = useMemo(() => ({
     wifeSalaryBalance,
+    wifeMealTicketsBalance,
     freelanceBufferBalance,
     sharedPoolBalance
-  }), [wifeSalaryBalance, freelanceBufferBalance, sharedPoolBalance]);
+  }), [wifeSalaryBalance, wifeMealTicketsBalance, freelanceBufferBalance, sharedPoolBalance]);
 
   // Authentication State
   const [currentUser, setCurrentUser] = useState<AuthUser | null>(getStoredUser);

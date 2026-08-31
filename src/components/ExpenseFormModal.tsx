@@ -33,6 +33,8 @@ export const ExpenseFormModal: React.FC<ExpenseFormModalProps> = ({
     switch (form.assignedPayer) {
       case 'WIFE_SALARY':
         return cashBalances.wifeSalaryBalance;
+      case 'WIFE_MEAL_TICKETS':
+        return cashBalances.wifeMealTicketsBalance;
       case 'FREELANCE_BUFFER':
         return cashBalances.freelanceBufferBalance;
       case 'SHARED_POOL':
@@ -123,13 +125,16 @@ export const ExpenseFormModal: React.FC<ExpenseFormModalProps> = ({
               className="w-full px-3 py-2 rounded-xl bg-stone-800 border border-stone-700 text-white text-xs focus:outline-none"
             >
               <option value="WIFE_SALARY">
-                Salariu {profile.wifeName.split(' ')[0]} (Disponibil: {cashBalances.wifeSalaryBalance.toFixed(2)} {sym})
+                💳 Salariu {profile.wifeName.split(' ')[0]} (Disponibil: {cashBalances.wifeSalaryBalance.toFixed(2)} {sym})
+              </option>
+              <option value="WIFE_MEAL_TICKETS">
+                🥗 Card Bonuri de Masă {profile.wifeName.split(' ')[0]} (Edenred/Pluxee) (Disponibil: {cashBalances.wifeMealTicketsBalance.toFixed(2)} {sym})
               </option>
               <option value="FREELANCE_BUFFER">
-                Buffer Freelance {profile.husbandName.split(' ')[0]} (Disponibil: {cashBalances.freelanceBufferBalance.toFixed(2)} {sym})
+                💼 Buffer Freelance {profile.husbandName.split(' ')[0]} (Disponibil: {cashBalances.freelanceBufferBalance.toFixed(2)} {sym})
               </option>
               <option value="SHARED_POOL">
-                Fond Comun Familie (Disponibil: {cashBalances.sharedPoolBalance.toFixed(2)} {sym})
+                🏡 Fond Comun Familie (Disponibil: {cashBalances.sharedPoolBalance.toFixed(2)} {sym})
               </option>
             </select>
           </div>

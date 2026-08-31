@@ -300,7 +300,9 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           className="bg-stone-850 hover:bg-stone-800/90 border border-stone-700/60 rounded-2xl p-5 shadow-lg transition-all cursor-pointer group"
         >
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold uppercase tracking-wider text-emerald-400">Steady Salary Anchor</span>
+            <span className="text-xs font-semibold uppercase tracking-wider text-emerald-400">
+              {profile.language === 'ro' ? `Salariu & Bonuri ${profile.wifeName.split(' ')[0]}` : 'Steady Salary Anchor'}
+            </span>
             <div className="w-9 h-9 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 group-hover:scale-105 transition-transform">
               <Receipt className="w-5 h-5" />
             </div>
@@ -308,15 +310,15 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           <div className="mt-3">
             <div className="text-2xl sm:text-3xl font-black font-display text-white tracking-tight">
               {sym}{profile.wifeMonthlySalary.toLocaleString()}
-              <span className="text-xs text-stone-400 font-normal">/mo</span>
+              <span className="text-xs text-lime-400 font-bold ml-1.5">+ {sym}{(profile.wifeMealTicketsMonthly ?? 800).toLocaleString()} bonuri</span>
             </div>
             <p className="text-xs text-stone-400 mt-1 flex items-center space-x-1">
-              <span className="text-emerald-400 font-semibold">{salaryCoveragePercent}% coverage</span>
-              <span>of {sym}{fixedExpenses.toLocaleString()} fixed bills</span>
+              <span className="text-emerald-400 font-semibold">{salaryCoveragePercent}% acoperire</span>
+              <span>din {sym}{fixedExpenses.toLocaleString()} facturi fixe</span>
             </p>
           </div>
           <div className="mt-4 pt-3 border-t border-stone-800 flex items-center justify-between text-xs text-stone-400 group-hover:text-stone-200">
-            <span>{sym}{wifeSurplus.toLocaleString()} monthly surplus</span>
+            <span>+{sym}{wifeSurplus.toLocaleString()} surplus lunar</span>
             <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
           </div>
         </div>
