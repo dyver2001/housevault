@@ -283,6 +283,68 @@ Răspunde DOAR în format JSON strict:
     setItemizedList(itemizedList.filter((_, i) => i !== index));
   };
 
+  const handleLoadAuchanPreset = () => {
+    setMerchant('Auchan România SA (Iași Palas)');
+    setDate(new Date().toISOString().split('T')[0]);
+    setCategory('GROCERIES');
+    setItemizedList([
+      { name: 'Piersici proaspete (1.56kg)', price: 13.42 },
+      { name: 'Pungă Bio', price: 0.15 },
+      { name: 'Lapte Auchan 3.5% (1L)', price: 6.10 },
+      { name: 'Biscuiți Rom Sandwich', price: 14.99 },
+      { name: 'Jambon Curcan 150g', price: 9.99 },
+      { name: 'Jambon Curcan 150g', price: 9.99 },
+      { name: 'Maioneză ZG', price: 5.39 },
+      { name: 'Jambon Curcan 150g', price: 9.99 },
+      { name: 'Roșii proaspete 500g', price: 9.49 },
+      { name: 'Struguri albi (1.41kg)', price: 11.27 },
+      { name: 'Pungă Bio', price: 0.15 },
+      { name: 'Chefir Auchan 3.3% 330g (9 buc)', price: 25.11 },
+      { name: 'Chips Pringles Original', price: 11.99 },
+      { name: 'Ouă proaspete Poule 30 buc', price: 33.99 },
+      { name: 'Parfum rufe Cashmere', price: 35.19 },
+      { name: 'Suc mixt Olympus 1L', price: 8.90 },
+      { name: 'Garanție plastic SGR', price: 0.50 },
+      { name: 'Mozzarella Sticks', price: 12.99 },
+      { name: 'Covrigei pentru bere', price: 4.79 },
+      { name: 'Dovlecei proaspeți (1.08kg)', price: 4.22 },
+      { name: 'Smântână Almette 150g', price: 15.78 },
+      { name: 'Hell Energizant 0.25L', price: 4.19 },
+      { name: 'Garanție doză SGR', price: 0.50 },
+      { name: 'Chips Auchan', price: 11.99 },
+      { name: 'Ciuperci Champignon brune', price: 9.89 },
+      { name: 'Cereale gust căpșuni', price: 12.99 },
+      { name: 'Smântână Hochland BTF', price: 24.79 },
+      { name: 'Crenvurști 500g', price: 17.39 },
+      { name: 'Ton mărunțit Auchan', price: 41.99 },
+      { name: 'Tăiței verzi Asia Food', price: 17.99 },
+      { name: 'Castraveți cornichon (0.82kg)', price: 3.51 },
+      { name: 'Pungă Bio', price: 0.15 },
+      { name: 'Ardei Bianca filieră', price: 6.99 },
+      { name: 'Cafea Lavazza 250g', price: 33.79 },
+      { name: 'Morcovi 1kg filieră', price: 4.89 },
+      { name: 'Coca-Cola 2.5L PET', price: 10.99 },
+      { name: 'Garanție plastic SGR', price: 0.50 },
+      { name: 'Unt Auchan 82% 200g (2 buc)', price: 17.98 },
+      { name: 'Smântână LaDorna UHT (2 buc)', price: 15.98 },
+      { name: 'Sos Cheddar Cheez 175g', price: 10.99 },
+      { name: 'Cartofi prăjiți 2.5kg', price: 12.99 },
+      { name: 'Brânză Monte Banato Cheese', price: 3.29 },
+      { name: 'Lapte Auchan 3.5% (1L)', price: 6.10 },
+      { name: 'Lapte Auchan 3.5% (1L)', price: 6.10 },
+      { name: 'Lapte Auchan 3.5% (1L)', price: 6.10 },
+      { name: 'Pâine cu făină 500g', price: 5.99 },
+      { name: 'Porumb dulce Bonduelle', price: 12.99 },
+      { name: 'Pâine albă cu maia', price: 8.69 },
+      { name: 'Covrigei pentru bere', price: 4.79 },
+      { name: 'Chips ardei Chio 170g', price: 10.49 },
+      { name: 'Biscuiți cu nuci Auchan', price: 15.49 },
+      { name: 'Chips Lay\'s Grătar', price: 8.49 }
+    ]);
+    setHasScanned(true);
+    setImagePreview('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="400" height="200"><rect width="100%" height="100%" fill="%231c1917"/><text x="50%" y="50%" fill="%2310b981" font-size="16" font-family="sans-serif" text-anchor="middle" font-weight="bold">Bon Auchan România Scanat (593.49 lei)</text></svg>');
+  };
+
   const handleAddNewItem = () => {
     if (!newItemName.trim()) return;
     const priceVal = parseFloat(newItemPrice) || 0;
@@ -458,6 +520,18 @@ Răspunde DOAR în format JSON strict:
                 </div>
               </label>
             </div>
+
+            <div className="pt-2">
+              <button
+                type="button"
+                onClick={handleLoadAuchanPreset}
+                className="w-full py-3 px-4 rounded-2xl bg-gradient-to-r from-amber-500/20 via-orange-500/20 to-amber-500/20 hover:from-amber-500/30 hover:to-orange-500/30 border border-amber-500/40 text-amber-300 font-bold text-xs flex items-center justify-center space-x-2 transition shadow-md cursor-pointer active:scale-98"
+              >
+                <Sparkles className="w-4 h-4 text-amber-400" />
+                <span>✨ Încarcă Direct Bonul Auchan (593.49 lei • 49 Produse)</span>
+              </button>
+            </div>
+
             <div className="text-center pt-1">
               <span className="text-[11px] text-stone-400">
                 {isRo
