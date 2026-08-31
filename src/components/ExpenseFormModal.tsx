@@ -44,11 +44,13 @@ export const ExpenseFormModal: React.FC<ExpenseFormModalProps> = ({
     }
   }, [form.assignedPayer, cashBalances]);
 
-  const isNegativeAfterBill = remainingAfterBill < 0;
+  const initialCredit = initialData && initialData.assignedPayer === form.assignedPayer ? Number(initialData.amount || 0) : 0;
+  const currentAvailable = (Number(selectedBalance) || 0) + initialCredit;
+  const remainingAfterBill = currentAvailable - (Number(form.amount) || 0);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.title.trim() || form.amount <= 0) return;
+    if (!form.title.trim() || Number(form.amount) <= 0) return;
     onSave(form);
     onClose();
   };
@@ -117,23 +119,23 @@ export const ExpenseFormModal: React.FC<ExpenseFormModalProps> = ({
 
           {/* Assigned Income Source with Live Balances */}
           <div>
-            <label className="block text-xs font-semibold text-stone-300 mb-1">Sursă de Plată (Din ce cont se scade?)</label>
+            <label className="block text-xs font-semibold text-stone-300 mb-1">Sursă de Plată (Din ce cont se susține?)</label>
             <select
               value={form.assignedPayer}
               onChange={(e) => setForm({ ...form, assignedPayer: e.target.value as ExpensePayer })}
               className="w-full px-3 py-2 rounded-xl bg-stone-800 border border-stone-700 text-white text-xs focus:outline-none"
             >
               <option value="WIFE_SALARY">
-                💳 Salariu {profile.wifeName.split(' ')[0]} (Sold: {cashBalances.wifeSalaryBalance.toFixed(2)} {sym})
+                💳 Salariu {profile.wifeName.split(' ')[0]} ({profile.wifeMonthlySalary.toLocaleString()} {sym}/lună)
               </option>
               <option value="WIFE_MEAL_TICKETS">
-                🥗 Card Bonuri de Masă {profile.wifeName.split(' ')[0]} (Edenred/Pluxee) (Sold: {cashBalances.wifeMealTicketsBalance.toFixed(2)} {sym})
+                🥗 Card Bonuri de Masă {profile.wifeName.split(' ')[0]} ({(profile.wifeMealTicketsMonthly ?? 800).toLocaleString()} {sym}/lună)
               </option>
               <option value="FREELANCE_BUFFER">
-                💼 Buffer Freelance {profile.husbandName.split(' ')[0]} (Sold: {cashBalances.freelanceBufferBalance.toFixed(2)} {sym})
+                💼 Buffer Freelance {profile.husbandName.split(' ')[0]}
               </option>
               <option value="SHARED_POOL">
-                🏡 Fond Comun Familie (Sold: {cashBalances.sharedPoolBalance.toFixed(2)} {sym})
+                🏡 Fond Comun Familie
               </option>
             </select>
           </div>
@@ -141,12 +143,12 @@ export const ExpenseFormModal: React.FC<ExpenseFormModalProps> = ({
           {/* Cash Reduction Preview Card */}
           <div className="p-3 bg-stone-950 rounded-xl border border-stone-800 text-xs space-y-1">
             <div className="flex justify-between text-stone-400">
-              <span>Sold disponibil în cont:</span>
-              <span className="font-mono font-bold text-white">{selectedBalance.toFixed(2)} {sym}</span>
+              <span>Disponibil în cont:</span>
+              <span className="font-mono font-bold text-white">{currentAvailable.toFixed(2)} {sym}</span>
             </div>
             <div className="flex justify-between text-rose-400">
-              <span>Sumă factură:</span>
-              <span className="font-mono font-bold">-{form.amount.toFixed(2)} {sym}</span>
+              <span>Valoare factură:</span>
+              <span className="font-mono font-bold">-{Number(form.amount || 0).toFixed(2)} {sym}</span>
             </div>
             <div className="flex justify-between font-bold pt-1 border-t border-stone-800">
               <span className="text-stone-300">Sold estimat după plată:</span>
@@ -180,7 +182,7 @@ export const ExpenseFormModal: React.FC<ExpenseFormModalProps> = ({
           </button>
           <button
             type="submit"
-            disabled={!form.title.trim() || form.amount <= 0}
+            disabled={!form.title.trim() || Number(form.amount) <= 0}
             className="flex-1 py-2.5 rounded-xl font-bold text-xs shadow-md transition cursor-pointer bg-emerald-500 hover:bg-emerald-400 text-stone-950 shadow-emerald-500/20 active:scale-98"
           >
             Salvează Cheltuiala
