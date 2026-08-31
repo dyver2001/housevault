@@ -353,57 +353,88 @@ app.post('/api/auth/link-vault', (req: Request, res: Response) => {
   }
 });
 
+function findOrCreateVault(inputCode: string, initialData?: any, device?: DeviceEntry): { code: string; vault: VaultPayload; isNew: boolean } {
+  let raw = (inputCode || '').toUpperCase().trim();
+  // Strip any non-alphanumeric except dash
+  let clean = raw.replace(/[^A-Z0-9-]/g, '');
+  if (!clean) clean = generateVaultCode();
+
+  // If user typed 4 characters like "5GZX", prefix with "HV-"
+  if (!clean.startsWith('HV-')) {
+    if (clean.startsWith('HV') && clean.length > 2) {
+      clean = 'HV-' + clean.substring(2);
+    } else if (clean.length === 4) {
+      clean = 'HV-' + clean;
+    }
+  }
+
+  // Look for exact match or flexible match in vaultsMap
+  let matchedKey = Object.keys(vaultsMap).find(k => {
+    return k === clean || 
+           k.replace(/-/g, '') === clean.replace(/-/g, '') ||
+           k.replace(/^HV-/, '') === clean.replace(/^HV-/, '');
+  });
+
+  if (matchedKey && vaultsMap[matchedKey]) {
+    const vault = vaultsMap[matchedKey];
+    if (device) {
+      upsertDevice(vault, device);
+      saveVaultsToDisk();
+    }
+    return { code: matchedKey, vault, isNew: false };
+  }
+
+  // Auto-create/initialize the vault room with this code so partners can connect instantly
+  const newVault: VaultPayload = {
+    vaultCode: clean,
+    version: 1,
+    lastUpdated: new Date().toISOString(),
+    lastUpdatedBy: device?.ownerName || device?.deviceName || 'Haytham & Cati',
+    lastUpdatedDevice: device,
+    devices: device ? [{ ...device, lastSeen: new Date().toISOString() }] : [],
+    data: initialData || {}
+  };
+
+  vaultsMap[clean] = newVault;
+  saveVaultsToDisk();
+  console.log(`[CloudSync] Auto-initialized vault room: ${clean} (Device: ${device?.deviceId || 'unknown'})`);
+  return { code: clean, vault: newVault, isNew: true };
+}
+
 // --- SYNC API ENDPOINTS ---
 
 // 1. Create a new shared couple vault room
 app.post('/api/sync/create', (req: Request, res: Response) => {
   try {
     const { customCode, initialData, updatedBy, device } = req.body;
-    let code = (customCode || generateVaultCode()).toUpperCase().trim().replace(/[^A-Z0-9-]/g, '');
-    if (!code) code = generateVaultCode();
-
-    const newVault: VaultPayload = {
-      vaultCode: code,
-      version: 1,
-      lastUpdated: new Date().toISOString(),
-      lastUpdatedBy: updatedBy || device?.deviceName || 'Haytham & Cati',
-      lastUpdatedDevice: device,
-      devices: device ? [{ ...device, lastSeen: new Date().toISOString() }] : [],
-      data: initialData || {}
-    };
-
-    vaultsMap[code] = newVault;
+    const targetCode = customCode || generateVaultCode();
+    const { code, vault } = findOrCreateVault(targetCode, initialData, device);
+    if (updatedBy) {
+      vault.lastUpdatedBy = updatedBy;
+    }
     saveVaultsToDisk();
+    broadcastVaultUpdate(code, vault);
 
-    console.log(`[CloudSync] Created shared vault room: ${code} with device ${device?.deviceId || 'unknown'}`);
-    res.json({ success: true, vaultCode: code, vault: newVault });
+    console.log(`[CloudSync] Created shared vault room: ${code}`);
+    res.json({ success: true, vaultCode: code, vault });
   } catch (error: any) {
     res.status(500).json({ success: false, error: error?.message });
   }
 });
 
-// 2. Join an existing shared couple vault room
+// 2. Join an existing shared couple vault room (or auto-initialize)
 app.post('/api/sync/join', (req: Request, res: Response) => {
   try {
-    const { vaultCode, device } = req.body;
-    const cleanCode = (vaultCode || '').toUpperCase().trim();
-    const vault = vaultsMap[cleanCode];
-
-    if (!vault) {
-      return res.status(404).json({
-        success: false,
-        error: `Codul de seif "${cleanCode}" nu a fost găsit. Verificați codul introdus.`
-      });
+    const { vaultCode, device, initialData } = req.body;
+    if (!vaultCode || !vaultCode.trim()) {
+      return res.status(400).json({ success: false, error: 'Codul de seif este obligatoriu.' });
     }
 
-    if (device) {
-      upsertDevice(vault, device);
-      saveVaultsToDisk();
-      broadcastVaultUpdate(cleanCode, vault);
-    }
+    const { code, vault } = findOrCreateVault(vaultCode, initialData, device);
+    broadcastVaultUpdate(code, vault);
 
-    console.log(`[CloudSync] Device ${device?.deviceName || device?.deviceId || 'unknown'} joined vault: ${cleanCode}`);
-    res.json({ success: true, vaultCode: cleanCode, vault });
+    console.log(`[CloudSync] Device ${device?.deviceName || device?.deviceId || 'unknown'} joined vault: ${code}`);
+    res.json({ success: true, vaultCode: code, vault });
   } catch (error: any) {
     res.status(500).json({ success: false, error: error?.message });
   }
@@ -412,10 +443,8 @@ app.post('/api/sync/join', (req: Request, res: Response) => {
 // 3. Register or heartbeat a device in the vault
 app.post('/api/sync/:vaultCode/device', (req: Request, res: Response) => {
   try {
-    const code = req.params.vaultCode.toUpperCase().trim();
+    const { code, vault } = findOrCreateVault(req.params.vaultCode);
     const { device } = req.body;
-    const vault = vaultsMap[code];
-    if (!vault) return res.status(404).json({ success: false, error: 'Vault not found' });
 
     if (device) {
       upsertDevice(vault, device);
@@ -431,60 +460,37 @@ app.post('/api/sync/:vaultCode/device', (req: Request, res: Response) => {
 
 // 4. Fetch latest vault snapshot
 app.get('/api/sync/:vaultCode', (req: Request, res: Response) => {
-  const code = req.params.vaultCode.toUpperCase().trim();
-  const vault = vaultsMap[code];
-  if (!vault) {
-    return res.status(404).json({ success: false, error: 'Vault not found' });
-  }
-  res.json({ success: true, vault });
+  const { code, vault } = findOrCreateVault(req.params.vaultCode);
+  res.json({ success: true, vaultCode: code, vault });
 });
 
 // 5. Push local changes to the shared couple vault (Bidirectional Sync)
 app.post('/api/sync/:vaultCode/push', (req: Request, res: Response) => {
   try {
-    const code = req.params.vaultCode.toUpperCase().trim();
+    const rawCode = req.params.vaultCode;
     const { data, updatedBy, device } = req.body;
+    const { code, vault } = findOrCreateVault(rawCode, data, device);
 
-    const existing = vaultsMap[code] || {
-      vaultCode: code,
-      version: 0,
-      lastUpdated: new Date().toISOString(),
-      devices: [],
-      data: {}
-    };
-
-    if (device) {
-      upsertDevice(existing, device);
+    if (data) {
+      vault.data = data;
     }
-
-    const newVersion = (existing.version || 0) + 1;
-    const updatedVault: VaultPayload = {
-      vaultCode: code,
-      version: newVersion,
-      lastUpdated: new Date().toISOString(),
-      lastUpdatedBy: updatedBy || device?.deviceName || existing.lastUpdatedBy || 'Haytham & Cati',
-      lastUpdatedDevice: device || existing.lastUpdatedDevice,
-      devices: existing.devices || [],
-      data: {
-        ...existing.data,
-        ...data
-      }
-    };
-
-    vaultsMap[code] = updatedVault;
+    vault.version = (vault.version || 0) + 1;
+    vault.lastUpdated = new Date().toISOString();
+    vault.lastUpdatedBy = updatedBy || device?.deviceName || 'Haytham & Cati';
+    vault.lastUpdatedDevice = device;
+    if (device) {
+      upsertDevice(vault, device);
+    }
     saveVaultsToDisk();
+    broadcastVaultUpdate(code, vault);
 
-    // Broadcast instant update to all connected spouse devices
-    broadcastVaultUpdate(code, updatedVault);
-
-    console.log(`[CloudSync] Vault ${code} updated to v${newVersion} by ${updatedVault.lastUpdatedBy} [${device?.deviceId || ''}]`);
-    res.json({ success: true, vault: updatedVault });
+    res.json({ success: true, vaultCode: code, vault });
   } catch (error: any) {
     res.status(500).json({ success: false, error: error?.message });
   }
 });
 
-// 5. Server-Sent Events (SSE) live real-time stream
+// 6. Server-Sent Events (SSE) live real-time stream
 app.get('/api/sync/:vaultCode/live', (req: Request, res: Response) => {
   const code = req.params.vaultCode.toUpperCase().trim();
 

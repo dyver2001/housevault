@@ -569,11 +569,22 @@ export const App: React.FC = () => {
   };
 
   const handleJoinSyncCode = async (code: string): Promise<boolean> => {
-    const res = await joinCloudVault(code);
-    if (res.success && res.vault?.data) {
-      setSyncCode(res.vaultCode || code);
-      setStoredVaultCode(res.vaultCode || code);
-      applyRemoteSnapshot(res.vault.data);
+    const currentData = { profile, projects, debts, targets, expenses, splitRule, activities, groceryList, groceryCatalog };
+    const res = await joinCloudVault(
+      code,
+      currentUser?.name?.includes('Haytham') ? 'Haytham' : 'Cati',
+      currentData
+    );
+    if (res.success && res.vault) {
+      const canonicalCode = res.vaultCode || code;
+      setSyncCode(canonicalCode);
+      setStoredVaultCode(canonicalCode);
+      setIsSyncConnected(true);
+      if (res.vault.data && Object.keys(res.vault.data).length > 0) {
+        applyRemoteSnapshot(res.vault.data);
+      } else {
+        pushCurrentStateToCloud();
+      }
       setLastSyncTime(res.vault.lastUpdated || new Date().toISOString());
       return true;
     }

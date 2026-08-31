@@ -111,14 +111,15 @@ export async function createCloudVault(
 
 export async function joinCloudVault(
   vaultCode: string,
-  ownerName: string = 'Cati'
+  ownerName: string = 'Cati',
+  currentLocalData?: any
 ): Promise<{ success: boolean; vaultCode?: string; vault?: any; error?: string }> {
   try {
     const device = getMyDeviceProfile(ownerName);
     const res = await fetch('/api/sync/join', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ vaultCode, device })
+      body: JSON.stringify({ vaultCode, device, initialData: currentLocalData })
     });
     const json = await res.json();
     if (json.success && json.vaultCode) {
