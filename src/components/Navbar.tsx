@@ -78,7 +78,7 @@ export const Navbar: React.FC<NavbarProps> = ({
     },
     {
       id: 'freelance' as TabType,
-      label: isRo ? Proiecte  : ${husbandShort} Freelance,
+      label: isRo ? `Proiecte ${husbandShort}` : `${husbandShort} Freelance`,
       icon: Coins,
       badge: uncollectedCount > 0 ? uncollectedCount : undefined,
       badgeAlert: overdueCount > 0,
@@ -110,7 +110,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               <button
                 onClick={onOpenAuth}
                 className="relative w-10 h-10 rounded-2xl bg-gradient-to-br from-amber-500/20 via-stone-900 to-emerald-500/20 border border-amber-500/30 flex items-center justify-center text-white font-bold text-xs shadow-lg shadow-amber-500/10 cursor-pointer hover:border-amber-400 active:scale-95 transition"
-                title={currentUser ? ${currentUser.name} () : 'Autentificare'}
+                title={currentUser ? `${currentUser.name} (${currentUser.email})` : 'Autentificare'}
               >
                 {currentUser ? (
                   <span className="font-display font-black text-amber-300 text-sm">
@@ -119,7 +119,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 ) : (
                   <User className="w-5 h-5 text-amber-400" />
                 )}
-                <span className={bsolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-stone-950 } />
+                <span className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-stone-950 ${isSyncConnected ? 'bg-emerald-400 shadow-sm shadow-emerald-400' : 'bg-amber-400'}`} />
               </button>
 
               <div
@@ -149,9 +149,13 @@ export const Navbar: React.FC<NavbarProps> = ({
                   <button
                     key={item.id}
                     onClick={() => onSelectTab(item.id)}
-                    className={elative flex items-center space-x-2 px-4 py-2 rounded-xl text-sm font-bold transition-all duration-200 cursor-pointer }
+                    className={`relative flex items-center space-x-2 px-4 py-2 rounded-xl text-sm font-bold transition-all duration-200 cursor-pointer ${
+                      isActive
+                        ? 'bg-gradient-to-r from-stone-850 to-stone-800 text-white shadow-md border border-white/[0.12] scale-[1.02]'
+                        : 'text-stone-400 hover:text-stone-200 hover:bg-white/[0.03]'
+                    }`}
                   >
-                    <Icon className={w-4 h-4 } />
+                    <Icon className={`w-4 h-4 ${isActive ? item.activeText : 'text-stone-400'}`} />
                     <span>{item.label}</span>
                     {item.badge !== undefined && (
                       <span className="ml-1.5 px-2 py-0.5 text-xs font-black rounded-full bg-amber-500 text-stone-950 shadow-sm animate-pulse">
@@ -168,7 +172,11 @@ export const Navbar: React.FC<NavbarProps> = ({
               {/* Joyful AI Strategist Button */}
               <button
                 onClick={() => onSelectTab('ai')}
-                className={lex items-center space-x-1.5 px-3.5 py-2 rounded-2xl font-bold text-xs transition shadow-lg cursor-pointer }
+                className={`flex items-center space-x-1.5 px-3.5 py-2 rounded-2xl font-bold text-xs transition shadow-lg cursor-pointer ${
+                  currentTab === 'ai'
+                    ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-purple-500/25 border border-purple-400/40'
+                    : 'bg-gradient-to-r from-purple-500/15 to-indigo-500/15 hover:from-purple-500/25 hover:to-indigo-500/25 text-purple-300 border border-purple-500/30'
+                }`}
                 title="HouseVault AI Strategist"
               >
                 <Sparkles className="w-3.5 h-3.5 text-purple-300 animate-spin-slow" />
@@ -180,7 +188,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 <button
                   onClick={onOpenSettings}
                   className="h-9 px-3 rounded-2xl bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-300 transition flex items-center space-x-1.5 text-xs font-bold cursor-pointer whitespace-nowrap shadow-sm"
-                  title={isRo ? Conectat cu  () : Synced with  ()}
+                  title={isRo ? `Conectat cu ${wifeShort} (${syncCode})` : `Synced with ${wifeShort} (${syncCode})`}
                 >
                   <span className="relative flex h-2 w-2">
                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
@@ -237,10 +245,14 @@ export const Navbar: React.FC<NavbarProps> = ({
             <button
               key={item.id}
               onClick={() => onSelectTab(item.id)}
-              className={lex-1 flex flex-col items-center justify-center py-2 px-1 rounded-2xl transition-all cursor-pointer }
+              className={`flex-1 flex flex-col items-center justify-center py-2 px-1 rounded-2xl transition-all cursor-pointer ${
+                isActive
+                  ? 'bg-gradient-to-br from-white/[0.08] to-white/[0.02] text-white border border-white/[0.12] shadow-sm'
+                  : 'text-stone-400 hover:text-stone-200'
+              }`}
             >
-              <Icon className={w-5 h-5 } />
-              <span className={	ext-[10px] tracking-tight mt-1 truncate }>
+              <Icon className={`w-5 h-5 ${isActive ? item.activeText : 'text-stone-400'}`} />
+              <span className={`text-[10px] tracking-tight mt-1 truncate ${isActive ? 'font-bold text-white' : 'font-medium'}`}>
                 {item.label}
               </span>
             </button>
@@ -266,17 +278,21 @@ export const Navbar: React.FC<NavbarProps> = ({
             <button
               key={item.id}
               onClick={() => onSelectTab(item.id)}
-              className={lex-1 flex flex-col items-center justify-center py-2 px-1 rounded-2xl transition-all cursor-pointer }
+              className={`flex-1 flex flex-col items-center justify-center py-2 px-1 rounded-2xl transition-all cursor-pointer ${
+                isActive
+                  ? 'bg-gradient-to-br from-white/[0.08] to-white/[0.02] text-white border border-white/[0.12] shadow-sm'
+                  : 'text-stone-400 hover:text-stone-200'
+              }`}
             >
               <div className="relative">
-                <Icon className={w-5 h-5 } />
+                <Icon className={`w-5 h-5 ${isActive ? item.activeText : 'text-stone-400'}`} />
                 {item.badge !== undefined && (
                   <span className="absolute -top-1 -right-2 px-1 rounded-full text-[9px] font-bold bg-amber-500 text-stone-950">
                     {item.badge}
                   </span>
                 )}
               </div>
-              <span className={	ext-[10px] tracking-tight mt-1 truncate }>
+              <span className={`text-[10px] tracking-tight mt-1 truncate ${isActive ? 'font-bold text-white' : 'font-medium'}`}>
                 {item.label}
               </span>
             </button>

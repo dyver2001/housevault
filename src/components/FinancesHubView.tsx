@@ -72,11 +72,17 @@ export const FinancesHubView: React.FC<FinancesHubViewProps> = ({
           <button
             type="button"
             onClick={() => setSubTab('bills')}
-            className={lex items-center space-x-2 px-3.5 sm:px-5 py-2.5 rounded-2xl text-xs sm:text-sm font-bold transition-all cursor-pointer whitespace-nowrap }
+            className={`flex items-center space-x-2 px-3.5 sm:px-5 py-2.5 rounded-2xl text-xs sm:text-sm font-bold transition-all cursor-pointer whitespace-nowrap ${
+              subTab === 'bills'
+                ? 'bg-gradient-to-r from-emerald-500 to-teal-500 text-stone-950 shadow-lg shadow-emerald-500/25 scale-[1.02]'
+                : 'text-stone-300 hover:text-white hover:bg-white/[0.04]'
+            }`}
           >
             <Receipt className="w-4 h-4 shrink-0" />
             <span>{isRo ? 'Facturi & Bonuri' : 'Bills & Vouchers'}</span>
-            <span className={	ext-[11px] font-mono px-2 py-0.5 rounded-full }>
+            <span className={`text-[11px] font-mono px-2 py-0.5 rounded-full ${
+              subTab === 'bills' ? 'bg-stone-950/20 text-stone-950 font-black' : 'bg-stone-800 text-emerald-400'
+            }`}>
               {sym}{fixedExpenses.toLocaleString()}
             </span>
           </button>
@@ -84,11 +90,17 @@ export const FinancesHubView: React.FC<FinancesHubViewProps> = ({
           <button
             type="button"
             onClick={() => setSubTab('debts')}
-            className={lex items-center space-x-2 px-3.5 sm:px-5 py-2.5 rounded-2xl text-xs sm:text-sm font-bold transition-all cursor-pointer whitespace-nowrap }
+            className={`flex items-center space-x-2 px-3.5 sm:px-5 py-2.5 rounded-2xl text-xs sm:text-sm font-bold transition-all cursor-pointer whitespace-nowrap ${
+              subTab === 'debts'
+                ? 'bg-gradient-to-r from-rose-500 to-pink-500 text-stone-950 shadow-lg shadow-rose-500/25 scale-[1.02]'
+                : 'text-stone-300 hover:text-white hover:bg-white/[0.04]'
+            }`}
           >
             <Landmark className="w-4 h-4 shrink-0" />
             <span>{isRo ? 'Datorii Bancare' : 'Bank Debt'}</span>
-            <span className={	ext-[11px] font-mono px-2 py-0.5 rounded-full }>
+            <span className={`text-[11px] font-mono px-2 py-0.5 rounded-full ${
+              subTab === 'debts' ? 'bg-stone-950/20 text-stone-950 font-black' : 'bg-stone-800 text-rose-400'
+            }`}>
               {sym}{totalDebt.toLocaleString()}
             </span>
           </button>
@@ -96,12 +108,18 @@ export const FinancesHubView: React.FC<FinancesHubViewProps> = ({
           <button
             type="button"
             onClick={() => setSubTab('groceries')}
-            className={lex items-center space-x-2 px-3.5 sm:px-5 py-2.5 rounded-2xl text-xs sm:text-sm font-bold transition-all cursor-pointer whitespace-nowrap }
+            className={`flex items-center space-x-2 px-3.5 sm:px-5 py-2.5 rounded-2xl text-xs sm:text-sm font-bold transition-all cursor-pointer whitespace-nowrap ${
+              subTab === 'groceries'
+                ? 'bg-gradient-to-r from-amber-500 to-yellow-400 text-stone-950 shadow-lg shadow-amber-500/25 scale-[1.02]'
+                : 'text-stone-300 hover:text-white hover:bg-white/[0.04]'
+            }`}
           >
             <ShoppingCart className="w-4 h-4 shrink-0" />
             <span>{isRo ? 'Cumpărături & Meniu' : 'Groceries & Menu'}</span>
             {pendingGroceries > 0 && (
-              <span className={	ext-[11px] font-bold px-2 py-0.5 rounded-full }>
+              <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${
+                subTab === 'groceries' ? 'bg-stone-950/20 text-stone-950 font-black' : 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
+              }`}>
                 {pendingGroceries}
               </span>
             )}
