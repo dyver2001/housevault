@@ -1,204 +1,176 @@
-package com.example
+﻿package com.example
 
+import android.annotation.SuppressLint
+import android.app.Activity
+import android.content.Intent
+import android.graphics.Color
+import android.net.Uri
+import android.os.Build
 import android.os.Bundle
+import android.view.View
+import android.view.WindowInsetsController
+import android.webkit.*
+import android.widget.FrameLayout
+import android.widget.ProgressBar
 import androidx.activity.ComponentActivity
-import androidx.activity.compose.setContent
-import androidx.activity.enableEdgeToEdge
-import androidx.activity.viewModels
-import androidx.compose.foundation.background
-import androidx.compose.foundation.horizontalScroll
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
-import androidx.compose.material.icons.outlined.*
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import com.example.ui.screens.*
-import com.example.ui.theme.*
-import com.example.ui.viewmodel.AppTab
-import com.example.ui.viewmodel.HouseVaultViewModel
+import androidx.activity.OnBackPressedCallback
+import androidx.activity.result.contract.ActivityResultContracts
 
 class MainActivity : ComponentActivity() {
-    private val viewModel: HouseVaultViewModel by viewModels()
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
-        setContent {
-            val profile by viewModel.profile.collectAsState()
-            MyApplicationTheme(preset = profile.themePreset, themeMode = profile.themeMode) {
-                MainAppScreen(viewModel = viewModel)
-            }
+    private lateinit var webView: WebView
+    private lateinit var progressBar: ProgressBar
+    private var filePathCallback: ValueCallback<Array<Uri>>? = null
+
+    private val fileChooserLauncher = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (filePathCallback != null) {
+            val results: Array<Uri>? = if (result.resultCode == Activity.RESULT_OK) {
+                val data = result.data
+                if (data?.dataString != null) {
+                    arrayOf(Uri.parse(data.dataString))
+                } else if (data?.clipData != null) {
+                    val count = data.clipData!!.itemCount
+                    val uris = Array(count) { i -> data.clipData!!.getItemAt(i).uri }
+                    uris
+                } else null
+            } else null
+            filePathCallback?.onReceiveValue(results)
+            filePathCallback = null
         }
     }
-}
 
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun MainAppScreen(viewModel: HouseVaultViewModel) {
-    val currentTab by viewModel.currentTab.collectAsState()
-    val profile by viewModel.profile.collectAsState()
-    val projects by viewModel.projects.collectAsState()
-    val debts by viewModel.debts.collectAsState()
-    val expenses by viewModel.expenses.collectAsState()
-    val targets by viewModel.targets.collectAsState()
-    val currentUser by viewModel.currentUser.collectAsState()
-    var dismissedAuth by remember { mutableStateOf(false) }
+    @SuppressLint("SetJavaScriptEnabled")
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
 
-    if (currentUser == null && !dismissedAuth) {
-        AuthScreen(
-            viewModel = viewModel,
-            onContinueOffline = { dismissedAuth = true }
-        )
-        return
-    }
+        // Luxury Deep Obsidian Theme (#09090b)
+        window.statusBarColor = Color.parseColor("#09090b")
+        window.navigationBarColor = Color.parseColor("#09090b")
 
-    val pendingCount = projects.count { !it.isFullyCollected }
-
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(10.dp)
-                    ) {
-                        // User Avatar Bubble (Revolut Style)
-                        Box(
-                            modifier = Modifier
-                                .size(34.dp)
-                                .clip(CircleShape)
-                                .background(Emerald800)
-                                .clickable { viewModel.selectTab(AppTab.SHARE_APK) },
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text(
-                                text = (currentUser?.name?.firstOrNull() ?: 'H').toString().uppercase(),
-                                color = Color.White,
-                                fontWeight = FontWeight.Black,
-                                fontSize = 14.sp
-                            )
-                        }
-
-                        Text(
-                            text = "HouseVault",
-                            fontWeight = FontWeight.Black,
-                            fontSize = 18.sp,
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
-                    }
-                },
-                actions = {
-                    IconButton(onClick = { viewModel.selectTab(AppTab.ACTIVITY) }) {
-                        Icon(
-                            Icons.Default.Notifications,
-                            contentDescription = "Feed Cuplu",
-                            tint = if (currentTab == AppTab.ACTIVITY) Amber500 else Slate500,
-                            modifier = Modifier.size(22.dp)
-                        )
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface
-                )
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            window.insetsController?.setSystemBarsAppearance(
+                0,
+                WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS
             )
-        },
-        bottomBar = {
-            NavigationBar(
-                containerColor = MaterialTheme.colorScheme.surface,
-                tonalElevation = 8.dp
-            ) {
-                val lang = profile.language
-                val navItems = listOf(
-                    Triple(AppTab.DASHBOARD, com.example.data.AppStrings.get("nav_vault", lang), Icons.Default.AccountBalanceWallet),
-                    Triple(AppTab.COLLECTOR, com.example.data.AppStrings.get("nav_collect", lang), Icons.Default.AttachMoney),
-                    Triple(AppTab.HOUSE_BUDGET, com.example.data.AppStrings.get("nav_budget", lang), Icons.Default.Home),
-                    Triple(AppTab.BANK_DEBT, com.example.data.AppStrings.get("nav_debts", lang), Icons.Default.CreditCard),
-                    Triple(AppTab.TARGETS, com.example.data.AppStrings.get("nav_targets", lang), Icons.Default.Savings),
-                    Triple(AppTab.SHARE_APK, com.example.data.AppStrings.get("nav_settings", lang), Icons.Default.Settings)
-                )
+        }
 
-                val primaryColor = MaterialTheme.colorScheme.primary
-                val onPrimaryContainer = MaterialTheme.colorScheme.primaryContainer
+        val rootLayout = FrameLayout(this).apply {
+            setBackgroundColor(Color.parseColor("#09090b"))
+        }
 
-                navItems.forEach { (tab, label, icon) ->
-                    val isSelected = currentTab == tab
-                    NavigationBarItem(
-                        selected = isSelected,
-                        onClick = { viewModel.selectTab(tab) },
-                        icon = {
-                            BadgedBox(
-                                badge = {
-                                    if (tab == AppTab.COLLECTOR && pendingCount > 0) {
-                                        Badge(
-                                            containerColor = Amber500,
-                                            contentColor = Slate900,
-                                            modifier = Modifier.offset(x = 4.dp, y = (-2).dp)
-                                        ) {
-                                            Text("$pendingCount", fontWeight = FontWeight.Bold, fontSize = 10.sp)
-                                        }
-                                    }
-                                }
-                            ) {
-                                Icon(
-                                    imageVector = icon,
-                                    contentDescription = label,
-                                    tint = if (isSelected) primaryColor else Slate400,
-                                    modifier = Modifier.size(22.dp)
-                                )
-                            }
-                        },
-                        label = {
-                            Text(
-                                text = label,
-                                fontSize = 10.sp,
-                                fontWeight = if (isSelected) FontWeight.ExtraBold else FontWeight.Medium,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis
-                            )
-                        },
-                        colors = NavigationBarItemDefaults.colors(
-                            selectedIconColor = primaryColor,
-                            selectedTextColor = primaryColor,
-                            indicatorColor = onPrimaryContainer.copy(alpha = 0.5f),
-                            unselectedTextColor = Slate400,
-                            unselectedIconColor = Slate400
-                        )
-                    )
+        progressBar = ProgressBar(this, null, android.R.attr.progressBarStyleHorizontal).apply {
+            isIndeterminate = true
+            visibility = View.VISIBLE
+            layoutParams = FrameLayout.LayoutParams(
+                FrameLayout.LayoutParams.MATCH_PARENT,
+                8
+            )
+        }
+
+        webView = WebView(this).apply {
+            setBackgroundColor(Color.parseColor("#09090b"))
+            layoutParams = FrameLayout.LayoutParams(
+                FrameLayout.LayoutParams.MATCH_PARENT,
+                FrameLayout.LayoutParams.MATCH_PARENT
+            )
+
+            settings.apply {
+                javaScriptEnabled = true
+                domStorageEnabled = true
+                databaseEnabled = true
+                allowFileAccess = true
+                allowContentAccess = true
+                loadWithOverviewMode = true
+                useWideViewPort = true
+                setSupportZoom(false)
+                displayZoomControls = false
+                mediaPlaybackRequiresUserGesture = false
+                cacheMode = WebSettings.LOAD_DEFAULT
+                userAgentString = "${settings.userAgentString} HouseVault-Android-App/2.0"
+            }
+
+            webViewClient = object : WebViewClient() {
+                override fun onPageFinished(view: WebView?, url: String?) {
+                    super.onPageFinished(view, url)
+                    progressBar.visibility = View.GONE
+                }
+
+                override fun onReceivedError(
+                    view: WebView?,
+                    request: WebResourceRequest?,
+                    error: WebResourceError?
+                ) {
+                    super.onReceivedError(view, request, error)
+                    progressBar.visibility = View.GONE
+                }
+            }
+
+            webChromeClient = object : WebChromeClient() {
+                override fun onProgressChanged(view: WebView?, newProgress: Int) {
+                    if (newProgress < 100) {
+                        progressBar.visibility = View.VISIBLE
+                    } else {
+                        progressBar.visibility = View.GONE
+                    }
+                }
+
+                override fun onShowFileChooser(
+                    webView: WebView?,
+                    filePathCallback: ValueCallback<Array<Uri>>?,
+                    fileChooserParams: FileChooserParams?
+                ): Boolean {
+                    this@MainActivity.filePathCallback?.onReceiveValue(null)
+                    this@MainActivity.filePathCallback = filePathCallback
+
+                    val intent = fileChooserParams?.createIntent() ?: Intent(Intent.ACTION_GET_CONTENT).apply {
+                        type = "image/*"
+                    }
+                    try {
+                        fileChooserLauncher.launch(intent)
+                    } catch (e: Exception) {
+                        this@MainActivity.filePathCallback = null
+                        return false
+                    }
+                    return true
                 }
             }
         }
-    ) { innerPadding ->
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
-        ) {
-            when (currentTab) {
-                AppTab.DASHBOARD -> DashboardScreen(viewModel = viewModel, onNavigate = { viewModel.selectTab(it) })
-                AppTab.COLLECTOR -> FreelanceCollectorScreen(viewModel = viewModel)
-                AppTab.HOUSE_BUDGET -> HouseholdBudgetScreen(viewModel = viewModel)
-                AppTab.BANK_DEBT -> BankDebtScreen(viewModel = viewModel)
-                AppTab.TARGETS -> SavingsTargetsScreen(viewModel = viewModel)
-                AppTab.CALENDAR -> CashFlowCalendarScreen(profile = profile, projects = projects, debts = debts, expenses = expenses)
-                AppTab.GEAR_TAX -> GearTaxScreen(profile = profile)
-                AppTab.ACTIVITY -> ActivityFeedScreen(profile = profile)
-                AppTab.AI_ADVISOR -> AiAdvisorScreen(viewModel = viewModel)
-                AppTab.SHARE_APK -> MobileShareScreen(viewModel = viewModel)
+
+        rootLayout.addView(webView)
+        rootLayout.addView(progressBar)
+        setContentView(rootLayout)
+
+        // Handle Android Back Navigation
+        onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                if (webView.canGoBack()) {
+                    webView.goBack()
+                } else {
+                    isEnabled = false
+                    onBackPressedDispatcher.onBackPressed()
+                }
             }
-        }
+        })
+
+        // Load the live HouseVault Suite
+        val targetUrl = "https://housevault.onrender.com"
+        webView.loadUrl(targetUrl)
+    }
+
+    override fun onResume() {
+        super.onResume()
+        webView.onResume()
+    }
+
+    override fun onPause() {
+        super.onPause()
+        webView.onPause()
+    }
+
+    override fun onDestroy() {
+        webView.destroy()
+        super.onDestroy()
     }
 }
