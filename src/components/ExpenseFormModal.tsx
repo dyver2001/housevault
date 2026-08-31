@@ -44,12 +44,11 @@ export const ExpenseFormModal: React.FC<ExpenseFormModalProps> = ({
     }
   }, [form.assignedPayer, cashBalances]);
 
-  const isBrokeOrInsufficient = selectedBalance <= 0 || selectedBalance < form.amount;
-  const remainingAfterBill = selectedBalance - form.amount;
+  const isNegativeAfterBill = remainingAfterBill < 0;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.title.trim() || form.amount <= 0 || isBrokeOrInsufficient) return;
+    if (!form.title.trim() || form.amount <= 0) return;
     onSave(form);
     onClose();
   };
@@ -118,23 +117,23 @@ export const ExpenseFormModal: React.FC<ExpenseFormModalProps> = ({
 
           {/* Assigned Income Source with Live Balances */}
           <div>
-            <label className="block text-xs font-semibold text-stone-300 mb-1">Sursă de Plată (Din ce bani se scade?)</label>
+            <label className="block text-xs font-semibold text-stone-300 mb-1">Sursă de Plată (Din ce cont se scade?)</label>
             <select
               value={form.assignedPayer}
               onChange={(e) => setForm({ ...form, assignedPayer: e.target.value as ExpensePayer })}
               className="w-full px-3 py-2 rounded-xl bg-stone-800 border border-stone-700 text-white text-xs focus:outline-none"
             >
               <option value="WIFE_SALARY">
-                💳 Salariu {profile.wifeName.split(' ')[0]} (Disponibil: {cashBalances.wifeSalaryBalance.toFixed(2)} {sym})
+                💳 Salariu {profile.wifeName.split(' ')[0]} (Sold: {cashBalances.wifeSalaryBalance.toFixed(2)} {sym})
               </option>
               <option value="WIFE_MEAL_TICKETS">
-                🥗 Card Bonuri de Masă {profile.wifeName.split(' ')[0]} (Edenred/Pluxee) (Disponibil: {cashBalances.wifeMealTicketsBalance.toFixed(2)} {sym})
+                🥗 Card Bonuri de Masă {profile.wifeName.split(' ')[0]} (Edenred/Pluxee) (Sold: {cashBalances.wifeMealTicketsBalance.toFixed(2)} {sym})
               </option>
               <option value="FREELANCE_BUFFER">
-                💼 Buffer Freelance {profile.husbandName.split(' ')[0]} (Disponibil: {cashBalances.freelanceBufferBalance.toFixed(2)} {sym})
+                💼 Buffer Freelance {profile.husbandName.split(' ')[0]} (Sold: {cashBalances.freelanceBufferBalance.toFixed(2)} {sym})
               </option>
               <option value="SHARED_POOL">
-                🏡 Fond Comun Familie (Disponibil: {cashBalances.sharedPoolBalance.toFixed(2)} {sym})
+                🏡 Fond Comun Familie (Sold: {cashBalances.sharedPoolBalance.toFixed(2)} {sym})
               </option>
             </select>
           </div>
@@ -142,31 +141,20 @@ export const ExpenseFormModal: React.FC<ExpenseFormModalProps> = ({
           {/* Cash Reduction Preview Card */}
           <div className="p-3 bg-stone-950 rounded-xl border border-stone-800 text-xs space-y-1">
             <div className="flex justify-between text-stone-400">
-              <span>Sold disponibil curent:</span>
+              <span>Sold disponibil în cont:</span>
               <span className="font-mono font-bold text-white">{selectedBalance.toFixed(2)} {sym}</span>
             </div>
             <div className="flex justify-between text-rose-400">
-              <span>Sumă de scăzut:</span>
+              <span>Sumă factură:</span>
               <span className="font-mono font-bold">-{form.amount.toFixed(2)} {sym}</span>
             </div>
             <div className="flex justify-between font-bold pt-1 border-t border-stone-800">
-              <span className="text-stone-300">Sold rămas:</span>
-              <span className={`font-mono ${remainingAfterBill < 0 ? 'text-rose-400 font-black' : 'text-emerald-400'}`}>
+              <span className="text-stone-300">Sold estimat după plată:</span>
+              <span className={`font-mono ${remainingAfterBill < 0 ? 'text-amber-400 font-bold' : 'text-emerald-400'}`}>
                 {remainingAfterBill.toFixed(2)} {sym}
               </span>
             </div>
           </div>
-
-          {/* Broke Warning Banner */}
-          {isBrokeOrInsufficient && (
-            <div className="p-3 rounded-xl bg-rose-500/20 border border-rose-500/50 text-rose-200 text-xs flex items-start gap-2 animate-pulse">
-              <ShieldAlert className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
-              <div>
-                <strong className="block text-rose-300">⚠️ FONDURI INSUFICIENTE</strong>
-                <span>Soldul disponibil este de {selectedBalance.toFixed(2)} {sym}. Nu poți introduce o factură fără fonduri suficiente!</span>
-              </div>
-            </div>
-          )}
 
           <div className="flex items-center space-x-2 pt-1">
             <input
@@ -192,14 +180,10 @@ export const ExpenseFormModal: React.FC<ExpenseFormModalProps> = ({
           </button>
           <button
             type="submit"
-            disabled={isBrokeOrInsufficient || form.amount <= 0}
-            className={`flex-1 py-2.5 rounded-xl font-bold text-xs shadow-md transition cursor-pointer ${
-              isBrokeOrInsufficient || form.amount <= 0
-                ? 'bg-stone-800 text-stone-500 border border-stone-700 cursor-not-allowed opacity-60'
-                : 'bg-emerald-500 hover:bg-emerald-400 text-stone-950 shadow-emerald-500/20 active:scale-98'
-            }`}
+            disabled={!form.title.trim() || form.amount <= 0}
+            className="flex-1 py-2.5 rounded-xl font-bold text-xs shadow-md transition cursor-pointer bg-emerald-500 hover:bg-emerald-400 text-stone-950 shadow-emerald-500/20 active:scale-98"
           >
-            {isBrokeOrInsufficient ? 'Sold 0 — Blocat' : 'Salvează & Scade din Sold'}
+            Salvează Cheltuiala
           </button>
         </div>
       </form>

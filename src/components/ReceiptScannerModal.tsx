@@ -283,21 +283,15 @@ export const ReceiptScannerModal: React.FC<ReceiptScannerModalProps> = ({
                     </button>
                   </div>
                   <div className='p-3 bg-stone-900 rounded-xl border border-stone-800 text-xs space-y-1.5'>
-                    <div className='flex items-center justify-between text-stone-300'><span>{isRo ? 'Sold disponibil inainte de bon:' : 'Available balance before:'}</span><span className='font-mono font-bold'>{selectedPayerBalance.toFixed(2)} {currencySymbol}</span></div>
-                    <div className='flex items-center justify-between text-rose-400'><span>{isRo ? 'Valoare bon de scazut:' : 'Receipt deduction:'}</span><span className='font-mono font-bold'>-{totalAmount.toFixed(2)} {currencySymbol}</span></div>
+                    <div className='flex items-center justify-between text-stone-300'><span>{isRo ? 'Sold disponibil în cont:' : 'Available in account:'}</span><span className='font-mono font-bold'>{selectedPayerBalance.toFixed(2)} {currencySymbol}</span></div>
+                    <div className='flex items-center justify-between text-rose-400'><span>{isRo ? 'Valoare bon:' : 'Receipt total:'}</span><span className='font-mono font-bold'>-{totalAmount.toFixed(2)} {currencySymbol}</span></div>
                     <div className='h-px bg-stone-800 my-1' />
-                    <div className='flex items-center justify-between font-bold'><span className='text-stone-200'>{isRo ? 'Sold ramas dupa introducere:' : 'Remaining balance after:'}</span><span className={'font-mono text-sm ' + (remainingBalanceAfterBill < 0 ? 'text-rose-400 font-black' : 'text-emerald-400')}>{remainingBalanceAfterBill.toFixed(2)} {currencySymbol}</span></div>
+                    <div className='flex items-center justify-between font-bold'><span className='text-stone-200'>{isRo ? 'Sold estimat după bon:' : 'Estimated balance after:'}</span><span className={'font-mono text-sm ' + (remainingBalanceAfterBill < 0 ? 'text-amber-400 font-bold' : 'text-emerald-400')}>{remainingBalanceAfterBill.toFixed(2)} {currencySymbol}</span></div>
                   </div>
-                  {isBalanceInsufficient && (
-                    <div className='p-3 rounded-xl bg-rose-500/20 border border-rose-500/50 text-rose-200 text-xs flex items-start gap-2.5 animate-pulse'>
-                      <ShieldAlert className='w-5 h-5 text-rose-400 shrink-0 mt-0.5' />
-                      <div><strong className='block font-bold text-rose-300'>âš ï¸ {isRo ? 'FONDURI INSUFICIENTE' : 'INSUFFICIENT FUNDS'} (Sold: {selectedPayerBalance.toFixed(2)} {currencySymbol})</strong><span>{isRo ? 'Acest cont nu are destui bani pentru a acoperi bonul. Alege alt cont cu sold disponibil!' : 'Selected account does not have enough funds to cover this bill.'}</span></div>
-                    </div>
-                  )}
                 </div>
 
-                <button type='button' disabled={isBalanceInsufficient || totalAmount <= 0} onClick={handleSaveExpense} className={'w-full py-3 rounded-2xl font-bold text-xs shadow-lg transition flex items-center justify-center space-x-2 ' + (isBalanceInsufficient || totalAmount <= 0 ? 'bg-stone-800 text-stone-500 border border-stone-700 cursor-not-allowed opacity-60' : 'bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-stone-950 shadow-emerald-500/20 cursor-pointer active:scale-98')}>
-                  <Check className='w-4 h-4' /><span>{isBalanceInsufficient ? (isRo ? 'Sold 0 / Insuficient â€” Blocat' : '0 Balance â€” Locked') : (isRo ? 'Confirma & Scade ' + totalAmount.toFixed(2) + ' ' + currencySymbol + ' din Sold' : 'Confirm & Deduct ' + totalAmount.toFixed(2) + ' ' + currencySymbol)}</span>
+                <button type='button' disabled={totalAmount <= 0} onClick={handleSaveExpense} className={'w-full py-3 rounded-2xl font-bold text-xs shadow-lg transition flex items-center justify-center space-x-2 ' + (totalAmount <= 0 ? 'bg-stone-800 text-stone-500 border border-stone-700 cursor-not-allowed opacity-60' : 'bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-stone-950 shadow-emerald-500/20 cursor-pointer active:scale-98')}>
+                  <Check className='w-4 h-4' /><span>{isRo ? 'Confirmă & Salvează Bonul (' + totalAmount.toFixed(2) + ' ' + currencySymbol + ')' : 'Confirm & Save Receipt (' + totalAmount.toFixed(2) + ' ' + currencySymbol + ')'}</span>
                 </button>
               </div>
             )}
