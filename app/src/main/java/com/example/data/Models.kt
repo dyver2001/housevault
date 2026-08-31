@@ -120,8 +120,10 @@ enum class ExpenseCategory(val label: String) {
 
 enum class ExpensePayer(val label: String) {
     WIFE_SALARY("Wife IT Salary (Fixed Base)"),
+    WIFE_MEAL_TICKETS("Wife Meal Tickets (Edenred/Pluxee)"),
     FREELANCE_BUFFER("Freelance Videography"),
-    SHARED_POOL("Shared Household Pool")
+    SHARED_POOL("Shared Household Pool"),
+    DECIDE_LATER("Decide at Payment (Haytham or Cati)")
 }
 
 data class HouseholdExpense(
@@ -139,7 +141,8 @@ data class HouseholdProfile(
     val husbandName: String = "Haytham (Videograf)",
     val wifeName: String = "Cati (IT Support)",
     val wifeMonthlySalary: Double = 6500.0,
-    val husbandEstMonthlyGross: Double = 12000.0,
+    val wifeMealTicketsMonthly: Double = 800.0,
+    val husbandEstMonthlyGross: Double = 12500.0,
     val emergencyFundMonthsGoal: Int = 6,
     val language: String = "ro",
     val themePreset: String = "emerald",
