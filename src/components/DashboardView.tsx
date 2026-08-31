@@ -268,28 +268,31 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 
       {/* 4 Core Financial Pillar Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* Card 1: Uncollected Freelance Inflow */}
+        {/* Card 1: Haytham's Freelance Income */}
         <div
           onClick={() => onNavigate('freelance')}
           className="bg-stone-850 hover:bg-stone-800/90 border border-stone-700/60 rounded-2xl p-5 shadow-lg transition-all cursor-pointer group"
         >
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold uppercase tracking-wider text-amber-400">Freelance Inflow</span>
+            <span className="text-xs font-semibold uppercase tracking-wider text-amber-400">
+              {profile.language === 'ro' ? `Venit Freelance ${profile.husbandName.split(' ')[0]}` : `${profile.husbandName.split(' ')[0]}'s Income`}
+            </span>
             <div className="w-9 h-9 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 group-hover:scale-105 transition-transform">
               <Coins className="w-5 h-5" />
             </div>
           </div>
           <div className="mt-3">
             <div className="text-2xl sm:text-3xl font-black font-display text-white tracking-tight">
-              {sym}{totalUncollected.toLocaleString()}
+              {sym}{(profile.husbandEstMonthlyGross || 12500).toLocaleString()}
+              <span className="text-xs text-stone-400 font-normal">/mo</span>
             </div>
             <p className="text-xs text-stone-400 mt-1 flex items-center space-x-1">
-              <span className="font-semibold text-amber-300">{uncollectedProjects.length} gigs</span>
-              <span>awaiting client payment</span>
+              <span className="font-semibold text-amber-300">{(projects || []).length} proiecte</span>
+              <span>• {sym}{(projects || []).reduce((s, p) => s + (p.depositReceived || 0), 0).toLocaleString()} încasat</span>
             </p>
           </div>
           <div className="mt-4 pt-3 border-t border-stone-800 flex items-center justify-between text-xs text-stone-400 group-hover:text-stone-200">
-            <span>Collect & split funds</span>
+            <span>{profile.language === 'ro' ? 'Vezi proiecte & încasări' : 'View projects & payouts'}</span>
             <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
           </div>
         </div>
