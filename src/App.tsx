@@ -429,10 +429,17 @@ export const App: React.FC = () => {
     });
   };
 
-  const handleMakeDebtPayment = (debtId: string, amount: number) => {
+  const handleMakeDebtPayment = (
+    debtId: string,
+    amount: number,
+    source?: ExpensePayer,
+    deductFromAccount?: boolean
+  ) => {
+    let debtName = 'Datorie Bancară';
     setDebts((prev) => {
       const nextDebts = prev.map((d) => {
         if (d.id === debtId) {
+          debtName = d.bankName;
           const newBal = Math.max(0, d.currentBalance - amount);
           return { ...d, currentBalance: newBal };
         }
@@ -442,6 +449,39 @@ export const App: React.FC = () => {
       pushCurrentStateToCloud({ debts: nextDebts });
       return nextDebts;
     });
+
+    const payer = source || 'FREELANCE_BUFFER';
+    const payerName =
+      payer === 'FREELANCE_BUFFER'
+        ? `Buffer Freelance ${profile.husbandName.split(' ')[0]}`
+        : payer === 'WIFE_SALARY'
+        ? `Salariu ${profile.wifeName.split(' ')[0]}`
+        : payer === 'WIFE_MEAL_TICKETS'
+        ? `Card Bonuri ${profile.wifeName.split(' ')[0]}`
+        : 'Fond Comun';
+
+    if (deductFromAccount) {
+      const debtExpense: HouseholdExpense = {
+        id: `exp-debt-${Date.now()}`,
+        title: `Rambursare Datorie: ${debtName}`,
+        amount: amount,
+        category: 'MISC',
+        isFixed: false,
+        assignedPayer: payer
+      };
+      setExpenses((prev) => {
+        const next = [debtExpense, ...prev];
+        saveExpenses(next);
+        pushCurrentStateToCloud({ expenses: next });
+        return next;
+      });
+    }
+
+    logActivity(
+      `A efectuat o plată de ${amount} ${profile.currencySymbol} la ${debtName} din ${payerName}`,
+      'DEBT_REDUCED',
+      amount
+    );
   };
 
   // Target handlers
@@ -804,6 +844,7 @@ export const App: React.FC = () => {
           <BankDebtView
             debts={debts}
             profile={profile}
+            cashBalances={cashBalances}
             onOpenNewDebt={() => setEditingDebt(null)}
             onEditDebt={(d) => setEditingDebt(d)}
             onDeleteDebt={handleDeleteDebt}

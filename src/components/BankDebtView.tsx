@@ -8,33 +8,44 @@ import {
   ArrowDownCircle,
   Calculator
 } from 'lucide-react';
-import { BankDebt, HouseholdProfile } from '../types';
+import { BankDebt, HouseholdProfile, CashPocketsBalance, ExpensePayer } from '../types';
 import { DebtPayoffSimulatorModal } from './DebtPayoffSimulatorModal';
 import { DebtBurnEffect } from './animations/DebtBurnEffect';
 
 interface BankDebtViewProps {
   profile: HouseholdProfile;
   debts: BankDebt[];
+  cashBalances?: CashPocketsBalance;
   onOpenNewDebt: () => void;
   onEditDebt: (debt: BankDebt) => void;
   onDeleteDebt: (debtId: string) => void;
-  onMakePayment: (debtId: string, amount: number) => void;
+  onMakePayment: (debtId: string, amount: number, source?: ExpensePayer, deductFromAccount?: boolean) => void;
 }
 
 export const BankDebtView: React.FC<BankDebtViewProps> = ({
   profile,
   debts,
+  cashBalances,
   onOpenNewDebt,
   onEditDebt,
   onDeleteDebt,
   onMakePayment
 }) => {
-  const sym = profile.currencySymbol;
+  const sym = profile.currencySymbol || 'lei';
+  const isRo = profile.language === 'ro';
   const [strategy, setStrategy] = useState<'AVALANCHE' | 'SNOWBALL'>('AVALANCHE');
   const [paymentModalDebt, setPaymentModalDebt] = useState<BankDebt | null>(null);
   const [paymentInput, setPaymentInput] = useState<string>('');
+  const [selectedPayer, setSelectedPayer] = useState<ExpensePayer>('FREELANCE_BUFFER');
+  const [deductFromAccount, setDeductFromAccount] = useState<boolean>(true);
   const [isSimulatorOpen, setIsSimulatorOpen] = useState(false);
   const [burningDebt, setBurningDebt] = useState<{ title: string; amount: number } | null>(null);
+
+  const wifeBal = Number(cashBalances?.wifeSalaryBalance) || 0;
+  const husbandBal = Number(cashBalances?.freelanceBufferBalance) || 0;
+  const sharedBal = Number(cashBalances?.sharedPoolBalance) || 0;
+  const wifeShort = (profile.wifeName || 'Cati').split(' ')[0];
+  const husbandShort = (profile.husbandName || 'Haytham').split(' ')[0];
 
   const totalCurrentDebt = debts.reduce((acc, d) => acc + d.currentBalance, 0);
   const totalOriginalDebt = debts.reduce((acc, d) => acc + d.originalBalance, 0);
@@ -55,7 +66,7 @@ export const BankDebtView: React.FC<BankDebtViewProps> = ({
     const amt = parseFloat(paymentInput);
     if (!isNaN(amt) && amt > 0) {
       setBurningDebt({ title: paymentModalDebt.bankName, amount: amt });
-      onMakePayment(paymentModalDebt.id, amt);
+      onMakePayment(paymentModalDebt.id, amt, selectedPayer, deductFromAccount);
       setPaymentModalDebt(null);
       setPaymentInput('');
     }
@@ -253,31 +264,39 @@ export const BankDebtView: React.FC<BankDebtViewProps> = ({
         })}
       </div>
 
-      {/* Payment Logger Modal */}
+      {/* Payment Logger Modal with Source Selection */}
       {paymentModalDebt && (
-        <div className="fixed inset-0 z-50 bg-stone-950/80 backdrop-blur-sm flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-50 bg-stone-950/85 backdrop-blur-sm flex items-center justify-center p-4">
           <form
             onSubmit={handleLogPayment}
-            className="bg-stone-900 border border-stone-700 rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl"
+            className="bg-stone-900 border border-stone-700 rounded-3xl max-w-md w-full p-6 space-y-4 shadow-2xl overflow-y-auto max-h-[90vh]"
           >
-            <div className="flex items-center justify-between">
-              <h3 className="font-bold text-white text-base font-display">Log Debt Payment</h3>
+            <div className="flex items-center justify-between border-b border-stone-800 pb-3">
+              <div>
+                <h3 className="font-bold text-white text-base font-display">
+                  {isRo ? 'Înregistrează Plată Datorie' : 'Log Debt Payment'}
+                </h3>
+                <span className="text-xs text-rose-400 font-bold">{paymentModalDebt.bankName}</span>
+              </div>
               <button
                 type="button"
                 onClick={() => setPaymentModalDebt(null)}
-                className="text-stone-400 hover:text-white text-sm"
+                className="text-stone-400 hover:text-white text-sm cursor-pointer"
               >
                 ✕
               </button>
             </div>
 
-            <p className="text-xs text-stone-300">
-              Applying payment towards <strong>{paymentModalDebt.bankName}</strong>. Current balance: <strong>{sym}{paymentModalDebt.currentBalance.toLocaleString()}</strong>.
-            </p>
+            <div className="p-3 bg-stone-950 rounded-2xl border border-stone-800 text-xs flex justify-between items-center">
+              <span className="text-stone-400">{isRo ? 'Datorie curentă de achitat:' : 'Current balance:'}</span>
+              <span className="font-mono font-bold text-rose-400 text-sm">
+                {sym}{paymentModalDebt.currentBalance.toLocaleString()}
+              </span>
+            </div>
 
             <div>
               <label className="block text-xs font-semibold text-stone-300 mb-1">
-                Payment Amount ({sym})
+                {isRo ? `Sumă Plătită (${sym})` : `Payment Amount (${sym})`}
               </label>
               <input
                 type="number"
@@ -287,23 +306,98 @@ export const BankDebtView: React.FC<BankDebtViewProps> = ({
                 value={paymentInput}
                 onChange={(e) => setPaymentInput(e.target.value)}
                 required
-                className="w-full px-3.5 py-2 rounded-xl bg-stone-800 border border-stone-700 text-white text-sm focus:border-rose-500 focus:outline-none"
+                placeholder={`ex: ${paymentModalDebt.minMonthlyPayment}`}
+                className="w-full px-3.5 py-2.5 rounded-xl bg-stone-800 border border-stone-700 text-white font-mono font-bold text-sm focus:border-rose-500 focus:outline-none"
               />
             </div>
+
+            {/* Sursă de Plată (From where was the money paid?) */}
+            <div className="space-y-2">
+              <label className="block text-xs font-semibold text-stone-300">
+                {isRo ? 'Din ce bani ai plătit? (Sursă cont)' : 'Paid from which account?'}
+              </label>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                <button
+                  type="button"
+                  onClick={() => setSelectedPayer('FREELANCE_BUFFER')}
+                  className={`p-2.5 rounded-xl border text-left transition-all cursor-pointer ${
+                    selectedPayer === 'FREELANCE_BUFFER'
+                      ? 'bg-amber-500/20 border-amber-500 text-white shadow-sm ring-1 ring-amber-500/40'
+                      : 'bg-stone-800/80 border-stone-700/60 text-stone-400 hover:text-stone-200'
+                  }`}
+                >
+                  <div className="text-[11px] font-bold truncate">💼 Buffer {husbandShort}</div>
+                  <div className="text-xs font-mono font-bold mt-0.5 text-amber-400">{husbandBal.toFixed(2)} {sym}</div>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setSelectedPayer('WIFE_SALARY')}
+                  className={`p-2.5 rounded-xl border text-left transition-all cursor-pointer ${
+                    selectedPayer === 'WIFE_SALARY'
+                      ? 'bg-emerald-500/20 border-emerald-500 text-white shadow-sm ring-1 ring-emerald-500/40'
+                      : 'bg-stone-800/80 border-stone-700/60 text-stone-400 hover:text-stone-200'
+                  }`}
+                >
+                  <div className="text-[11px] font-bold truncate">💳 Salariu {wifeShort}</div>
+                  <div className="text-xs font-mono font-bold mt-0.5 text-emerald-400">{wifeBal.toFixed(2)} {sym}</div>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setSelectedPayer('SHARED_POOL')}
+                  className={`p-2.5 rounded-xl border text-left transition-all cursor-pointer ${
+                    selectedPayer === 'SHARED_POOL'
+                      ? 'bg-cyan-500/20 border-cyan-500 text-white shadow-sm ring-1 ring-cyan-500/40'
+                      : 'bg-stone-800/80 border-stone-700/60 text-stone-400 hover:text-stone-200'
+                  }`}
+                >
+                  <div className="text-[11px] font-bold truncate">🏡 Fond Comun</div>
+                  <div className="text-xs font-mono font-bold mt-0.5 text-cyan-400">{sharedBal.toFixed(2)} {sym}</div>
+                </button>
+              </div>
+            </div>
+
+            {/* Deduct from account checkbox */}
+            <div className="flex items-center space-x-2 pt-1">
+              <input
+                type="checkbox"
+                id="deductDebtExpense"
+                checked={deductFromAccount}
+                onChange={(e) => setDeductFromAccount(e.target.checked)}
+                className="w-4 h-4 rounded text-rose-500 bg-stone-800 border-stone-700 focus:ring-rose-500 cursor-pointer"
+              />
+              <label htmlFor="deductDebtExpense" className="text-xs text-stone-300 cursor-pointer select-none">
+                {isRo ? 'Scade automat din soldul contului ales și înregistrează tranzacția' : 'Deduct from selected account and log transaction'}
+              </label>
+            </div>
+
+            {/* Payoff Simulation Preview */}
+            {parseFloat(paymentInput) > 0 && (
+              <div className="p-3 bg-stone-950 rounded-2xl border border-stone-800 text-xs space-y-1">
+                <div className="flex justify-between text-stone-400">
+                  <span>{isRo ? 'Datorie după această plată:' : 'Remaining balance after:'}</span>
+                  <span className="font-mono font-bold text-emerald-400">
+                    {sym}{Math.max(0, paymentModalDebt.currentBalance - (parseFloat(paymentInput) || 0)).toLocaleString()}
+                  </span>
+                </div>
+              </div>
+            )}
 
             <div className="flex space-x-2 pt-2">
               <button
                 type="button"
                 onClick={() => setPaymentModalDebt(null)}
-                className="flex-1 py-2 rounded-xl bg-stone-800 text-stone-300 text-xs font-semibold hover:bg-stone-700"
+                className="flex-1 py-2.5 rounded-xl bg-stone-800 text-stone-300 text-xs font-semibold hover:bg-stone-700 cursor-pointer"
               >
-                Cancel
+                {isRo ? 'Anulează' : 'Cancel'}
               </button>
               <button
                 type="submit"
-                className="flex-1 py-2 rounded-xl bg-rose-500 hover:bg-rose-400 text-stone-950 text-xs font-bold shadow-md shadow-rose-500/20"
+                disabled={!paymentInput || parseFloat(paymentInput) <= 0}
+                className="flex-1 py-2.5 rounded-xl bg-rose-500 hover:bg-rose-400 text-stone-950 text-xs font-bold shadow-md shadow-rose-500/20 cursor-pointer transition active:scale-98"
               >
-                Confirm Payment
+                {isRo ? `Confirmă Plata (${parseFloat(paymentInput) || 0} ${sym})` : `Confirm Payment (${parseFloat(paymentInput) || 0} ${sym})`}
               </button>
             </div>
           </form>
