@@ -120,19 +120,23 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
     safe: (sampleGigAmount * splitRule.safePocketPercent) / 100
   };
 
+  const husbandIncome = profile?.husbandEstMonthlyGross || 12500;
+  const wifeAllowance = (profile?.wifeMonthlySalary || 0) + (profile?.wifeMealTicketsMonthly ?? 800);
+  const totalHouseholdIncome = husbandIncome + wifeAllowance;
+
   return (
-    <div className="space-y-6">
-      {/* Top Banner: Dual Income Engine Philosophy */}
-      <div className="bg-gradient-to-r from-stone-800 via-stone-850 to-stone-900 border border-stone-700/80 rounded-2xl p-6 shadow-xl relative overflow-hidden">
-        <div className="absolute -right-10 -bottom-10 w-64 h-64 bg-emerald-500/5 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute -left-10 -top-10 w-64 h-64 bg-amber-500/5 rounded-full blur-3xl pointer-events-none" />
+    <div className="space-y-6 animate-in fade-in duration-300">
+      {/* 👑 Ultra-Luxury Futuristic Family Hero Banner */}
+      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-stone-900/95 via-stone-850/90 to-stone-950/95 border border-white/[0.1] p-6 sm:p-8 shadow-2xl backdrop-blur-3xl">
+        <div className="absolute -right-16 -top-16 w-80 h-80 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute -left-16 -bottom-16 w-80 h-80 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
 
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6 relative z-10">
-          <div className="space-y-2.5">
+          <div className="space-y-3">
             <div className="flex flex-wrap items-center gap-2">
-              <div className="inline-flex items-center space-x-2 px-2.5 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-300 text-xs font-semibold">
-                <Sparkles className="w-3.5 h-3.5" />
-                <span>{profile.language === 'ro' ? 'Motor Financiar de Cuplu' : 'Couple Financial Engine'}</span>
+              <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-gradient-to-r from-amber-500/20 via-emerald-500/20 to-cyan-500/20 border border-white/[0.12] text-amber-300 text-xs font-black shadow-sm">
+                <Sparkles className="w-3.5 h-3.5 text-amber-400 animate-spin-slow" />
+                <span>{profile.language === 'ro' ? '✨ Seif Financiar de Familie • VIP Suite' : '✨ Family Wealth Engine • VIP Suite'}</span>
               </div>
 
               {syncCode ? (
@@ -142,7 +146,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                   title="Apasă pentru detalii sincronizare"
                 >
                   <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
-                  <span>🟢 {profile.language === 'ro' ? 'Conectat cu' : 'Synced with'} {profile.wifeName.split(' ')[0]} ({syncCode})</span>
+                  <span>🟢 {profile.language === 'ro' ? 'Sincronizat live cu' : 'Live synced with'} {profile.wifeName.split(' ')[0]} ({syncCode})</span>
                 </div>
               ) : (
                 <div
@@ -156,24 +160,41 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               )}
             </div>
 
-            <h1 className="text-2xl sm:text-3xl font-display font-black text-white tracking-tight">
-              {profile.wifeName.split(' ')[0]} Anchors Bills. {profile.husbandName.split(' ')[0]} Accelerates Wealth.
-            </h1>
-            <p className="text-stone-300 text-sm max-w-2xl leading-relaxed">
-              {profile.language === 'ro'
-                ? `Salariul fix al lui ${profile.wifeName.split(' ')[0]} garantează cheltuielile lunare (${sym}${fixedExpenses.toLocaleString()}/lună), lăsând 100% din onorariile video ale lui ${profile.husbandName.split(' ')[0]} libere să achite datoriile bancare și să umple seiful pentru casă.`
-                : `${profile.wifeName.split(' ')[0]}'s steady salary guarantees fixed survival costs (${sym}${fixedExpenses.toLocaleString()}/mo), leaving 100% of ${profile.husbandName.split(' ')[0]}'s freelance videography windfalls to annihilate bank debt and fill your house savings vault.`}
-            </p>
+            <div className="space-y-1">
+              <h1 className="text-2xl sm:text-4xl font-display font-black text-white tracking-tight">
+                {profile.wifeName.split(' ')[0]} Garantează Facturile. {profile.husbandName.split(' ')[0]} Crește Averea.
+              </h1>
+              <p className="text-stone-300 text-xs sm:text-sm max-w-2xl leading-relaxed">
+                Venitul combinat al familiei este de <strong className="text-white font-mono">{sym}{totalHouseholdIncome.toLocaleString()}/lună</strong>.
+                Salariul stabil acoperă cheltuielile zilnice, lăsând proiectele video libere să umple seiful casei de vis!
+              </p>
+            </div>
+
+            {/* Income Pillars Pill Badges */}
+            <div className="flex flex-wrap gap-2 pt-1">
+              <div className="px-3 py-1.5 rounded-xl bg-amber-500/15 border border-amber-500/30 text-xs flex items-center gap-1.5">
+                <span className="text-amber-400 font-bold">💼 {profile.husbandName.split(' ')[0]}:</span>
+                <span className="font-mono font-black text-white">{sym}{husbandIncome.toLocaleString()}/lună</span>
+              </div>
+              <div className="px-3 py-1.5 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-xs flex items-center gap-1.5">
+                <span className="text-emerald-400 font-bold">💳 {profile.wifeName.split(' ')[0]} Salariu:</span>
+                <span className="font-mono font-black text-white">{sym}{profile.wifeMonthlySalary.toLocaleString()}/lună</span>
+              </div>
+              <div className="px-3 py-1.5 rounded-xl bg-lime-500/15 border border-lime-500/30 text-xs flex items-center gap-1.5">
+                <span className="text-lime-400 font-bold">🥗 Bonuri Masă:</span>
+                <span className="font-mono font-black text-white">{sym}{(profile.wifeMealTicketsMonthly ?? 800).toLocaleString()}/lună</span>
+              </div>
+            </div>
           </div>
 
-          <div className="flex flex-wrap gap-3 items-center">
+          <div className="flex flex-wrap gap-2.5 items-center">
             <button
               type="button"
               onClick={() => {
                 soundFx.playCashChime();
                 setIsVaultDoorOpen(true);
               }}
-              className="flex items-center space-x-2 px-4 py-2.5 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 font-bold text-sm shadow-lg transition-all cursor-pointer"
+              className="flex items-center space-x-2 px-4 py-2.5 rounded-2xl bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 font-black text-xs shadow-lg transition-all cursor-pointer active:scale-95"
             >
               <Vault className="w-4 h-4 text-amber-400" />
               <span>🔓 Deschide Seiful 3D</span>
@@ -182,18 +203,19 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             <button
               id="btn-dash-new-project"
               onClick={onOpenNewProject}
-              className="flex items-center space-x-2 px-4 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-stone-950 font-bold text-sm shadow-lg shadow-emerald-500/20 transition-all cursor-pointer"
+              className="flex items-center space-x-2 px-4 py-2.5 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-400 hover:from-emerald-400 hover:to-teal-300 text-stone-950 font-black text-xs shadow-lg shadow-emerald-500/20 transition-all cursor-pointer active:scale-95"
             >
-              <Plus className="w-4 h-4" />
-              <span>Log Freelance Gig</span>
+              <Plus className="w-4 h-4 stroke-[3]" />
+              <span>+ Încasează Proiect</span>
             </button>
+
             <button
-              id="btn-dash-ai-advisor"
-              onClick={() => onNavigate('ai')}
-              className="flex items-center space-x-2 px-4 py-2.5 rounded-xl bg-stone-800 hover:bg-stone-700 text-stone-200 border border-stone-600 font-medium text-sm transition-all cursor-pointer"
+              id="btn-dash-new-expense"
+              onClick={onOpenNewExpense}
+              className="flex items-center space-x-2 px-4 py-2.5 rounded-2xl bg-stone-900 hover:bg-stone-800 text-stone-200 border border-stone-700 font-bold text-xs transition-all cursor-pointer active:scale-95"
             >
-              <Sparkles className="w-4 h-4 text-amber-400" />
-              <span>Ask AI Strategist</span>
+              <Receipt className="w-4 h-4 text-emerald-400" />
+              <span>+ Adaugă Factură</span>
             </button>
           </div>
         </div>
@@ -266,18 +288,18 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         </button>
       </div>
 
-      {/* 4 Core Financial Pillar Cards */}
+      {/* 4 Core Financial Pillar Cards with Joyful Jewel Gradients */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Card 1: Haytham's Freelance Income */}
         <div
           onClick={() => onNavigate('freelance')}
-          className="bg-stone-850 hover:bg-stone-800/90 border border-stone-700/60 rounded-2xl p-5 shadow-lg transition-all cursor-pointer group"
+          className="bg-gradient-to-br from-stone-900/90 via-stone-850/80 to-amber-950/20 hover:from-stone-850 hover:to-amber-900/30 border border-amber-500/30 hover:border-amber-400/60 rounded-3xl p-5 shadow-xl hover:shadow-amber-500/10 transition-all cursor-pointer group"
         >
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold uppercase tracking-wider text-amber-400">
+            <span className="text-xs font-black uppercase tracking-wider text-amber-400">
               {profile.language === 'ro' ? `Venit Freelance ${profile.husbandName.split(' ')[0]}` : `${profile.husbandName.split(' ')[0]}'s Income`}
             </span>
-            <div className="w-9 h-9 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 group-hover:scale-105 transition-transform">
+            <div className="w-10 h-10 rounded-2xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-400 group-hover:scale-110 transition-transform shadow-sm">
               <Coins className="w-5 h-5" />
             </div>
           </div>
@@ -291,8 +313,8 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               <span>• {sym}{(projects || []).reduce((s, p) => s + (p.depositReceived || 0), 0).toLocaleString()} încasat</span>
             </p>
           </div>
-          <div className="mt-4 pt-3 border-t border-stone-800 flex items-center justify-between text-xs text-stone-400 group-hover:text-stone-200">
-            <span>{profile.language === 'ro' ? 'Vezi proiecte & încasări' : 'View projects & payouts'}</span>
+          <div className="mt-4 pt-3 border-t border-stone-800/80 flex items-center justify-between text-xs text-stone-400 group-hover:text-amber-300 transition-colors">
+            <span className="font-bold">{profile.language === 'ro' ? 'Vezi proiecte & încasări' : 'View projects & payouts'}</span>
             <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
           </div>
         </div>
@@ -300,13 +322,13 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         {/* Card 2: Household Budget Anchor */}
         <div
           onClick={() => onNavigate('budget')}
-          className="bg-stone-850 hover:bg-stone-800/90 border border-stone-700/60 rounded-2xl p-5 shadow-lg transition-all cursor-pointer group"
+          className="bg-gradient-to-br from-stone-900/90 via-stone-850/80 to-emerald-950/20 hover:from-stone-850 hover:to-emerald-900/30 border border-emerald-500/30 hover:border-emerald-400/60 rounded-3xl p-5 shadow-xl hover:shadow-emerald-500/10 transition-all cursor-pointer group"
         >
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold uppercase tracking-wider text-emerald-400">
+            <span className="text-xs font-black uppercase tracking-wider text-emerald-400">
               {profile.language === 'ro' ? `Salariu & Bonuri ${profile.wifeName.split(' ')[0]}` : 'Steady Salary Anchor'}
             </span>
-            <div className="w-9 h-9 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 group-hover:scale-105 transition-transform">
+            <div className="w-10 h-10 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-400 group-hover:scale-110 transition-transform shadow-sm">
               <Receipt className="w-5 h-5" />
             </div>
           </div>
@@ -320,8 +342,8 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               <span>din {sym}{fixedExpenses.toLocaleString()} facturi fixe</span>
             </p>
           </div>
-          <div className="mt-4 pt-3 border-t border-stone-800 flex items-center justify-between text-xs text-stone-400 group-hover:text-stone-200">
-            <span>+{sym}{wifeSurplus.toLocaleString()} surplus lunar</span>
+          <div className="mt-4 pt-3 border-t border-stone-800/80 flex items-center justify-between text-xs text-stone-400 group-hover:text-emerald-300 transition-colors">
+            <span className="font-bold">+{sym}{wifeSurplus.toLocaleString()} surplus lunar</span>
             <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
           </div>
         </div>
@@ -329,11 +351,13 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         {/* Card 3: Bank Debt Snowball */}
         <div
           onClick={() => onNavigate('debt')}
-          className="bg-stone-850 hover:bg-stone-800/90 border border-stone-700/60 rounded-2xl p-5 shadow-lg transition-all cursor-pointer group"
+          className="bg-gradient-to-br from-stone-900/90 via-stone-850/80 to-rose-950/20 hover:from-stone-850 hover:to-rose-900/30 border border-rose-500/30 hover:border-rose-400/60 rounded-3xl p-5 shadow-xl hover:shadow-rose-500/10 transition-all cursor-pointer group"
         >
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold uppercase tracking-wider text-rose-400">Bank Debt</span>
-            <div className="w-9 h-9 rounded-xl bg-rose-500/10 border border-rose-500/20 flex items-center justify-center text-rose-400 group-hover:scale-105 transition-transform">
+            <span className="text-xs font-black uppercase tracking-wider text-rose-400">
+              {profile.language === 'ro' ? 'Datorii Bancare' : 'Bank Debt'}
+            </span>
+            <div className="w-10 h-10 rounded-2xl bg-rose-500/15 border border-rose-500/30 flex items-center justify-center text-rose-400 group-hover:scale-110 transition-transform shadow-sm">
               <Landmark className="w-5 h-5" />
             </div>
           </div>
@@ -341,19 +365,19 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             <div className="text-2xl sm:text-3xl font-black font-display text-white tracking-tight">
               {sym}{totalDebt.toLocaleString()}
             </div>
-            <div className="w-full bg-stone-700 h-1.5 rounded-full mt-2 overflow-hidden">
+            <div className="w-full bg-stone-800 h-1.5 rounded-full mt-2 overflow-hidden">
               <div
                 className="bg-rose-500 h-full rounded-full transition-all duration-500"
                 style={{ width: `${100 - debtProgressPercent}%` }}
               />
             </div>
-            <p className="text-xs text-stone-400 mt-1 flex items-center justify-between">
-              <span>{debts.length} active accounts</span>
-              <span className="text-emerald-400 font-medium">{debtProgressPercent}% paid off</span>
+            <p className="text-xs text-stone-400 mt-1.5 flex items-center justify-between">
+              <span>{debts.length} conturi active</span>
+              <span className="text-emerald-400 font-bold">{debtProgressPercent}% achitat</span>
             </p>
           </div>
-          <div className="mt-3 pt-2 border-t border-stone-800 flex items-center justify-between text-xs text-stone-400 group-hover:text-stone-200">
-            <span>Avalanche payoff order</span>
+          <div className="mt-3 pt-2.5 border-t border-stone-800/80 flex items-center justify-between text-xs text-stone-400 group-hover:text-rose-300 transition-colors">
+            <span className="font-bold">{profile.language === 'ro' ? 'Strategie rambursare' : 'Avalanche payoff'}</span>
             <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
           </div>
         </div>
@@ -361,11 +385,13 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         {/* Card 4: Savings Targets */}
         <div
           onClick={() => onNavigate('targets')}
-          className="bg-stone-850 hover:bg-stone-800/90 border border-stone-700/60 rounded-2xl p-5 shadow-lg transition-all cursor-pointer group"
+          className="bg-gradient-to-br from-stone-900/90 via-stone-850/80 to-cyan-950/20 hover:from-stone-850 hover:to-cyan-900/30 border border-cyan-500/30 hover:border-cyan-400/60 rounded-3xl p-5 shadow-xl hover:shadow-cyan-500/10 transition-all cursor-pointer group"
         >
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold uppercase tracking-wider text-cyan-400">Savings Vaults</span>
-            <div className="w-9 h-9 rounded-xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400 group-hover:scale-105 transition-transform">
+            <span className="text-xs font-black uppercase tracking-wider text-cyan-400">
+              {profile.language === 'ro' ? 'Seif & Obiective' : 'Savings Vaults'}
+            </span>
+            <div className="w-10 h-10 rounded-2xl bg-cyan-500/15 border border-cyan-500/30 flex items-center justify-center text-cyan-400 group-hover:scale-110 transition-transform shadow-sm">
               <Vault className="w-5 h-5" />
             </div>
           </div>
@@ -373,19 +399,19 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             <div className="text-2xl sm:text-3xl font-black font-display text-white tracking-tight">
               {sym}{totalSaved.toLocaleString()}
             </div>
-            <div className="w-full bg-stone-700 h-1.5 rounded-full mt-2 overflow-hidden">
+            <div className="w-full bg-stone-800 h-1.5 rounded-full mt-2 overflow-hidden">
               <div
-                className="bg-cyan-400 h-full rounded-full transition-all duration-500"
+                className="bg-gradient-to-r from-cyan-400 to-blue-500 h-full rounded-full transition-all duration-500"
                 style={{ width: `${savingsProgressPercent}%` }}
               />
             </div>
-            <p className="text-xs text-stone-400 mt-1 flex items-center justify-between">
-              <span>Goal: {sym}{totalTargetGoal.toLocaleString()}</span>
-              <span className="text-cyan-300 font-medium">{savingsProgressPercent}% achieved</span>
+            <p className="text-xs text-stone-400 mt-1.5 flex items-center justify-between">
+              <span>Țintă: {sym}{totalTargetGoal.toLocaleString()}</span>
+              <span className="text-cyan-300 font-bold">{savingsProgressPercent}% acumulat</span>
             </p>
           </div>
-          <div className="mt-3 pt-2 border-t border-stone-800 flex items-center justify-between text-xs text-stone-400 group-hover:text-stone-200">
-            <span>House & Gear funds</span>
+          <div className="mt-3 pt-2.5 border-t border-stone-800/80 flex items-center justify-between text-xs text-stone-400 group-hover:text-cyan-300 transition-colors">
+            <span className="font-bold">{profile.language === 'ro' ? 'Fonduri Casă & Familie' : 'House & Gear funds'}</span>
             <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
           </div>
         </div>

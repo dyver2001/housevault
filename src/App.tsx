@@ -8,6 +8,7 @@ import { SavingsTargetsView } from './components/SavingsTargetsView';
 import { CashFlowCalendarView } from './components/CashFlowCalendarView';
 import { AiAdvisorView } from './components/AiAdvisorView';
 import { GroceryOptimizerView } from './components/GroceryOptimizerView';
+import { FinancesHubView, FinanceSubTab } from './components/FinancesHubView';
 import { CollectPaymentModal } from './components/CollectPaymentModal';
 import { SettingsShareModal } from './components/SettingsShareModal';
 import { ProjectFormModal } from './components/ProjectFormModal';
@@ -816,39 +817,26 @@ export const App: React.FC = () => {
           />
         )}
 
-        {currentTab === 'budget' && (
-          <HouseholdBudgetView
-            expenses={expenses}
+        {(currentTab === 'budget' || currentTab === 'debt' || currentTab === 'groceries') && (
+          <FinancesHubView
+            initialSubTab={currentTab === 'debt' ? 'debts' : currentTab === 'groceries' ? 'groceries' : 'bills'}
             profile={profile}
+            expenses={expenses}
+            debts={debts}
+            shoppingList={groceryList}
+            groceryCatalog={groceryCatalog}
+            cashBalances={cashBalances}
             onOpenNewExpense={() => setEditingExpense(null)}
             onOpenScanner={() => setIsReceiptScannerOpen(true)}
             onEditExpense={(e) => setEditingExpense(e)}
             onDeleteExpense={handleDeleteExpense}
-          />
-        )}
-
-        {currentTab === 'groceries' && (
-          <GroceryOptimizerView
-            profile={profile}
-            shoppingList={groceryList}
-            onUpdateShoppingList={handleUpdateGroceryList}
-            groceryCatalog={groceryCatalog}
-            onUpdateGroceryCatalog={handleUpdateGroceryCatalog}
-            onAddExpense={handleAddDirectExpense}
-            cashBalances={cashBalances}
-            onOpenReceiptScanner={() => setIsReceiptScannerOpen(true)}
-          />
-        )}
-
-        {currentTab === 'debt' && (
-          <BankDebtView
-            debts={debts}
-            profile={profile}
-            cashBalances={cashBalances}
             onOpenNewDebt={() => setEditingDebt(null)}
             onEditDebt={(d) => setEditingDebt(d)}
             onDeleteDebt={handleDeleteDebt}
-            onMakePayment={handleMakeDebtPayment}
+            onMakeDebtPayment={handleMakeDebtPayment}
+            onUpdateShoppingList={handleUpdateGroceryList}
+            onUpdateGroceryCatalog={handleUpdateGroceryCatalog}
+            onAddDirectExpense={handleAddDirectExpense}
           />
         )}
 
