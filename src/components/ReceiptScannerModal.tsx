@@ -63,18 +63,57 @@ export const ReceiptScannerModal: React.FC<ReceiptScannerModalProps> = ({
 
   if (!isOpen) return null;
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const optimizeImageForOCR = (file: File): Promise<{ base64: string; mimeType: string }> => {
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => {
+          const MAX_DIM = 2048;
+          let width = img.width;
+          let height = img.height;
+          if (width > MAX_DIM || height > MAX_DIM) {
+            if (width > height) {
+              height = Math.round((height * MAX_DIM) / width);
+              width = MAX_DIM;
+            } else {
+              width = Math.round((width * MAX_DIM) / height);
+              height = MAX_DIM;
+            }
+          }
+          const canvas = document.createElement('canvas');
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          if (ctx) {
+            ctx.drawImage(img, 0, 0, width, height);
+            const compressed = canvas.toDataURL('image/jpeg', 0.92);
+            resolve({ base64: compressed, mimeType: 'image/jpeg' });
+          } else {
+            resolve({ base64: e.target?.result as string, mimeType: file.type || 'image/jpeg' });
+          }
+        };
+        img.onerror = () => {
+          resolve({ base64: e.target?.result as string, mimeType: file.type || 'image/jpeg' });
+        };
+        img.src = e.target?.result as string;
+      };
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    const reader = new FileReader();
-    reader.onload = async (evt) => {
-      const base64 = evt.target?.result as string;
-      if (base64) {
-        setImagePreview(base64);
-        scanReceipt(base64, file.type || 'image/jpeg');
-      }
-    };
-    reader.readAsDataURL(file);
+    try {
+      setLoading(true);
+      const { base64, mimeType } = await optimizeImageForOCR(file);
+      setImagePreview(base64);
+      scanReceipt(base64, mimeType);
+    } catch (err: any) {
+      setError(err?.message || 'Eroare la procesarea imaginii');
+      setLoading(false);
+    }
     e.target.value = '';
   };
 
@@ -82,15 +121,16 @@ export const ReceiptScannerModal: React.FC<ReceiptScannerModalProps> = ({
     setLoading(true);
     setError(null);
     try {
+      const customKey = localStorage.getItem('housevault_gemini_key') || localStorage.getItem('gemini_api_key') || '';
       const res = await fetch('/api/ai/scan-receipt', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ imageBase64: base64, mimeType })
+        body: JSON.stringify({ imageBase64: base64, mimeType, customApiKey: customKey })
       });
       const data = await res.json();
       if (data.success && data.result) {
         const r = data.result;
-        setMerchant(r.merchantName || 'Lidl Romania');
+        setMerchant(r.merchantName || 'Lidl România');
         if (r.suggestedCategory) setCategory(r.suggestedCategory);
         if (r.date) setDate(r.date);
         if (Array.isArray(r.itemizedList) && r.itemizedList.length > 0) {
