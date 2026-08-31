@@ -712,6 +712,7 @@ RĂSPUNDE EXCLUSIV ÎN FORMAT JSON VALID:
 Nu include blocuri markdown sau text suplimentar în afara JSON-ului.`;
 
       const candidateModels = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash'];
+      let lastErrorMessage = '';
       for (const modelName of candidateModels) {
         try {
           const ai = new GoogleGenAI({ apiKey });
@@ -739,31 +740,23 @@ Nu include blocuri markdown sau text suplimentar în afara JSON-ului.`;
             return res.json({ success: true, result: parsed, modelUsed: modelName });
           }
         } catch (mErr: any) {
-          console.warn(`[AI Receipt Scanner] Model ${modelName} attempt error:`, mErr?.message);
+          lastErrorMessage = mErr?.message || '';
+          console.warn(`[AI Receipt Scanner] Model ${modelName} attempt error:`, lastErrorMessage);
         }
+      }
+
+      if (lastErrorMessage) {
+        return res.status(400).json({
+          success: false,
+          error: `Eroare Google Gemini: ${lastErrorMessage}. Te rugăm să introduci o cheie API validă din Google AI Studio.`
+        });
       }
     }
 
-    // Intelligent heuristic fallback with realistic breakdown
-    const fallbackResult = {
-      merchantName: 'Supermarket România (Scanat)',
-      totalAmount: 112.50,
-      currency: 'RON',
-      date: new Date().toISOString().split('T')[0],
-      suggestedCategory: 'GROCERIES',
-      itemizedList: [
-        { name: 'Piept de pui dezosat proaspăt (1kg)', price: 29.90 },
-        { name: 'Lapte 3.5% (1L)', price: 5.80 },
-        { name: 'Ouă proaspete M 30 buc', price: 22.50 },
-        { name: 'Pâine toast integrală (500g)', price: 6.90 },
-        { name: 'Brânză telemea de vacă (400g)', price: 18.50 },
-        { name: 'Banane proaspete (1.5kg)', price: 12.40 },
-        { name: 'Apă minerală plată 2L (bax 6 buc)', price: 16.50 }
-      ],
-      items: ['Piept de pui dezosat', 'Lapte 3.5%', 'Ouă M30', 'Pâine toast', 'Telemea vacă', 'Banane', 'Apă plată'],
-      rawSummary: 'Bon cumpărături alimentare recunoscut.'
-    };
-    res.json({ success: true, result: fallbackResult, fallback: true });
+    return res.status(400).json({
+      success: false,
+      error: 'Cheia Gemini API lipsește sau este invalidă. Te rugăm să introduci cheia ta gratuită din Google AI Studio (aistudio.google.com) în scaner.'
+    });
   } catch (error: any) {
     res.status(500).json({ success: false, error: error?.message });
   }
