@@ -83,6 +83,7 @@ export const App: React.FC = () => {
   const [expenses, setExpenses] = useState<HouseholdExpense[]>(loadExpenses);
   const [splitRule, setSplitRule] = useState<WindfallSplitRule>(loadSplitRule);
   const [groceryList, setGroceryList] = useState<ShoppingListItem[]>(loadGroceryList);
+  const [groceryCatalog, setGroceryCatalog] = useState<GroceryCatalogItem[]>(loadGroceryCatalog);
   const [activities, setActivities] = useState<ActivityItem[]>(loadActivities);
 
   useEffect(() => {
