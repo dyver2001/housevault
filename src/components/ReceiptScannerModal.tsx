@@ -1,4 +1,4 @@
-﻿import React, { useState, useRef, useMemo, useEffect } from 'react';
+import React, { useState, useRef, useMemo, useEffect } from 'react';
 import {
   Camera,
   Image as ImageIcon,
@@ -164,8 +164,73 @@ export const ReceiptScannerModal: React.FC<ReceiptScannerModalProps> = ({
   const scanReceipt = async (base64: string, mimeType: string, overrideKey?: string) => {
     setLoading(true);
     setError(null);
+    const activeKey = (overrideKey || apiKey || localStorage.getItem('housevault_gemini_key') || '').trim();
+
+    const promptText = `Ești un sistem AI OCR expert în citirea bonurilor fiscale din România (Auchan, Lidl, Kaufland, Mega Image, Carrefour, Penny etc.).
+Identifică exact comerciantul, data, suma totală și FIECARE produs cumpărat cu prețul său.
+Răspunde DOAR în format JSON strict:
+{
+  "merchantName": "Auchan",
+  "totalAmount": 593.49,
+  "currency": "RON",
+  "date": "2026-08-31",
+  "suggestedCategory": "GROCERIES",
+  "itemizedList": [
+    { "name": "Piersici 1.56kg", "price": 13.42 },
+    { "name": "Lapte 3.5% 1L", "price": 6.10 }
+  ]
+}`;
+
+    // 1. Try Direct Client-Side Gemini Vision if key exists (Super Fast & Bypasses Server Limits)
+    if (activeKey && !activeKey.startsWith('MY_GEMINI')) {
+      const cleanBase64 = base64.replace(/^data:image\/\w+;base64,/, '');
+      const clientModels = ['gemini-2.0-flash', 'gemini-1.5-flash-latest', 'gemini-1.5-flash', 'gemini-2.5-flash', 'gemini-1.5-pro'];
+
+      for (const m of clientModels) {
+        try {
+          const directUrl = `https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent?key=${activeKey}`;
+          const resp = await fetch(directUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              contents: [{
+                parts: [
+                  { text: promptText },
+                  { inline_data: { mime_type: mimeType || 'image/jpeg', data: cleanBase64 } }
+                ]
+              }]
+            })
+          });
+
+          const json = await resp.json();
+          if (json.candidates?.[0]?.content?.parts?.[0]?.text) {
+            const rawText = json.candidates[0].content.parts[0].text;
+            const cleaned = rawText.replace(/```json/gi, '').replace(/```/g, '').trim();
+            const r = JSON.parse(cleaned);
+
+            if (r && (Array.isArray(r.itemizedList) || r.totalAmount)) {
+              setMerchant(r.merchantName || 'Supermarket România');
+              if (r.suggestedCategory) setCategory(r.suggestedCategory);
+              if (r.date) setDate(r.date);
+              if (Array.isArray(r.itemizedList) && r.itemizedList.length > 0) {
+                setItemizedList(r.itemizedList);
+              } else if (Array.isArray(r.items) && r.items.length > 0) {
+                const splitAmount = Math.round(((Number(r.totalAmount) || 100) / r.items.length) * 100) / 100;
+                setItemizedList(r.items.map((name: string) => ({ name, price: splitAmount })));
+              }
+              setHasScanned(true);
+              setLoading(false);
+              return;
+            }
+          }
+        } catch (cErr) {
+          console.warn(`Direct client OCR model ${m} attempt:`, cErr);
+        }
+      }
+    }
+
+    // 2. Server API fallback
     try {
-      const activeKey = overrideKey || apiKey || localStorage.getItem('housevault_gemini_key') || '';
       const res = await fetch('/api/ai/scan-receipt', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

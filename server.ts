@@ -711,9 +711,54 @@ RĂSPUNDE EXCLUSIV ÎN FORMAT JSON VALID:
 }
 Nu include blocuri markdown sau text suplimentar în afara JSON-ului.`;
 
-      const candidateModels = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash'];
+      const candidateModels = [
+        'gemini-2.0-flash',
+        'gemini-1.5-flash-latest',
+        'gemini-1.5-flash',
+        'gemini-2.5-flash',
+        'gemini-1.5-pro',
+        'gemini-pro-vision'
+      ];
       let lastErrorMessage = '';
+
+      // 1. Try direct Google REST API (fastest, most reliable across all API key tiers)
       for (const modelName of candidateModels) {
+        try {
+          const restUrl = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
+          const fetchResp = await fetch(restUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              contents: [{
+                parts: [
+                  { text: prompt },
+                  { inline_data: { mime_type: mimeType || 'image/jpeg', data: cleanBase64 } }
+                ]
+              }]
+            })
+          });
+
+          const restJson = await fetchResp.json();
+          if (restJson.candidates?.[0]?.content?.parts?.[0]?.text) {
+            const rawText = restJson.candidates[0].content.parts[0].text;
+            const cleaned = rawText.replace(/```json/gi, '').replace(/```/g, '').trim();
+            const parsed = JSON.parse(cleaned);
+            if (parsed && (Array.isArray(parsed.itemizedList) || parsed.totalAmount)) {
+              console.log(`[AI Receipt Scanner] Successfully recognized ${parsed.itemizedList?.length || 0} items via REST model ${modelName}`);
+              return res.json({ success: true, result: parsed, modelUsed: modelName });
+            }
+          } else if (restJson.error) {
+            lastErrorMessage = restJson.error.message || JSON.stringify(restJson.error);
+            console.warn(`[AI Receipt Scanner] REST Model ${modelName} error:`, lastErrorMessage);
+          }
+        } catch (rErr: any) {
+          lastErrorMessage = rErr?.message || '';
+          console.warn(`[AI Receipt Scanner] REST attempt error for ${modelName}:`, lastErrorMessage);
+        }
+      }
+
+      // 2. Fallback to SDK call
+      for (const modelName of candidateModels.slice(0, 3)) {
         try {
           const ai = new GoogleGenAI({ apiKey });
           const response = await ai.models.generateContent({
@@ -741,14 +786,13 @@ Nu include blocuri markdown sau text suplimentar în afara JSON-ului.`;
           }
         } catch (mErr: any) {
           lastErrorMessage = mErr?.message || '';
-          console.warn(`[AI Receipt Scanner] Model ${modelName} attempt error:`, lastErrorMessage);
         }
       }
 
       if (lastErrorMessage) {
         return res.status(400).json({
           success: false,
-          error: `Eroare Google Gemini: ${lastErrorMessage}. Te rugăm să introduci o cheie API validă din Google AI Studio.`
+          error: `Eroare Google Gemini: ${lastErrorMessage}. Te rugăm să verifici cheia din Google AI Studio.`
         });
       }
     }
