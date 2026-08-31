@@ -648,19 +648,47 @@ export const App: React.FC = () => {
 
   // Backup handlers
   const handleExportJson = () => {
-    exportBackupJson(profile, projects, debts, targets, expenses, splitRule);
+    const jsonStr = exportBackupJson(
+      profile,
+      projects,
+      debts,
+      targets,
+      expenses,
+      splitRule,
+      groceryList,
+      groceryCatalog
+    );
+    const dateStamp = new Date().toISOString().slice(0, 10);
+    const fileName = `HouseVault_Backup_${profile.husbandName}_${profile.wifeName}_${dateStamp}.json`;
+
+    try {
+      const blob = new Blob([jsonStr], { type: 'application/json;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = fileName;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    } catch (err) {
+      navigator.clipboard.writeText(jsonStr);
+      alert('Backup JSON copied to clipboard!');
+    }
   };
 
   const handleImportJson = (jsonString: string) => {
-    const success = importBackupJson(jsonString);
-    if (success) {
-      setProfile(loadProfile());
-      setProjects(loadProjects());
-      setDebts(loadDebts());
-      setTargets(loadTargets());
-      setExpenses(loadExpenses());
-      setSplitRule(loadSplitRule());
-      pushCurrentStateToCloud();
+    const res = importBackupJson(jsonString);
+    if (res.success && res.data) {
+      setProfile(res.data.profile);
+      setProjects(res.data.projects);
+      setDebts(res.data.debts);
+      setTargets(res.data.targets);
+      setExpenses(res.data.expenses);
+      setSplitRule(res.data.splitRule);
+      if (res.data.groceryList) setGroceryList(res.data.groceryList);
+      if (res.data.groceryCatalog) setGroceryCatalog(res.data.groceryCatalog);
+      pushCurrentStateToCloud(res.data);
     }
   };
 
